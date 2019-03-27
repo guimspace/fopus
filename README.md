@@ -46,6 +46,26 @@ chmod u+x fopus.sh
 sudo ./fopus.sh --install
 ```
 
+3. Set the default GPG key to sign with:
+```
+fopus --config default-key [GPG KEY]
+```
+
+
+## Usage
+
+**Syntax:** `fopus [OPTION]... [DIRECTORY PASSPHRASE]`
+
+```
+--dir DIR PASSPHRASE    archive, compress, encrypt and split
+--config                set options
+--update                update fopus
+--install               install fopus
+--uninstall             uninstall fopus
+--help                  display a short help and exit
+--version               display the version number and exit
+```
+
 
 ## License
 
