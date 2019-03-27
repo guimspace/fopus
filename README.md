@@ -42,7 +42,7 @@ wget https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -O fo
 2. Make the installer executable and then execute it:
 
 ```
-chmod u+x fopush.sh
+chmod u+x fopus.sh
 sudo ./fopus.sh --install
 ```
 
