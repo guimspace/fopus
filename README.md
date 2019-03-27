@@ -66,6 +66,12 @@ fopus --config default-key [GPG KEY]
 --version               display the version number and exit
 ```
 
+#### Examples
+```
+fopus --dir /home/USERNAME/Documents/foo/
+fopus --dir foo/
+```
+
 
 ## License
 
