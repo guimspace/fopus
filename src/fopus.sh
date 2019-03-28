@@ -192,9 +192,9 @@ update_fopus()
 	if [[ "$1" == "-u" ]]; then
 		if [[ -z "$2" ]]; then
 			>&2 echo "fopus: update: missing GitHub username"
-			echo -n "fopus: update: continue? [y/n]: "
+			echo -n "fopus: update: drop authentication and continue? [Y/n]: "
 			read -r user_answer
-			if [[ "$user_answer" != "n" && "$user_answer" != "N" ]]; then
+			if [[ "$user_answer" == "n" || "$user_answer" == "N" ]]; then
 				exit 1
 			fi
 		fi
