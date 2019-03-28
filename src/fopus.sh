@@ -327,10 +327,8 @@ config_fopus()
 			;;
 
 		"min-size")
-			re=^[0-9]+$|
-			if [[ ! "$conf_value" =~ $re ]]; then
-				>&2 echo "fopus: must be integer"
-				exit 1
+			if [[ "$conf_value" == "0" ]]; then
+				conf_value=""
 			fi
 			fopus_config[min-size]="$conf_value"
 			;;
@@ -341,7 +339,7 @@ config_fopus()
 			echo "Options:"
 			echo ""
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
-			echo -e "  min-size SIZE\tput SIZE bytes per output file; 0 defaults to 1073741824"
+			echo -e "  min-size SIZE\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
 			echo -e "  root-path DIR\tput backups in \$HOME/DIR/; blank defaults to '\$HOME/Backups'"
 			echo -e "  github-username NAME\tGitHub username for authentication"
 			exit 0 ;;
