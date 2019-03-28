@@ -235,7 +235,7 @@ update_fopus()
 		exit 1
 	fi
 
-	remote_hashsum=$(echo "$dl_file" | $sha512sum_tool | cut -d " " -f 1)
+	remote_hashsum=$($sha512sum_tool "$dl_file" | cut -d " " -f 1)
 
 	local_hashsum=$($sha512sum_tool "$fopus_path" | cut -d " " -f 1)
 	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
