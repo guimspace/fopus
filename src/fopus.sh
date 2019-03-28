@@ -28,7 +28,7 @@ fopus_config=(
     [min-size]="1073741824"
 	[default-key]=""
 	[github-username]=""
-	[root-name]="Backups"
+	[root-path]="$HOME/Backups/"
 )
 
 
@@ -313,19 +313,18 @@ config_fopus()
 	conf_option="$1"
 	conf_value="$2"
 
-
 	case "$conf_option" in
 		"default-key")
 			fopus_config[default-key]="$conf_value"
-			save_conf ;;
+			;;
 
 		"github-username")
 			fopus_config[github-username]="$conf_value"
-			save_conf ;;
+			;;
 
-		"root-name")
+		"root-path")
 			fopus_config[root-name]="$conf_value"
-			save_conf ;;
+			;;
 
 		"min-size")
 			re=^[0-9]+$|
@@ -334,7 +333,7 @@ config_fopus()
 				exit 1
 			fi
 			fopus_config[min-size]="$conf_value"
-			save_conf ;;
+			;;
 
 		*)
 			echo "Syntax: fopus --config [OPTION] [ARG]"
@@ -343,10 +342,12 @@ config_fopus()
 			echo ""
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
 			echo -e "  min-size SIZE\tput SIZE bytes per output file; 0 defaults to 1073741824"
-			echo -e "  root-name NAME\tname NAME the root directory of backups \$HOME/NAME; blank defaults to 'Backups'"
+			echo -e "  root-path DIR\tput backups in \$HOME/DIR/; blank defaults to '\$HOME/Backups'"
 			echo -e "  github-username NAME\tGitHub username for authentication"
-			;;
+			exit 0 ;;
 	esac
+
+	save_conf
 	exit 0
 }
 
