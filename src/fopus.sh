@@ -114,7 +114,7 @@ show_help()
 	echo "  fopus --dir /home/username/Documents/foo/"
 	echo "  fopus --dir foo/"
 	echo ""
-	echo -e "  --dir DIR PASSPHRASE\t\tarchive, compress, encrypt and split"
+	echo -e "  --dir DIR\t\t\tarchive, compress, encrypt and split"
 	echo -e "  --config\t\t\tset options"
 	echo -e "  --update\t\t\tupdate fopus"
 	echo -e "  --install\t\t\tinstall fopus"
@@ -339,8 +339,7 @@ fopus_dir()
 	read_conf
 
 	GPG_KEY_ID=${fopus_config[default-key]}
-	TARGET_DIR=$1
-	SEC_PASSPHRASE=$2
+	TARGET_DIR="$1"
 
 	if [[ ! -z "$GPG_KEY_ID" ]]; then
 		gpg --list-secret-key "$GPG_KEY_ID" 1> /dev/null
@@ -400,14 +399,10 @@ fopus_dir()
 	echo "Encrypt"
 	if [[ -z "$GPG_KEY_ID" ]]; then
 		gpg -o "$FILE_NAME.enc" -s \
-		-c -z 0 \
-		--batch --yes --passphrase "$SEC_PASSPHRASE" \
-		"$FILE_NAME"
+			-c -z 0 "$FILE_NAME"
 	else
 		gpg -o "$FILE_NAME.enc" -u "$GPG_KEY_ID" -s \
-		-c -z 0 \
-		--batch --yes --passphrase "$SEC_PASSPHRASE" \
-		"$FILE_NAME"
+			-c -z 0 "$FILE_NAME"
 	fi
 	echo "Done."
 
@@ -460,7 +455,7 @@ case "$user_input" in
 		update_fopus "${@:2}" ;;
 
 	"--dir")
-		fopus_dir "${@:2}" ;;
+		fopus_dir "$2" ;;
 
 	"--config")
 		config_fopus "${@:2}" ;;
