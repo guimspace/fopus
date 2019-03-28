@@ -207,6 +207,7 @@ update_fopus()
 	if [[ -n "$github_username" ]]; then
 		echo -n "fopus: Enter host password for user '$github_username': "
 		read -rs github_token
+		echo ""
 	fi
 
 	if [[ -n "$github_username" ]]; then
