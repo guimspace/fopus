@@ -233,6 +233,7 @@ update_fopus()
 
 	local_hashsum=$($sha512sum_tool "$fopus_path" | cut -d " " -f 1)
 	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
+		echo "fopus is up-to-date"
 		exit 0
 	fi
 
