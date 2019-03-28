@@ -22,13 +22,7 @@ $ gpg -o dir_DIR.tar.xz.enc -u DEFAULT-KEY -s \
 
 ## Requirements
 
-* `wget`
-* `curl`
-* `gpg`
-* `tar`
-* `xz`
-* `md5sum`
-* `shasum`
+`gpg`, `curl`, `tar`, `xz` or `pxz`, `md5sum`, `shasum`
 
 
 ## Install
@@ -57,7 +51,7 @@ fopus --config default-key [GPG KEY]
 **Syntax:** `fopus [OPTION]... [DIRECTORY PASSPHRASE]`
 
 ```
---dir DIR PASSPHRASE    archive, compress, encrypt and split
+--dir DIR               archive, compress, encrypt and split
 --config                set options
 --update                update fopus
 --install               install fopus
