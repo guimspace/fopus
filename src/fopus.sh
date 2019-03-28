@@ -211,11 +211,9 @@ update_fopus()
 
 	if [[ -n "$github_username" ]]; then
 		remote_=$(curl -sf --connect-timeout 7 \
-			-u "$github_username:$github_token" \
-			-o /dev/null "$remote_url")
+			-u "$github_username:$github_token" "$remote_url")
 	else
-		remote_=$(curl -sf --connect-timeout 7 \
-			-o /dev/null "$remote_url")
+		remote_=$(curl -sf --connect-timeout 7 "$remote_url")
 	fi
 
 	if [[ "$?" != 0 ]]; then
