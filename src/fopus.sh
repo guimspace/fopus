@@ -188,6 +188,7 @@ update_fopus()
 {
 	read_conf
 	local github_username=""
+	local github_token=""
 
 	if [[ "$1" == "-u" ]]; then
 		if [[ -z "$2" ]]; then
@@ -204,8 +205,13 @@ update_fopus()
 	fi
 
 	if [[ -n "$github_username" ]]; then
+		echo -n "fopus: Enter host password for user '$github_username': "
+		read -rs github_token
+	fi
+
+	if [[ -n "$github_username" ]]; then
 		remote_=$(curl -sf --connect-timeout 7 \
-			-u "$github_username" \
+			-u "$github_username:$github_token" \
 			-o /dev/null "$remote_url")
 	else
 		remote_=$(curl -sf --connect-timeout 7 \
@@ -233,7 +239,7 @@ update_fopus()
 	mkdir -p "$HOME/.fopus/tmp"
 
 	if [[ -n "$github_username" ]]; then
-		curl -sf --connect-timeout 7 -u "$github_username" \
+		curl -sf --connect-timeout 7 -u "$github_username:$github_token" \
 			-o "$HOME/.fopus/tmp/fopus" "$remote_url"
 	else
 		curl -sf --connect-timeout 7 \
