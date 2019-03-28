@@ -33,7 +33,7 @@ DATE=$(date +%Y-%m-%d)
 
 check_requirements()
 {
-	list_packages=(tar xz md5sum shasum)
+	list_packages=(gpg curl tar xz md5sum shasum)
 
 	for i in ${!list_packages[*]}; do
 		if ! command -v "${list_packages[$i]}" &> /dev/null; then
