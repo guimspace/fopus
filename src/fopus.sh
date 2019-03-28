@@ -24,7 +24,7 @@ fopus_config=(
     [min-size]="1073741824"
 	[default-key]=""
 )
-remote_url="https://raw.githubusercontent.com/guimspace/fopus/master/fopus.sh"
+remote_url="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
 MIN_SIZE=1073741824
 FOPUS_CONF_PATH="$HOME/.config/fopus/fopus.conf"
 FOPUS_CONF_DIR="$HOME/.config/fopus"
