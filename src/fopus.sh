@@ -23,6 +23,7 @@ typeset -A fopus_config
 fopus_config=(
     [min-size]="1073741824"
 	[default-key]=""
+	[github-username]=""
 )
 remote_url="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
 MIN_SIZE=1073741824
@@ -185,7 +186,32 @@ uninstall_fopus()
 
 update_fopus()
 {
-	remote_=$(curl --connect-timeout 7 -o /dev/null "$remote_url")
+	read_conf
+	local github_username=""
+
+	if [[ "$1" == "-u" ]]; then
+		if [[ -z "$2" ]]; then
+			>&2 echo "fopus: update: missing GitHub username"
+			echo -n "fopus: update: continue? [y/n]: "
+			read -r user_answer
+			if [[ "$user_answer" != "n" && "$user_answer" != "N" ]]; then
+				exit 1
+			fi
+		fi
+		github_username="$2"
+	else
+		github_username="${fopus_config[github-username]}"
+	fi
+
+	if [[ -n "$github_username" ]]; then
+		remote_=$(curl -sf --connect-timeout 7 \
+			-u "$github_username" \
+			-o /dev/null "$remote_url")
+	else
+		remote_=$(curl -sf --connect-timeout 7 \
+			-o /dev/null "$remote_url")
+	fi
+
 	if [[ "$?" != 0 ]]; then
 		>&2 echo "fopus: update: download failed"
 		exit 1
@@ -206,7 +232,14 @@ update_fopus()
 
 	mkdir -p "$HOME/.fopus/tmp"
 
-	curl --connect-timeout 7 -o "$HOME/.fopus/tmp/fopus" "$remote_url"
+	if [[ -n "$github_username" ]]; then
+		curl -sf --connect-timeout 7 -u "$github_username" \
+			-o "$HOME/.fopus/tmp/fopus" "$remote_url"
+	else
+		curl -sf --connect-timeout 7 \
+			-o "$HOME/.fopus/tmp/fopus" "$remote_url"
+	fi
+
 	if [[ "$?" != 0 ]]; then
 		>&2 echo "fopus: update: download failed"
 		exit 1
@@ -297,12 +330,17 @@ config_fopus()
 			fopus_config[default-key]="$conf_value"
 			save_conf ;;
 
+		"github-username")
+			fopus_config[github-username]="$conf_value"
+			save_conf ;;
+
 		*)
 			echo "Syntax: fopus --config [OPTION] [ARG]"
 			echo ""
 			echo "Options:"
 			echo ""
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
+			echo -e "  github-username NAME\tGitHub username for authentication"
 			;;
 	esac
 	exit 0
@@ -431,7 +469,7 @@ case "$user_input" in
 		uninstall_fopus ;;
 
 	"--update")
-		update_fopus ;;
+		update_fopus "${@:2}" ;;
 
 	"--dir")
 		fopus_dir "${@:2}" ;;
