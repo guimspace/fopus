@@ -107,7 +107,6 @@ show_help()
 	echo "Examples:"
 	echo "  fopus --dir /home/username/Documents/foo/"
 	echo "  fopus --dir foo/"
-	echo "  fopus --config default-key 0x0000000000000000"
 	echo ""
 	echo -e "  --dir DIR PASSPHRASE\t\tarchive, compress, encrypt and split"
 	echo -e "  --config\t\t\tset options"
