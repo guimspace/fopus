@@ -17,14 +17,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-
 version=alpha-0.1.0
+
+# https://unix.stackexchange.com/a/232083 for the future
+# unset -v password
+# set +o allexport
+
 typeset -A fopus_config
 fopus_config=(
     [min-size]="1073741824"
 	[default-key]=""
 	[github-username]=""
 )
+
+
 remote_url="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
 MIN_SIZE=1073741824
 FOPUS_CONF_PATH="$HOME/.config/fopus/fopus.conf"
