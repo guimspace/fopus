@@ -193,7 +193,12 @@ update_fopus()
 {
 	read_conf
 	local github_username=""
-	local github_token=""
+
+	fopus_path="/usr/local/bin/fopus"
+	if [[ ! -f "$fopus_path" ]]; then
+		>&2 echo "fopus: fopus is not installed"
+		exit 1
+	fi
 
 	if [[ "$1" == "-u" ]]; then
 		if [[ -z "$2" ]]; then
@@ -209,31 +214,28 @@ update_fopus()
 		github_username="${fopus_config[github-username]}"
 	fi
 
-	if [[ -n "$github_username" ]]; then
-		echo -n "fopus: Enter host password for user '$github_username': "
-		read -rs github_token
-		echo ""
+	if ! mkdir -p "/tmp/fopus/"; then
+		exit 1
+	fi
+
+	if [[ -f "/tmp/fopus/fopus" ]]; then
+		rm -f "/tmp/fopus/fopus"
 	fi
 
 	if [[ -n "$github_username" ]]; then
-		remote_=$(curl -sf --connect-timeout 7 \
-			-u "$github_username:$github_token" "$remote_url")
+		curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" \
+			-u "$github_username" "$remote_url"
 	else
-		remote_=$(curl -sf --connect-timeout 7 "$remote_url")
+		curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" "$remote_url"
 	fi
 
-	if [[ "$?" != 0 ]]; then
+	dl_file="/tmp/fopus/fopus"
+	if [[ ! -f "$dl_file" ]]; then
 		>&2 echo "fopus: update: download failed"
 		exit 1
 	fi
 
-	remote_hashsum=$(echo "$remote_" | $sha512sum_tool | cut -d " " -f 1)
-
-	fopus_path="/usr/local/bin/fopus"
-	if [[ ! -f "$fopus_path" ]]; then
-		>&2 echo "fopus: fopus is not installed"
-		exit 1
-	fi
+	remote_hashsum=$(echo "$dl_file" | $sha512sum_tool | cut -d " " -f 1)
 
 	local_hashsum=$($sha512sum_tool "$fopus_path" | cut -d " " -f 1)
 	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
@@ -241,36 +243,11 @@ update_fopus()
 		exit 0
 	fi
 
-	mkdir -p "$HOME/.fopus/tmp"
+	echo "Updating..."
 
-	if [[ -n "$github_username" ]]; then
-		curl -sf --connect-timeout 7 -u "$github_username:$github_token" \
-			-o "$HOME/.fopus/tmp/fopus" "$remote_url"
-	else
-		curl -sf --connect-timeout 7 \
-			-o "$HOME/.fopus/tmp/fopus" "$remote_url"
-	fi
-
-	if [[ "$?" != 0 ]]; then
-		>&2 echo "fopus: update: download failed"
-		exit 1
-	fi
-
-	file_="$HOME/.fopus/tmp/fopus"
-	download_hashsum=$($sha512sum_tool "$file_" | cut -d " " -f 1)
-	if [[ "$remote_hashsum" != "$download_hashsum" ]]; then
-		>&2 echo "fopus: update: computed checksum did not match"
-		rm -f "$file_"
-		exit 1
-	fi
-
-	cp "$file_" "/usr/local/bin/fopus"
-
+	cp "$dl_file" "/usr/local/bin/fopus"
 	chown "$USER:$(id -gn $USER)" "/usr/local/bin/fopus"
-	if [[ "$?" != 0 ]]; then error_=1; fi
-
 	chmod 0755 "/usr/local/bin/fopus"
-	if [[ "$?" != 0 ]]; then error_=1; fi
 
 	echo "fopus is up-to-date"
 	exit 0
