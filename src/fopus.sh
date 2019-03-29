@@ -424,24 +424,7 @@ fopus_dir()
 		exit 1
 	fi
 
-	mkdir -p "$root_path"
-
-	# show backup details
-	echo ""
-	echo "Source $TARGET_DIR"
-	echo ""
-	echo "Date $DATE"
-	echo "Backup $root_path/bak_$DATE/"
-	du -sh "$TARGET_DIR"
-	echo "GPG key to sign with $GPG_KEY_ID"
-	echo ""
-
-	echo ""
-	echo "Start directory"
 	cd "$HOME" || exit 1
-
-	mkdir -p "$root_path/bak_$DATE"
-	cd "$root_path/bak_$DATE" || exit 1
 
 	BACKUP_DIR=$(basename "$TARGET_DIR")
 	BACKUP_DIR=${BACKUP_DIR// /_}
@@ -449,8 +432,43 @@ fopus_dir()
 
 	dir_hash=$(echo "$TARGET_DIR" | "$sha1sum_tool")
 	BACKUP_DIR_HASH="$BACKUP_DIR-${dir_hash:0:7}"
-	mkdir -p "$BACKUP_DIR_HASH"
-	cd "$BACKUP_DIR_HASH" || exit 1
+
+	user_answer=""
+	if [[ -e "$BACKUP_DIR_HASH" ]]; then
+		echo -n "Backup '$BACKUP_DIR_HASH' exists. Overwrite? [y/N]: "
+		read -r user_answer
+
+		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
+			echo -n "This is a backup! Really overwrite? [y/N]: "
+			read -r user_answer
+		else
+			echo "fopus: exiting"
+			exit 0
+		fi
+
+		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
+			rm -rf "$BACKUP_DIR_HASH"
+		else
+			echo "fopus: exiting"
+			exit 0
+		fi
+	fi
+
+
+	# show backup details
+	echo ""
+	echo "Source $TARGET_DIR"
+	echo ""
+	echo "Date $DATE"
+	echo "Backup path $root_path/bak_$DATE/$BACKUP_DIR_HASH"
+	echo "GPG key to sign with $GPG_KEY_ID"
+	du -sh "$TARGET_DIR"
+	echo "========== ========== ========== ========== =========="
+
+	echo ""
+	echo "Start directory"
+	mkdir -p "$root_path/bak_$DATE/$BACKUP_DIR_HASH" || exit 1
+	cd "$root_path/bak_$DATE/$BACKUP_DIR_HASH" || exit 1
 	echo "Done."
 
 
