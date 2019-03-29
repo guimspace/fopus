@@ -366,6 +366,7 @@ fopus_dir()
 	read_conf
 
 	TARGET_DIR="$1"
+	TARGET_DIR=${TARGET_DIR// /_}
 	GPG_KEY_ID="${fopus_config[default-key]}"
 
 	if [[ ! -z "$GPG_KEY_ID" ]]; then
