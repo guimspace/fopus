@@ -8,16 +8,15 @@
 **fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt** and **split** a directory.
 
 1. **Archive & compress:** The directory is archived and compressed in `.tar.xz` format.  
-`$ tar -cJvpf dir_DIR.tar.xz -- DIR > list-dir_DIR`
+`$ tar -I ALGO -cvpf dir_DIR.tar.xz -- DIR > list-dir_DIR`
 
 2. **Encrypt:** With `gpg`, the compressed file is encrypted with the properties: symmetric cipher, sign, compression disabled.  
 ```
-$ gpg -o dir_DIR.tar.xz.enc -u DEFAULT-KEY -s \
-    -c -z 0 --batch --yes --passphrase PASSPHRASE dir_DIR.tar.xz
+$ gpg -o dir_DIR.tar.xz.enc -u DEFAULT-KEY -s -c -z 0 dir_DIR.tar.xz
 ```
 
 3. **Split:** If the encrypted file is larger than 1073741824 bytes, it is split and put 1073741824 bytes per output file.  
-`$  split --verbose -b 1G dir_DIR.tar.xz.enc dir_DIR.tar.xz.enc_`
+`$  split --verbose -b SIZE dir_DIR.tar.xz.enc dir_DIR.tar.xz.enc_`
 
 
 ## Requirements
@@ -42,7 +41,7 @@ sudo ./fopus.sh --install
 
 3. Set the default GPG key to sign with:
 ```
-fopus --config default-key [GPG KEY]
+fopus --config default-key [GPG KEY ID]
 ```
 
 
