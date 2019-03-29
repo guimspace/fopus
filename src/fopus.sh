@@ -416,8 +416,10 @@ fopus_dir()
 	BACKUP_DIR=$(basename "$TARGET_DIR")
 	FILE_NAME="dir_$BACKUP_DIR.tar.xz"
 
-	mkdir -p "$BACKUP_DIR"
-	cd "$BACKUP_DIR" || exit 1
+	dir_hash=$(echo "$TARGET_DIR" | "$sha1sum_tool")
+	BACKUP_DIR_HASH="$BACKUP_DIR-${dir_hash:0:7}"
+	mkdir -p "$BACKUP_DIR_HASH"
+	cd "$BACKUP_DIR_HASH" || exit 1
 	echo "Done."
 
 
@@ -461,13 +463,13 @@ fopus_dir()
 	echo ""
 	echo "Hash and file permission"
 	cd ..
-	find "$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS
-	find "$BACKUP_DIR/" -type f -exec md5sum {} \; >> MD5SUMS
+	find "$BACKUP_DIR_HASH/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS
+	find "$BACKUP_DIR_HASH/" -type f -exec md5sum {} \; >> MD5SUMS
 
 	# file permission
-	chmod 700 "$BACKUP_DIR/"
-	find "$BACKUP_DIR/" -type f -exec chmod 0600 {} \;
-	find "$BACKUP_DIR/" -type d -exec chmod 0700 {} \;
+	chmod 700 "$BACKUP_DIR_HASH/"
+	find "$BACKUP_DIR_HASH/" -type f -exec chmod 0600 {} \;
+	find "$BACKUP_DIR_HASH/" -type d -exec chmod 0700 {} \;
 	echo "Done."
 
 	exit 0
