@@ -381,6 +381,17 @@ fopus_dir()
 	TARGET_DIR="$1"
 	GPG_KEY_ID="${fopus_config[default-key]}"
 
+	user_answer=""
+
+	if [[ "$UID" -eq 0 ]]; then
+		echo -n "fopus: user is root. Continue? [y/N]: "
+		read -r user_answer
+		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
+			echo "fopus: exiting"
+			exit 0
+		fi
+	fi
+
 
 	if [[ -z "$TARGET_DIR" ]]; then
 		>&2 echo "fopus: missing operand"
