@@ -33,7 +33,6 @@ fopus_config=(
 
 
 remote_url="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
-MIN_SIZE=1073741824
 FOPUS_CONF_PATH="$HOME/.config/fopus/fopus.conf"
 FOPUS_CONF_DIR="$HOME/.config/fopus"
 DATE=$(date +%Y-%m-%d)
@@ -158,7 +157,7 @@ install_fopus()
 	cp "$cli" "/usr/local/bin/fopus"
 	if [[ "$?" != 0 ]]; then exit 1; fi
 
-	chown "$USER:$(id -gn $USER)" "/usr/local/bin/fopus"
+	chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus"
 	if [[ "$?" != 0 ]]; then error_=1; fi
 
 	chmod 0755 "/usr/local/bin/fopus"
@@ -247,7 +246,7 @@ update_fopus()
 	echo "Updating..."
 
 	cp "$dl_file" "/usr/local/bin/fopus"
-	chown "$USER:$(id -gn $USER)" "/usr/local/bin/fopus"
+	chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus"
 	chmod 0755 "/usr/local/bin/fopus"
 
 	echo "fopus is up-to-date"
@@ -263,7 +262,7 @@ init_conf()
 	if [[ ! -d "$FOPUS_CONF_DIR" ]]; then
 		mkdir -p "$FOPUS_CONF_DIR"
 
-		chown "$SUDO_USER:$(id -gn $SUDO_USER)" "$FOPUS_CONF_DIR"
+		chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$FOPUS_CONF_DIR"
 		if [[ "$?" != 0 ]]; then exit 1; fi
 
 		chmod 0700 "$FOPUS_CONF_DIR"
@@ -272,7 +271,7 @@ init_conf()
 
 	echo "min-size 1073741824" > "$FOPUS_CONF_PATH"
 
-	chown "$SUDO_USER:$(id -gn $SUDO_USER)" "$FOPUS_CONF_PATH"
+	chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$FOPUS_CONF_PATH"
 	if [[ "$?" != 0 ]]; then exit 1; fi
 
 	chmod 0600 "$FOPUS_CONF_PATH"
@@ -285,8 +284,8 @@ read_conf()
 		exit 1
 	fi
 
-	while read var value; do
-		if [[ ! -z "$var" && ! -z "$value" ]]; then
+	while read -r var value; do
+		if [[ -n "$var" && -n "$value" ]]; then
 			fopus_config["$var"]="$value"
 		fi
 	done < "$FOPUS_CONF_PATH"
@@ -300,7 +299,7 @@ save_conf()
 
 	echo "" > "$FOPUS_CONF_PATH"
 	for var in ${!fopus_config[*]}; do
-		if [[ ! -z ${fopus_config[$var]} ]]; then
+		if [[ -n ${fopus_config[$var]} ]]; then
 			echo "$var ${fopus_config[$var]}" >> "$FOPUS_CONF_PATH"
 		fi
 	done
@@ -327,7 +326,7 @@ config_fopus()
 				>&2 echo "fopus: invalid operand"
 				exit 1
 			else
-				cd $(dirname "$conf_value") || exit 1
+				cd "$(dirname "$conf_value")" || exit 1
 				conf_value="$(pwd -P)/$(basename "$conf_value")/"
 
 				if [[ ! "$conf_value" =~ ^"$HOME"* ]]; then
@@ -369,7 +368,7 @@ fopus_dir()
 	TARGET_DIR=${TARGET_DIR// /_}
 	GPG_KEY_ID="${fopus_config[default-key]}"
 
-	if [[ ! -z "$GPG_KEY_ID" ]]; then
+	if [[ -n "$GPG_KEY_ID" ]]; then
 		gpg --list-secret-key "$GPG_KEY_ID" 1> /dev/null
 		if [[ "$?" -ne 0 ]]; then exit 1; fi
 	fi
@@ -385,7 +384,7 @@ fopus_dir()
 		exit 1
 	fi
 
-	cd $TARGET_DIR || exit 1
+	cd "$TARGET_DIR" || exit 1
 	TARGET_DIR=$(pwd -P)
 	cd ..
 
@@ -434,7 +433,7 @@ fopus_dir()
 	echo ""
 	echo "Test compression"
 	xz -tv -- "$FILE_NAME"
-	if [[ $? -ne 0 ]]; then exit 1; fi
+	if [[ "$?" -ne 0 ]]; then exit 1; fi
 	echo "Done."
 
 	# encrypt
