@@ -368,10 +368,6 @@ fopus_dir()
 	TARGET_DIR=${TARGET_DIR// /_}
 	GPG_KEY_ID="${fopus_config[default-key]}"
 
-	if [[ -n "$GPG_KEY_ID" ]]; then
-		gpg --list-secret-key "$GPG_KEY_ID" 1> /dev/null
-		if [[ "$?" -ne 0 ]]; then exit 1; fi
-	fi
 
 	if [[ -z "$TARGET_DIR" ]]; then
 		>&2 echo "fopus: missing operand"
