@@ -379,7 +379,6 @@ fopus_dir()
 	read_conf
 
 	TARGET_DIR="$1"
-	TARGET_DIR=${TARGET_DIR// /_}
 	GPG_KEY_ID="${fopus_config[default-key]}"
 
 
@@ -424,6 +423,7 @@ fopus_dir()
 	cd "$root_path/bak_$DATE" || exit 1
 
 	BACKUP_DIR=$(basename "$TARGET_DIR")
+	BACKUP_DIR=${BACKUP_DIR// /_}
 	FILE_NAME="dir_$BACKUP_DIR.tar.xz"
 
 	dir_hash=$(echo "$TARGET_DIR" | "$sha1sum_tool")
