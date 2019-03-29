@@ -426,6 +426,16 @@ fopus_dir()
 
 	mkdir -p "$root_path"
 
+	# show backup details
+	echo ""
+	echo "Source $TARGET_DIR"
+	echo ""
+	echo "Date $DATE"
+	echo "Backup $root_path/bak_$DATE/"
+	du -sh "$TARGET_DIR"
+	echo "GPG key to sign with $GPG_KEY_ID"
+	echo ""
+
 	echo ""
 	echo "Start directory"
 	cd "$HOME" || exit 1
