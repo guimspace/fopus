@@ -29,6 +29,7 @@ fopus_config=(
 	[default-key]=""
 	[github-username]=""
 	[root-path]="$HOME/Backups/"
+	[compress-algo]="xz"
 )
 
 
@@ -319,6 +320,18 @@ config_fopus()
 		"github-username")
 			fopus_config[github-username]="$conf_value" ;;
 
+		"compress-algo")
+			if [[ -z "$conf_value" || "$conf_value" == "1" ]]; then
+				conf_value="xz"
+			elif [[ "$conf_value" == "2" ]]; then
+				conf_value="pxz"
+			else
+				>&2 echo "fopus: invalid operand"
+				exit 1
+			fi
+
+			fopus_config[compress-algo]="$conf_value" ;;
+
 		"root-path")
 			if [[ "$conf_value" == "$HOME" || "$conf_value" == "$HOME/" ]]; then
 				conf_value=""
@@ -351,6 +364,7 @@ config_fopus()
 			echo ""
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
 			echo -e "  min-size SIZE\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
+			echo -e "  compress-algo n\tuse compress algorithm n; default is 1 which is xz; use 2 to use pxz"
 			echo -e "  root-path DIR\tput backups in \$HOME/DIR/; blank defaults to '\$HOME/Backups'"
 			echo -e "  github-username NAME\tGitHub username for authentication"
 			exit 0 ;;
@@ -422,7 +436,7 @@ fopus_dir()
 	# compress
 	echo ""
 	echo "Compression"
-	tar -cJvpf "$FILE_NAME" -- "$TARGET_DIR" > "list-dir_$BACKUP_DIR"
+	tar -I "${fopus_config[compress-algo]}" -cvpf "$FILE_NAME" -- "$TARGET_DIR" > "list-dir_$BACKUP_DIR"
 	echo "Done."
 
 	# test compression
