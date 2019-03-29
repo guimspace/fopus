@@ -315,23 +315,35 @@ config_fopus()
 
 	case "$conf_option" in
 		"default-key")
-			fopus_config[default-key]="$conf_value"
-			;;
+			fopus_config[default-key]="$conf_value" ;;
 
 		"github-username")
-			fopus_config[github-username]="$conf_value"
-			;;
+			fopus_config[github-username]="$conf_value" ;;
 
 		"root-path")
-			fopus_config[root-name]="$conf_value"
-			;;
+			if [[ "$conf_value" == "$HOME" || "$conf_value" == "$HOME/" ]]; then
+				conf_value=""
+			elif [[ ! -d "$conf_value" ]]; then
+				>&2 echo "fopus: invalid operand"
+				exit 1
+			else
+				cd $(dirname "$conf_value") || exit 1
+				conf_value="$(pwd -P)/$(basename "$conf_value")/"
+
+				if [[ ! "$conf_value" =~ ^"$HOME"* ]]; then
+					>&2 echo "fopus: permission denied"
+					exit 1
+				fi
+			fi
+
+			fopus_config[root-path]="$conf_value" ;;
 
 		"min-size")
 			if [[ "$conf_value" == "0" ]]; then
 				conf_value=""
 			fi
-			fopus_config[min-size]="$conf_value"
-			;;
+
+			fopus_config[min-size]="$conf_value" ;;
 
 		*)
 			echo "Syntax: fopus --config [OPTION] [ARG]"
@@ -353,8 +365,8 @@ fopus_dir()
 {
 	read_conf
 
-	GPG_KEY_ID=${fopus_config[default-key]}
 	TARGET_DIR="$1"
+	GPG_KEY_ID="${fopus_config[default-key]}"
 
 	if [[ ! -z "$GPG_KEY_ID" ]]; then
 		gpg --list-secret-key "$GPG_KEY_ID" 1> /dev/null
@@ -381,12 +393,25 @@ fopus_dir()
 		exit 1
 	fi
 
+	root_path="${fopus_config[root-path]}"
+	if [[ "$root_path" == "$HOME" || "$root_path" == "$HOME/" ]]; then
+		root_path="Backups"
+	elif [[ ! -d "$root_path" ]]; then
+		>&2 echo "fopus: '$root_path' is not a directory"
+		exit 1
+	elif [[ ! "$root_path" =~ ^"$HOME"* ]]; then
+		>&2 echo "fopus: permission denied"
+		exit 1
+	fi
+
+	mkdir -p "$root_path"
 
 	echo ""
 	echo "Start directory"
 	cd "$HOME" || exit 1
-	mkdir -p "fopus/bak_$DATE"
-	cd "fopus/bak_$DATE" || exit 1
+
+	mkdir -p "$root_path/bak_$DATE"
+	cd "$root_path/bak_$DATE" || exit 1
 
 	BACKUP_DIR=$(basename "$TARGET_DIR")
 	FILE_NAME="dir_$BACKUP_DIR.tar.xz"
@@ -424,10 +449,11 @@ fopus_dir()
 	# split
 	echo ""
 	echo "Split"
-	FILE_SIZE=$(stat -c %s "$FILE_NAME.enc")
-	if [[ "$FILE_SIZE" -gt "$MIN_SIZE" ]]; then
+	split_size=${fopus_config[min-size]}
+	file_size=$(stat -c %s "$FILE_NAME.enc")
+	if [[ "$file_size" -gt "$split_size" ]]; then
 	  echo ""
-	  split --verbose -b 1G "$FILE_NAME.enc" "$FILE_NAME.enc_"
+	  split --verbose -b "$split_size" "$FILE_NAME.enc" "$FILE_NAME.enc_"
 	fi
 	echo "Done."
 
