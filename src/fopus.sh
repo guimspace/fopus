@@ -413,14 +413,12 @@ fopus_dir()
 		exit 1
 	fi
 
-	mkdir -p "$root_path"
+	cd "$HOME" || exit 1
+	mkdir -p "$root_path/bak_$DATE"
+	cd "$root_path/bak_$DATE" || exit 1
 
 	echo ""
 	echo "Start directory"
-	cd "$HOME" || exit 1
-
-	mkdir -p "$root_path/bak_$DATE"
-	cd "$root_path/bak_$DATE" || exit 1
 
 	BACKUP_DIR=$(basename "$TARGET_DIR")
 	BACKUP_DIR=${BACKUP_DIR// /_}
@@ -428,7 +426,29 @@ fopus_dir()
 
 	dir_hash=$(echo "$TARGET_DIR" | "$sha1sum_tool")
 	BACKUP_DIR_HASH="$BACKUP_DIR-${dir_hash:0:7}"
-	mkdir -p "$BACKUP_DIR_HASH"
+
+	user_answer=""
+	if [[ -e "$BACKUP_DIR_HASH" ]]; then
+		echo -n "Backup '$BACKUP_DIR_HASH' exists. Overwrite? [y/N]: "
+		read -r user_answer
+
+		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
+			echo -n "This is a backup! Really overwrite? [y/N]: "
+			read -r user_answer
+		else
+			echo "fopus: exiting"
+			exit 0
+		fi
+
+		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
+			rm -rf "$BACKUP_DIR_HASH"
+		else
+			echo "fopus: exiting"
+			exit 0
+		fi
+	fi
+
+	mkdir -p "$BACKUP_DIR_HASH" || exit 1
 	cd "$BACKUP_DIR_HASH" || exit 1
 	echo "Done."
 
