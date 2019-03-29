@@ -415,7 +415,7 @@ fopus_dir()
 
 	root_path="${fopus_config[root-path]}"
 	if [[ "$root_path" == "$HOME" || "$root_path" == "$HOME/" ]]; then
-		root_path="Backups"
+		root_path="$HOME/Backups"
 	elif [[ ! -d "$root_path" ]]; then
 		>&2 echo "fopus: '$root_path' is not a directory"
 		exit 1
@@ -426,6 +426,9 @@ fopus_dir()
 
 	cd "$HOME" || exit 1
 
+	root_path=${root_path%/}
+	TARGET_DIR=${TARGET_DIR%/}
+
 	BACKUP_DIR=$(basename "$TARGET_DIR")
 	BACKUP_DIR=${BACKUP_DIR// /_}
 	FILE_NAME="dir_$BACKUP_DIR.tar.xz"
@@ -434,8 +437,8 @@ fopus_dir()
 	BACKUP_DIR_HASH="$BACKUP_DIR-${dir_hash:0:7}"
 
 	user_answer=""
-	if [[ -e "$BACKUP_DIR_HASH" ]]; then
-		echo -n "Backup '$BACKUP_DIR_HASH' exists. Overwrite? [y/N]: "
+	if [[ -e "$root_path/bak_$DATE/$BACKUP_DIR_HASH" ]]; then
+		echo -n "Backup 'bak_$DATE/$BACKUP_DIR_HASH' exists. Overwrite? [y/N]: "
 		read -r user_answer
 
 		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
@@ -447,7 +450,8 @@ fopus_dir()
 		fi
 
 		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-			rm -rf "$BACKUP_DIR_HASH"
+			rm -rf "$root_path/bak_$DATE/$BACKUP_DIR_HASH"
+			echo ""
 		else
 			echo "fopus: exiting"
 			exit 0
@@ -456,14 +460,15 @@ fopus_dir()
 
 
 	# show backup details
-	echo ""
-	echo "Source $TARGET_DIR"
-	echo ""
 	echo "Date $DATE"
+	echo "Source $TARGET_DIR"
 	echo "Backup path $root_path/bak_$DATE/$BACKUP_DIR_HASH"
-	echo "GPG key to sign with $GPG_KEY_ID"
+	if [[ -n "$GPG_KEY_ID" ]]; then
+		echo "GPG key to sign with $GPG_KEY_ID"
+	else
+		echo "No GPG key to sign with: gpg will use the first key found in the secret keyring"
+	fi
 	du -sh "$TARGET_DIR"
-	echo "========== ========== ========== ========== =========="
 
 	echo ""
 	echo "Start directory"
