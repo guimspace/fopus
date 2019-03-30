@@ -584,26 +584,26 @@ elif [[ -z "$user_input" ]]; then
 fi
 
 case "$user_input" in
-	"--install")
+	--install)
 		install_fopus ;;
 
-	"--uninstall")
+	--uninstall)
 		uninstall_fopus ;;
 
-	"--update")
+	--update)
 		update_fopus "${@:2}" ;;
 
-	"--config")
+	--config)
 		config_fopus "${@:2}" ;;
 
-	"--help")
+	--help)
 		show_help ;;
 
-	"--version")
+	--version)
 		show_version ;;
 
-	--)
-		fopus_main "${@:3}" ;;
+	--dir|--)
+		fopus_main "${@:2}" ;;
 
 	--*)
 		>&2 echo "fopus: invalid option"
