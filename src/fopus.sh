@@ -462,7 +462,7 @@ fopus_dir()
 	# show backup details
 	echo "Date $DATE"
 	echo "Source $TARGET_DIR"
-	echo "Backup path $root_path/bak_$DATE/$BACKUP_DIR_HASH"
+	echo "Backup $root_path/bak_$DATE/$BACKUP_DIR_HASH"
 	if [[ -n "$GPG_KEY_ID" ]]; then
 		echo "GPG key to sign with $GPG_KEY_ID"
 	else
@@ -471,28 +471,22 @@ fopus_dir()
 	du -sh "$TARGET_DIR"
 
 	echo ""
-	echo "Start directory"
+	echo "fopus: start backup file"
 	mkdir -p "$root_path/bak_$DATE/$BACKUP_DIR_HASH" || exit 1
 	cd "$root_path/bak_$DATE/$BACKUP_DIR_HASH" || exit 1
-	echo "Done."
 
 
 	# compress
-	echo ""
-	echo "Compression"
+	echo "fopus: compression"
 	tar -I "${fopus_config[compress-algo]}" -cvpf "$FILE_NAME" -- "$TARGET_DIR" > "list-dir_$BACKUP_DIR"
-	echo "Done."
 
 	# test compression
-	echo ""
-	echo "Test compression"
+	echo "fopus: test compression"
 	xz -tv -- "$FILE_NAME"
 	if [[ "$?" -ne 0 ]]; then exit 1; fi
-	echo "Done."
 
 	# encrypt
-	echo ""
-	echo "Encrypt"
+	echo "fopus: encrypt"
 	if [[ -z "$GPG_KEY_ID" ]]; then
 		gpg -o "$FILE_NAME.enc" -s \
 			-c -z 0 "$FILE_NAME"
@@ -500,31 +494,28 @@ fopus_dir()
 		gpg -o "$FILE_NAME.enc" -u "$GPG_KEY_ID" -s \
 			-c -z 0 "$FILE_NAME"
 	fi
-	echo "Done."
 
 	# split
-	echo ""
-	echo "Split"
+	echo "fopus: split"
 	split_size=${fopus_config[min-size]}
 	file_size=$(stat -c %s "$FILE_NAME.enc")
 	if [[ "$file_size" -gt "$split_size" ]]; then
-	  echo ""
-	  split --verbose -b "$split_size" "$FILE_NAME.enc" "$FILE_NAME.enc_"
+		split --verbose -b "$split_size" "$FILE_NAME.enc" "$FILE_NAME.enc_"
+	else
+		echo "Not necessary."
 	fi
-	echo "Done."
 
 	# hash
-	echo ""
-	echo "Hash and file permission"
+	echo "fopus: hashes"
 	cd ..
 	find "$BACKUP_DIR_HASH/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS
 	find "$BACKUP_DIR_HASH/" -type f -exec md5sum {} \; >> MD5SUMS
 
 	# file permission
+	echo "fopus: file permission"
 	chmod 700 "$BACKUP_DIR_HASH/"
 	find "$BACKUP_DIR_HASH/" -type f -exec chmod 0600 {} \;
 	find "$BACKUP_DIR_HASH/" -type d -exec chmod 0700 {} \;
-	echo "Done."
 
 	exit 0
 }
