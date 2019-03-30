@@ -487,13 +487,12 @@ fopus_dir()
 
 	# encrypt
 	echo "fopus: encrypt"
-	if [[ -z "$GPG_KEY_ID" ]]; then
-		if ! gpg -o "$FILE_NAME.enc" -s \
-			-c -z 0 "$FILE_NAME"; then exit 1; fi
-	else
-		if ! gpg -o "$FILE_NAME.enc" -u "$GPG_KEY_ID" -s \
-			-c -z 0 "$FILE_NAME"; then exit 1; fi
+	gpg_command=( gpg -o "$FILE_NAME.enc" )
+	if [[ -n "$GPG_KEY_ID" ]]; then
+		gpg_command+=( -u "$GPG_KEY_ID" )
 	fi
+	gpg_command+=( -s -c -z 0 "$FILE_NAME" )
+	if ! "${gpg_command[@]}"; then exit 1; fi
 
 	# split
 	echo "fopus: split"
