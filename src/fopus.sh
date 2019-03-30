@@ -374,64 +374,116 @@ config_fopus()
 	exit 0
 }
 
-fopus_dir()
+fopus_main()
 {
 	read_conf
 
-	TARGET_DIR="$1"
+	user_answer=""
+
+	fopus_input=("$@")
+	declare -a clean_list
+
+	origins="$(pwd -P)"
+	root_path="${fopus_config[root-path]}"
 	GPG_KEY_ID="${fopus_config[default-key]}"
 
-	user_answer=""
 
 	if [[ "$UID" -eq 0 ]]; then
 		echo -n "fopus: user is root. Continue? [y/N]: "
 		read -r user_answer
 		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
 			echo "fopus: exiting"
-			exit 0
+			exit 1
 		fi
-	fi
-
-
-	if [[ -z "$TARGET_DIR" ]]; then
-		>&2 echo "fopus: missing operand"
-		exit 1
-	elif [[ "$TARGET_DIR" == "$HOME" || "$TARGET_DIR" == "$HOME/" ]]; then
-		>&2 echo "fopus: missing operand"
-		exit 1
-	elif [[ ! -d "$TARGET_DIR" ]]; then
-		>&2 echo "fopus: invalid operand"
+	elif [[ ${#fopus_input[@]} -eq 0 ]]; then
+		>&2 echo "fopus: missing file operand"
+		echo "Try 'fopus --help' for more information."
 		exit 1
 	fi
 
-	cd "$TARGET_DIR" || exit 1
-	TARGET_DIR=$(pwd -P)
-	cd ..
+	filter_evaluate_files "${fopus_input[@]}"
+	N="${#clean_list[@]}"
 
-	if [[ ! "$TARGET_DIR" =~ ^"$HOME"* ]]; then
-		>&2 echo "fopus: invalid operand"
-		exit 1
-	fi
-
-	root_path="${fopus_config[root-path]}"
-	if [[ "$root_path" == "$HOME" || "$root_path" == "$HOME/" ]]; then
+	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
 		root_path="$HOME/Backups"
 	elif [[ ! -d "$root_path" ]]; then
-		>&2 echo "fopus: '$root_path' is not a directory"
+		>&2 echo "fopus: "$root_path": No such directory"
 		exit 1
-	elif [[ ! "$root_path" =~ ^"$HOME"* ]]; then
-		>&2 echo "fopus: permission denied"
+	elif [[ ! "$root_path" =~ ^"$HOME"/* ]]; then
+		>&2 echo "fopus: "$root_path": Permission denied"
 		exit 1
 	fi
+	root_path=${root_path%/}
+
+	i=1
+	while [[ $i -le $N ]]; do
+		echo ""
+		echo "fopus: "${clean_list[$i-1]}" ("$i"/"$N")"
+		fopus_backup_main "${clean_list[$i-1]}"
+
+		i=$[$i+1]
+	done
+
+	exit 0
+}
+
+filter_evaluate_files()
+{
+	local file=""
+	local list_files=("$@")
+
+
+	for i in ${!list_files[@]}; do
+		cd "$origins"
+		file="${list_files[$i]}"
+
+		if [[ ! -e "$file" ]]; then
+			>&2 echo "fopus: "$file": No such file or directory"
+			unset list_files[i]
+			continue
+		elif [[ "$file" =~ ^"$HOME"/?$ ]]; then
+			>&2 echo "fopus: "$file": Invalid file operand"
+			unset list_files[i]
+			continue
+		fi
+
+		if [[ -d "$file" ]]; then
+			cd "$file" || exit 1
+			file=$(pwd -P)
+			cd ..
+		else
+			file="$(cd "$(dirname "$file")" && pwd -P)/$(basename "$file")"
+		fi
+
+		if [[ ! "$file" =~ ^"$HOME"/* ]]; then
+			>&2 echo "fopus: "$file": Permission denied"
+			unset list_files[i]
+			continue
+		fi
+
+		echo "fopus: $(du -sh "$file")"
+		clean_list+=("$file")
+	done
+
+	return 0
+}
+
+fopus_backup_main()
+{
+	TARGET_DIR="$1"
+	perprefix="dir"
 
 	cd "$HOME" || exit 1
 
-	root_path=${root_path%/}
-	TARGET_DIR=${TARGET_DIR%/}
-
 	BACKUP_DIR=$(basename "$TARGET_DIR")
 	BACKUP_DIR=${BACKUP_DIR// /_}
-	FILE_NAME="dir_$BACKUP_DIR.tar.xz"
+
+	if [[ -d "$TARGET_DIR" ]]; then
+		perprefix="dir"
+	else
+		perprefix="file"
+	fi
+	FILE_NAME="$perprefix-$BACKUP_DIR.tar.xz"
 
 	dir_hash=$(echo "$TARGET_DIR" | "$sha1sum_tool")
 	BACKUP_DIR_HASH="$BACKUP_DIR-${dir_hash:0:7}"
@@ -445,22 +497,19 @@ fopus_dir()
 			echo -n "This is a backup! Really overwrite? [y/N]: "
 			read -r user_answer
 		else
-			echo "fopus: exiting"
-			exit 0
+			echo "fopus: aborting"
+			return 1
 		fi
 
 		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
 			rm -rf "$root_path/bak_$DATE/$BACKUP_DIR_HASH"
-			echo ""
 		else
-			echo "fopus: exiting"
-			exit 0
+			echo "fopus: aborting"
+			return 1
 		fi
 	fi
 
-
 	# show backup details
-	echo "Date $DATE"
 	echo "Source $TARGET_DIR"
 	echo "Backup $root_path/bak_$DATE/$BACKUP_DIR_HASH"
 	if [[ -n "$GPG_KEY_ID" ]]; then
@@ -470,7 +519,6 @@ fopus_dir()
 	fi
 	du -sh "$TARGET_DIR"
 
-	echo ""
 	echo "fopus: start backup file"
 	mkdir -p "$root_path/bak_$DATE/$BACKUP_DIR_HASH" || exit 1
 	cd "$root_path/bak_$DATE/$BACKUP_DIR_HASH" || exit 1
@@ -478,12 +526,12 @@ fopus_dir()
 
 	# compress
 	echo "fopus: compression"
-	tar -I "${fopus_config[compress-algo]}" -cvpf "$FILE_NAME" -- "$TARGET_DIR" > "list-dir_$BACKUP_DIR"
+	tar -I "${fopus_config[compress-algo]}" -cvpf "$FILE_NAME" -- "$TARGET_DIR" > "list_$perprefix-$BACKUP_DIR"
 
 	# test compression
 	echo "fopus: test compression"
 	xz -tv -- "$FILE_NAME"
-	if [[ "$?" -ne 0 ]]; then exit 1; fi
+	if [[ "$?" -ne 0 ]]; then return 1; fi
 
 	# encrypt
 	echo "fopus: encrypt"
@@ -492,7 +540,7 @@ fopus_dir()
 		gpg_command+=( -u "$GPG_KEY_ID" )
 	fi
 	gpg_command+=( -s -c -z 0 "$FILE_NAME" )
-	if ! "${gpg_command[@]}"; then exit 1; fi
+	if ! "${gpg_command[@]}"; then return 1; fi
 
 	# split
 	echo "fopus: split"
@@ -516,7 +564,7 @@ fopus_dir()
 	find "$BACKUP_DIR_HASH/" -type f -exec chmod 0600 {} \;
 	find "$BACKUP_DIR_HASH/" -type d -exec chmod 0700 {} \;
 
-	exit 0
+	return 0
 }
 
 
@@ -529,6 +577,10 @@ if [[ "$user_input" == "--install" || "$user_input" == "--uninstall" || \
 		>&2 echo "fopus: permission denied"
 		exit 1
 	fi
+elif [[ -z "$user_input" ]]; then
+	>&2 echo "fopus: missing file operand"
+	echo "Try 'fopus --help' for more information."
+	exit 1
 fi
 
 case "$user_input" in
@@ -541,9 +593,6 @@ case "$user_input" in
 	"--update")
 		update_fopus "${@:2}" ;;
 
-	"--dir")
-		fopus_dir "$2" ;;
-
 	"--config")
 		config_fopus "${@:2}" ;;
 
@@ -553,7 +602,16 @@ case "$user_input" in
 	"--version")
 		show_version ;;
 
+	--)
+		fopus_main "${@:3}" ;;
+
+	--*)
+		>&2 echo "fopus: invalid option"
+		echo "Try 'fopus --help' for more information."
+		exit 1 ;;
+
 	*)
-		echo "Try 'fopus --help' for more information." ;;
+		fopus_main "${@:1}" ;;
 esac
+
 exit 0
