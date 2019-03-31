@@ -362,6 +362,14 @@ config_fopus()
 
 			fopus_config[min-size]="$conf_value" ;;
 
+		destroy)
+			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
+				fopus_config[destroy]="$conf_value"
+			else
+				>&2 echo "fopus: config: invalid arg"
+				exit 1
+			fi ;;
+
 		*)
 			echo "Syntax: fopus --config [OPTION] [ARG]"
 			echo ""
@@ -371,6 +379,7 @@ config_fopus()
 			echo -e "  min-size SIZE\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
 			echo -e "  compress-algo n\tuse compress algorithm n; default is 1 which is xz; use 2 to use pxz"
 			echo -e "  root-path DIR\tput backups in \$HOME/DIR/; blank defaults to '\$HOME/Backups'"
+			echo -e "  destroy BOOL\tremove compressed archive after encryption"
 			echo -e "  github-username NAME\tGitHub username for authentication"
 			exit 0 ;;
 	esac
@@ -440,22 +449,31 @@ evaluate_options()
 
 	local i=0
 	local N=${#list_args[@]}
-	local tmp_value=""
+	local destroy_keep="false"
 
 	while [[ $i -lt $N && "${list_args[$i]}" != "--" ]]; do
-		case "${list_args["$i"]}" in
+		case "${list_args[$i]}" in
 			--destroy)
-				fopus_config[destroy]="true" ;;
+				if [[ "$destroy_keep" == "false" ]]; then
+					fopus_config[destroy]="true"
+					destroy_keep="true"
+				fi ;;
+
+			--keep)
+				if [[ "$destroy_keep" == "false" ]]; then
+					fopus_config[destroy]="false"
+					destroy_keep="true"
+				fi ;;
 
 			--min-size)
 				i=$[$i+1]
-				if [[ "${list_args[$i]}" =~ ^[0-9]+$ ]]; then
-					tmp_value="${list_args[$i]}"
+				if [[ "${list_args[$i]}" == "-1" || \
+						"${list_args[$i]}" =~ ^[0-9]+$ ]]; then
+					fopus_config[min-size]="${list_args[$i]}"
 				else
 					>&2 echo "fopus: min-size: invalid size"
 					exit 1
-				fi
-				fopus_config[min-size]="$tmp_value" ;;
+				fi ;;
 
 			*)
 				>&2 echo "fopus: "${list_args["$i"]}": invalid option"
@@ -591,7 +609,8 @@ fopus_backup_main()
 	echo "fopus: split"
 	split_size=${fopus_config[min-size]}
 	file_size=$(stat -c %s "$FILE_NAME.enc")
-	if [[ "$file_size" -gt "$split_size" ]]; then
+	if [[ "${fopus_config[min-size]}" == "-1" || \
+			"$file_size" -gt "$split_size" ]]; then
 		split --verbose -b "$split_size" "$FILE_NAME.enc" "$FILE_NAME.enc_"
 	else
 		echo "Not necessary."
