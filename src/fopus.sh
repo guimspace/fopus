@@ -489,7 +489,7 @@ filter_evaluate_files()
 	local i=""
 
 
-	for i in ${!list_files[@]}; do
+	for i in "${!list_files[@]}"; do
 		cd "$origins"
 		file="${list_files[$i]}"
 
