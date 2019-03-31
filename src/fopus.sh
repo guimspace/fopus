@@ -620,8 +620,8 @@ fopus_backup_main()
 	# file permission
 	echo "fopus: file permission"
 	chmod 700 "$BACKUP_DIR_HASH/"
-	find "$BACKUP_DIR_HASH/" -type f -exec chmod 0600 {} \;
-	find "$BACKUP_DIR_HASH/" -type d -exec chmod 0700 {} \;
+	find "$BACKUP_DIR_HASH/" -type f -exec chmod 600 {} \;
+	find "$BACKUP_DIR_HASH/" -type d -exec chmod 700 {} \;
 
 	return 0
 }
