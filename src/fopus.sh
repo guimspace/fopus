@@ -148,47 +148,37 @@ show_help()
 
 install_fopus()
 {
-	error_=0
-
 	if [[ ! -d "/usr/local/bin/" ]]; then
 		>&2 echo "fopus: /usr/local/bin/ not found."
 		exit 1
 	fi
 
 	cli="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
-	cp "$cli" "/usr/local/bin/fopus"
-	if [[ "$?" != 0 ]]; then exit 1; fi
 
-	chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus"
-	if [[ "$?" != 0 ]]; then error_=1; fi
-
-	chmod 0755 "/usr/local/bin/fopus"
-	if [[ "$?" != 0 ]]; then error_=1; fi
-
-	if [[ "$error_" == 0 ]]; then
-		init_conf
-		echo "Done."
-		exit 0
-	else
-		>&2 echo "fopus: install failed."
+	if ! cp "$cli" "/usr/local/bin/fopus"; then
 		exit 1
 	fi
+
+	if ! chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus"; then
+		exit 1
+	fi
+
+	if ! chmod a+rx "/usr/local/bin/fopus"; then
+		exit 1
+	fi
+
+	echo "fopus is installed."
+	exit 0
 }
 
 uninstall_fopus()
 {
-	error_=0
-
-	rm -f "/usr/local/bin/fopus"
-	if [[ "$?" != 0 ]]; then error_=1; fi
-
-	if [[ "$error_" == 0 ]]; then
-		echo "Done."
-		exit 0
-	else
-		>&2 echo "fopus: uninstall failed."
+	if ! rm -f "/usr/local/bin/fopus"; then
 		exit 1
 	fi
+
+	echo "fopus is uninstalled."
+	exit 0
 }
 
 update_fopus()
@@ -264,20 +254,24 @@ init_conf()
 	if [[ ! -d "$FOPUS_CONF_DIR" ]]; then
 		mkdir -p "$FOPUS_CONF_DIR"
 
-		chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$FOPUS_CONF_DIR"
-		if [[ "$?" != 0 ]]; then exit 1; fi
+		if ! chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$FOPUS_CONF_DIR"; then
+			exit 1
+		fi
 
-		chmod 0700 "$FOPUS_CONF_DIR"
-		if [[ "$?" != 0 ]]; then exit 1; fi
+		if ! chmod 700 "$FOPUS_CONF_DIR"; then
+			exit 1
+		fi
 	fi
 
 	echo "min-size 1073741824" > "$FOPUS_CONF_PATH"
 
-	chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$FOPUS_CONF_PATH"
-	if [[ "$?" != 0 ]]; then exit 1; fi
+	if ! chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$FOPUS_CONF_PATH"; then
+		exit 1
+	fi
 
-	chmod 0600 "$FOPUS_CONF_PATH"
-	if [[ "$?" != 0 ]]; then exit 1; fi
+	if ! chmod 600 "$FOPUS_CONF_PATH"; then
+		exit 1
+	fi
 }
 
 read_conf()
@@ -589,8 +583,9 @@ fopus_backup_main()
 
 	# test compression
 	echo "fopus: test compression"
-	xz -tv -- "$FILE_NAME"
-	if [[ "$?" -ne 0 ]]; then return 1; fi
+	if ! xz -tv -- "$FILE_NAME"; then
+		return 1;
+	fi
 
 	# encrypt
 	echo "fopus: encrypt"
