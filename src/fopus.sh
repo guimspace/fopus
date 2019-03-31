@@ -465,15 +465,8 @@ evaluate_options()
 					destroy_keep="true"
 				fi ;;
 
-			--min-size)
-				i=$[$i+1]
-				if [[ "${list_args[$i]}" == "-1" || \
-						"${list_args[$i]}" =~ ^[0-9]+$ ]]; then
-					fopus_config[min-size]="${list_args[$i]}"
-				else
-					>&2 echo "fopus: min-size: invalid size"
-					exit 1
-				fi ;;
+			--no-split)
+				fopus_config[min-size]="-1" ;;
 
 			*)
 				>&2 echo "fopus: "${list_args["$i"]}": invalid option"
