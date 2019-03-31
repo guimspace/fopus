@@ -30,6 +30,7 @@ fopus_config=(
 	[github-username]=""
 	[root-path]="$HOME/Backups/"
 	[compress-algo]="xz"
+	[destroy]="false"
 )
 
 
@@ -439,9 +440,23 @@ evaluate_options()
 
 	local i=0
 	local N=${#list_args[@]}
+	local tmp_value=""
 
 	while [[ $i -lt $N && "${list_args[$i]}" != "--" ]]; do
 		case "${list_args["$i"]}" in
+			--destroy)
+				fopus_config[destroy]="true" ;;
+
+			--min-size)
+				i=$[$i+1]
+				if [[ "${list_args[$i]}" =~ ^[0-9]+$ ]]; then
+					tmp_value="${list_args[$i]}"
+				else
+					>&2 echo "fopus: min-size: invalid size"
+					exit 1
+				fi
+				fopus_config[min-size]="$tmp_value" ;;
+
 			*)
 				>&2 echo "fopus: "${list_args["$i"]}": invalid option"
 				exit 1 ;;
@@ -567,6 +582,10 @@ fopus_backup_main()
 	fi
 	gpg_command+=( -s -c -z 0 "$FILE_NAME" )
 	if ! "${gpg_command[@]}"; then return 1; fi
+	if [[ "${fopus_config[default-key]}" == "true" ]]; then
+		rm -f "$FILE_NAME"
+		echo "fopus: removed $FILE_NAME"
+	fi
 
 	# split
 	echo "fopus: split"
