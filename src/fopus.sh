@@ -288,6 +288,10 @@ read_conf()
 	while read -r var value; do
 		if [[ -n "$var" && -n "$value" ]]; then
 			fopus_config["$var"]="$value"
+		elif [[ -z "$value" ]]; then
+			case "$var" in
+
+			esac
 		fi
 	done < "$FOPUS_CONF_PATH"
 }
