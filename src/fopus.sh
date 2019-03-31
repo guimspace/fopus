@@ -468,9 +468,16 @@ evaluate_options()
 			--no-split)
 				fopus_config[min-size]="-1" ;;
 
-			*)
+			--)
+				break ;;
+
+			--*)
 				>&2 echo "fopus: "${list_args["$i"]}": invalid option"
 				exit 1 ;;
+
+			*)
+				i=$[$i-1]
+				break ;;
 		esac
 		i=$[$i+1]
 	done
