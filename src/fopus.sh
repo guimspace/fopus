@@ -490,7 +490,7 @@ filter_evaluate_files()
 
 
 	for i in "${!list_files[@]}"; do
-		cd "$origins"
+		cd "$origins" || exit 1
 		file="${list_files[$i]}"
 
 		if [[ ! -e "$file" ]]; then
