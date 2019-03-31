@@ -381,7 +381,8 @@ fopus_main()
 	user_answer=""
 
 	fopus_input=("$@")
-	declare -a clean_list
+	declare -a list_files
+	declare -a list_clean
 
 	origins="$(pwd -P)"
 	root_path="${fopus_config[root-path]}"
@@ -401,8 +402,8 @@ fopus_main()
 		exit 1
 	fi
 
-	filter_evaluate_files "${fopus_input[@]}"
-	N="${#clean_list[@]}"
+	evaluate_options "${fopus_input[@]}"
+	filter_evaluate_files
 
 	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
 		root_path="$HOME/Backups"
@@ -416,10 +417,11 @@ fopus_main()
 	root_path=${root_path%/}
 
 	i=1
+	N="${#list_clean[@]}"
 	while [[ $i -le $N ]]; do
 		echo ""
-		echo "fopus: "${clean_list[$i-1]}" ("$i"/"$N")"
-		fopus_backup_main "${clean_list[$i-1]}"
+		echo "fopus: "${list_clean[$i-1]}" ("$i"/"$N")"
+		fopus_backup_main "${list_clean[$i-1]}"
 
 		i=$[$i+1]
 	done
@@ -427,10 +429,33 @@ fopus_main()
 	exit 0
 }
 
+evaluate_options()
+{
+	local list_args=("$@")
+
+	local i=0
+	local N=${#list_args[@]}
+
+	while [[ $i -lt $N && "${list_args[$i]}" != "--" ]]; do
+		case "${list_args["$i"]}" in
+			*)
+				>&2 echo "fopus: "${list_args["$i"]}": invalid option"
+				exit 1 ;;
+		esac
+		i=$[$i+1]
+	done
+
+	i=$[$i+1]
+	while [[ $i -lt $N ]]; do
+		list_files+=( "${list_args["$i"]}" )
+		i=$[$i+1]
+	done
+}
+
 filter_evaluate_files()
 {
 	local file=""
-	local list_files=("$@")
+	local i=""
 
 
 	for i in ${!list_files[@]}; do
@@ -439,11 +464,9 @@ filter_evaluate_files()
 
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: "$file": No such file or directory"
-			unset list_files[i]
 			continue
 		elif [[ "$file" =~ ^"$HOME"/?$ ]]; then
 			>&2 echo "fopus: "$file": Invalid file operand"
-			unset list_files[i]
 			continue
 		fi
 
@@ -457,12 +480,11 @@ filter_evaluate_files()
 
 		if [[ ! "$file" =~ ^"$HOME"/* ]]; then
 			>&2 echo "fopus: "$file": Permission denied"
-			unset list_files[i]
 			continue
 		fi
 
 		echo "fopus: $(du -sh "$file")"
-		clean_list+=("$file")
+		list_clean+=("$file")
 	done
 
 	return 0
