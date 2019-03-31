@@ -1,6 +1,6 @@
 # fopus
 
-[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/guimspace/fopus/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/guimspace/fopus/blob/master/LICENSE) [![Version](https://img.shields.io/github/release-pre/guimspace/fopus.svg)](https://github.com/guimspace/fopus/releases)
 
 
 ## Overview
@@ -31,19 +31,19 @@ $ fopus --dir Photos/
 **Result:**
 
 The directory `/home/username/Backups/bak_yyyy-mm-dd/` and:
- - `Photos-0989ee4/` where `0989ee4` is the first seven digits of SHA1 of `/home/username/Images/Photos/`
+ - `Photos-6910302/` where `6910302` is the first seven digits of SHA1 of `/home/username/Images/Photos`
    - `dir_Photos.tar.xz` the compressed archive
    - `dir_Photos.tar.xz.enc` the encrypted archive
    - `dir_Photos.tar.xz.enc_aa`, `dir_Photos.tar.xz.enc_ab`, ... the pieces of the encrypted archive
    - `list-dir_Photos` a list of files processed in compression
- - `MD5SUMS` and `SHA1SUMS` hashes of files in `Photos-0989ee4/` to ensure that the data has not changed due to accidental corruption.
+ - `MD5SUMS` and `SHA1SUMS` hashes of files in `Photos-6910302/` to ensure that the data has not changed due to accidental corruption.
 
 The directory `bak_yyyy-mm-dd` have file permission set to `0700`. Regular files in `bak_yyyy-mm-dd/` have file permission set to `0600`; for directories, `0700`.
 
 
 ## Requirements
 
-`gpg`, `curl`, `tar`, `xz` or `pxz`, `md5sum`, `shasum`
+`gpg`, `curl`, `tar`, `xz` or `pxz`, `split`, `md5sum`, `shasum`
 
 
 ## Install
@@ -51,25 +51,25 @@ The directory `bak_yyyy-mm-dd` have file permission set to `0700`. Regular files
 1. Download `fopus`:
 
 ```
-curl https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -o fopus.sh
+$ curl https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -o fopus.sh
 ```
 
 If you do not have `curl`, you can alternatively use a recent `wget`:
 
 ```
-wget https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -O fopus.sh
+$ wget https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -O fopus.sh
 ```
 
 2. Make the installer executable and then execute it:
 
 ```
-chmod u+x fopus.sh
-sudo ./fopus.sh --install
+$ chmod u+x fopus.sh
+$ sudo ./fopus.sh --install
 ```
 
-3. Set the default GPG key to sign with:
+Set the default GPG key to sign with:
 ```
-fopus --config default-key [GPG KEY ID]
+$ fopus --config default-key [GPG KEY ID]
 ```
 
 The following GPG key will be used to sign the files and commits:
