@@ -416,10 +416,10 @@ fopus_main()
 	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
 		root_path="$HOME/Backups"
 	elif [[ ! -d "$root_path" ]]; then
-		>&2 echo "fopus: "$root_path": No such directory"
+		>&2 echo "fopus: $root_path: No such directory"
 		exit 1
 	elif [[ ! "$root_path" =~ ^"$HOME"/* ]]; then
-		>&2 echo "fopus: "$root_path": Permission denied"
+		>&2 echo "fopus: $root_path: Permission denied"
 		exit 1
 	fi
 	root_path=${root_path%/}
@@ -428,7 +428,7 @@ fopus_main()
 	N="${#list_clean[@]}"
 	while [[ $i -le $N ]]; do
 		echo ""
-		echo "fopus: "${list_clean[$i-1]}" ("$i"/"$N")"
+		echo "fopus: ${list_clean[$i-1]} ($i/$N)"
 		fopus_backup_main "${list_clean[$i-1]}"
 
 		i=$[$i+1]
@@ -466,7 +466,7 @@ evaluate_options()
 				break ;;
 
 			--*)
-				>&2 echo "fopus: "${list_args["$i"]}": invalid option"
+				>&2 echo "fopus: ${list_args["$i"]}: invalid option"
 				exit 1 ;;
 
 			*)
@@ -494,10 +494,10 @@ filter_evaluate_files()
 		file="${list_files[$i]}"
 
 		if [[ ! -e "$file" ]]; then
-			>&2 echo "fopus: "$file": No such file or directory"
+			>&2 echo "fopus: $file: No such file or directory"
 			continue
 		elif [[ "$file" =~ ^"$HOME"/?$ ]]; then
-			>&2 echo "fopus: "$file": Invalid file operand"
+			>&2 echo "fopus: $file: Invalid file operand"
 			continue
 		fi
 
@@ -510,7 +510,7 @@ filter_evaluate_files()
 		fi
 
 		if [[ ! "$file" =~ ^"$HOME"/* ]]; then
-			>&2 echo "fopus: "$file": Permission denied"
+			>&2 echo "fopus: $file: Permission denied"
 			continue
 		fi
 
