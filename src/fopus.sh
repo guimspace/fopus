@@ -593,7 +593,7 @@ fopus_backup_main()
 	fi
 	gpg_command+=( -s -c -z 0 "$FILE_NAME" )
 	if ! "${gpg_command[@]}"; then return 1; fi
-	if [[ "${fopus_config[default-key]}" == "true" ]]; then
+	if [[ "${fopus_config[destroy]}" == "true" ]]; then
 		rm -f "$FILE_NAME"
 		echo "fopus: removed $FILE_NAME"
 	fi
