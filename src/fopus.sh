@@ -602,7 +602,7 @@ fopus_backup_main()
 	echo "fopus: split"
 	split_size=${fopus_config[min-size]}
 	file_size=$(stat -c %s "$FILE_NAME.enc")
-	if [[ "${fopus_config[min-size]}" == "-1" || \
+	if [[ "${fopus_config[min-size]}" != "-1" && \
 			"$file_size" -gt "$split_size" ]]; then
 		split --verbose -b "$split_size" "$FILE_NAME.enc" "$FILE_NAME.enc_"
 	else
