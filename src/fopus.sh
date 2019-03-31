@@ -662,10 +662,10 @@ case "$user_input" in
 	--dir|--)
 		fopus_main "${@:2}" ;;
 
-	--*)
-		>&2 echo "fopus: invalid option"
-		echo "Try 'fopus --help' for more information."
-		exit 1 ;;
+	# --*)
+	# 	>&2 echo "fopus: invalid option"
+	# 	echo "Try 'fopus --help' for more information."
+	# 	exit 1 ;;
 
 	*)
 		fopus_main "${@:1}" ;;
