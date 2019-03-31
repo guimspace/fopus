@@ -431,7 +431,7 @@ fopus_main()
 		echo "fopus: ${list_clean[$i-1]} ($i/$N)"
 		fopus_backup_main "${list_clean[$i-1]}"
 
-		i=$[$i+1]
+		i=$((i+1))
 	done
 
 	exit 0
@@ -470,16 +470,16 @@ evaluate_options()
 				exit 1 ;;
 
 			*)
-				i=$[$i-1]
+				i=$((i-1))
 				break ;;
 		esac
-		i=$[$i+1]
+		i=$((i+1))
 	done
 
-	i=$[$i+1]
+	i=$((i+1))
 	while [[ $i -lt $N ]]; do
 		list_files+=( "${list_args["$i"]}" )
-		i=$[$i+1]
+		i=$((i+1))
 	done
 }
 
