@@ -304,8 +304,30 @@ save_conf()
 		init_conf
 	fi
 
+	local check="false"
+	local list_options=( "default-key" "github-username" "compress-algo" \
+							"root-path" "min-size" "destroy" )
+
+	echo "# fopus" > "$FOPUS_CONF_PATH"
 	for var in ${!fopus_config[*]}; do
-		if [[ -n ${fopus_config[$var]} ]]; then
+		check="false"
+
+		for opt in ${!list_options[*]}; do
+			if [[ "$var" == "${list_options[$opt]}" ]]; then
+				check="true"
+				break
+			fi
+		done
+
+		if [[ "$check" == "false" ]]; then
+			>&2 echo "fopus: $var: invalid option"
+			continue
+		fi
+
+		if [[ "${fopus_config[$var]}" == "true" || \
+				"${fopus_config[$var]}" == "false" ]]; then
+			echo "$var" >> "$FOPUS_CONF_PATH"
+		elif [[ -n ${fopus_config[$var]} ]]; then
 			echo "$var ${fopus_config[$var]}" >> "$FOPUS_CONF_PATH"
 		fi
 	done
