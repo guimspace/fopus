@@ -285,6 +285,8 @@ read_conf()
 			fopus_config["$var"]="$value"
 		elif [[ -z "$value" ]]; then
 			case "$var" in
+				destroy)
+					fopus_config["$var"]="true"
 
 			esac
 		fi
