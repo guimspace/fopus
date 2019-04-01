@@ -128,6 +128,8 @@ show_help()
 	echo -e "  --destroy\t\t\tremove compressed archive after encryption"
 	echo -e "  --keep\t\t\tkeep compressed archive after encryption"
 	echo ""
+	echo "Note that the option 'destroy' does not securely delete the compressed archive."
+	echo ""
 	echo "To aces a file whose name starts with a '-', for example '-foo',"
 	echo "use one of these commands:"
 	echo "  fopus -- -foo"
