@@ -257,37 +257,32 @@ update_fopus()
 
 init_conf()
 {
+	if [[ "$UID" -eq 0 ]]; then
+		>&2 echo "fopus: user is root: Permission denied"
+		exit 1
+	fi
+
 	if [[ -f "$FOPUS_CONF_PATH" ]]; then
-		return
+		return 0
 	fi
 
 	if [[ ! -d "$FOPUS_CONF_DIR" ]]; then
-		mkdir -p "$FOPUS_CONF_DIR"
-
-		if ! chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$FOPUS_CONF_DIR"; then
-			exit 1
-		fi
-
-		if ! chmod 700 "$FOPUS_CONF_DIR"; then
+		if ! mkdir -p "$FOPUS_CONF_DIR"; then
 			exit 1
 		fi
 	fi
 
-	echo "min-size 1073741824" > "$FOPUS_CONF_PATH"
-
-	if ! chown "$SUDO_USER:$(id -gn "$SUDO_USER")" "$FOPUS_CONF_PATH"; then
+	if ! touch "$FOPUS_CONF_PATH"; then
 		exit 1
 	fi
 
-	if ! chmod 600 "$FOPUS_CONF_PATH"; then
-		exit 1
-	fi
+	return 0
 }
 
 read_conf()
 {
 	if [[ ! -f "$FOPUS_CONF_PATH" ]]; then
-		exit 1
+		init_conf
 	fi
 
 	while read -r var value; do
@@ -309,7 +304,6 @@ save_conf()
 		init_conf
 	fi
 
-	echo "" > "$FOPUS_CONF_PATH"
 	for var in ${!fopus_config[*]}; do
 		if [[ -n ${fopus_config[$var]} ]]; then
 			echo "$var ${fopus_config[$var]}" >> "$FOPUS_CONF_PATH"
