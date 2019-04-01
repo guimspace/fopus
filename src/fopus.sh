@@ -99,7 +99,7 @@ sha1sum_func() {
 
 show_version()
 {
-	echo "fopus $version"
+	echo "fopus v$version"
 	echo "Copyright (C) 2019 Guilherme Tadashi Maeoka"
 	echo "License GPLv3+: GNU GPL version 3 or later <https://www.gnu.org/licenses/>."
 	echo "This is free software: you are free to change and redistribute it."
@@ -109,21 +109,30 @@ show_version()
 
 show_help()
 {
-	echo "Usage: fopus [OPTION]... [DIRECTORY]"
-	echo "Archive, compress, encrypt and split a DIRECTORY."
+	echo "Usage: fopus [OPTION]... [FILE]..."
+	echo "Archive, compress, encrypt and split (aces) the FILE(s)."
 	echo ""
-	echo "Examples:"
-	echo "  fopus --dir /home/username/Documents/foo/"
-	echo "  fopus --dir foo/"
+	echo "Commands:"
 	echo ""
-	echo -e "  --dir DIR\t\t\tarchive, compress, encrypt and split"
-	echo -e "  --config\t\t\tset options"
-	echo -e "  --update\t\t\tupdate fopus"
-	echo -e "  --install\t\t\tinstall fopus"
-	echo -e "  --uninstall\t\t\tuninstall fopus"
-	echo -e "  --help\t\t\tdisplay this short help and exit"
-	echo -e "  --version\t\t\tdisplay the version number and exit"
+	echo -e "  --dir\t\tarchive, compress, encrypt and split"
+	echo -e "  --config\tset options"
+	echo -e "  --update\tupdate fopus"
+	echo -e "  --install\tinstall fopus"
+	echo -e "  --uninstall\tuninstall fopus"
+	echo -e "  --help\tdisplay this short help and exit"
+	echo -e "  --version\tdisplay the version number and exit"
 	echo ""
+	echo "Options:"
+	echo ""
+	echo -e "  --no-split\t\t\tskip split process"
+	echo -e "  --destroy\t\t\tremove compressed archive after encryption"
+	echo -e "  --keep\t\t\tkeep compressed archive after encryption"
+	echo ""
+	echo "To aces a file whose name starts with a '-', for example '-foo',"
+	echo "use one of these commands:"
+	echo "  fopus -- -foo"
+	echo ""
+	echo "  fopus ./-foo"
 	# echo "directory (--dir)"
 	# echo "  All files are saved in '\$HOME/fopus/bak_yyyy-mm-dd/DIR/'."
 	# echo "  The sequence of processes is archive & compress > encrypt > split > hash & file permission."
@@ -142,6 +151,7 @@ show_help()
 	# echo -e "\t\$ find \"DIR/\" -type f -exec sha1sum {} \; >> SHA1SUMS"
 	# echo -e "\t\$ find \"DIR/\" -type f -exec chmod 0600 {} \;"
 	# echo ""
+	echo ""
 	echo "Report bugs, comments and suggestions to <gui.mspace@gmail.com> (in English or Portuguese)."
 	echo "fopus repository: <https://github.com/guimspace/fopus>"
 }
@@ -372,11 +382,10 @@ config_fopus()
 			echo "Options:"
 			echo ""
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
-			echo -e "  min-size SIZE\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
-			echo -e "  compress-algo n\tuse compress algorithm n; default is 1 which is xz; use 2 to use pxz"
-			echo -e "  root-path DIR\tput backups in \$HOME/DIR/; blank defaults to '\$HOME/Backups'"
-			echo -e "  destroy BOOL\tremove compressed archive after encryption"
-			echo -e "  github-username NAME\tGitHub username for authentication"
+			echo -e "  min-size SIZE\t\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
+			echo -e "  compress-algo n\t\tuse compress algorithm n; default is 1 which is xz; use 2 to use pxz"
+			echo -e "  root-path DIR\t\tput backups in DIR; blank defaults to '\$HOME/Backups'"
+			echo -e "  destroy BOOL\t\tremove compressed archive after encryption"
 			exit 0 ;;
 	esac
 
@@ -469,6 +478,7 @@ evaluate_options()
 
 			--*)
 				>&2 echo "fopus: ${list_args["$i"]}: invalid option"
+				echo "Try 'fopus --help' for more information."
 				exit 1 ;;
 
 			*)
