@@ -545,10 +545,6 @@ fopus_backup_main()
 
 	local perprefix=""
 	local hash_value=""
-	local size_value=""
-	local max_size_value=""
-
-	local gpg_tool=""
 
 	backup_name=$(basename "$TARGET_FILE")
 	backup_name=${backup_name// /_}
@@ -566,25 +562,9 @@ fopus_backup_main()
 
 	cd "$HOME" || exit 1
 
-	user_answer=""
-	if [[ -e "$root_path/bak_$DATE/$backup_name_hash" ]]; then
-		echo -n "Backup 'bak_$DATE/$backup_name_hash' exists. Overwrite? [y/N]: "
-		read -r user_answer
-
-		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-			echo -n "This is a backup! Really overwrite? [y/N]: "
-			read -r user_answer
-		else
-			echo "fopus: aborting"
-			return 1
-		fi
-
-		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-			rm -rf "$root_path/bak_$DATE/$backup_name_hash"
-		else
-			echo "fopus: aborting"
-			return 1
-		fi
+	# test overwrite
+	if ! fopus_overwrite_part; then
+		return
 	fi
 
 	# show backup details
@@ -614,39 +594,116 @@ fopus_backup_main()
 
 	# encrypt
 	echo "fopus: encrypt"
+	if ! fopus_encryption_part "$archive_name"; then
+		return 1
+	fi
+
+	# split
+	echo "fopus: split"
+	if ! fopus_split_part "$archive_name"; then
+		return 1
+	fi
+
+	# hash and file permission
+	cd ..
+	if ! fopus_hash_permission_part "$backup_name_hash"; then
+		return 1
+	fi
+
+	return 0
+}
+
+fopus_hash_permission_part()
+{
+	local backup_name_hash="$1"
+	local find_command=""
+
+	# hashes
+	echo "fopus: hashes"
+	(find "$backup_name_hash/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS)
+	(find "$backup_name_hash/" -type f -exec md5sum {} \; >> MD5SUMS)
+
+	# file permission
+	echo "fopus: file permission"
+	if ! chmod 700 "$backup_name_hash/"; then
+		return 1
+	fi
+	(find "$backup_name_hash/" -type f -exec chmod 600 {} \;)
+	(find "$backup_name_hash/" -type d -exec chmod 700 {} \;)
+
+	return 0
+}
+
+fopus_overwrite_part()
+{
+	local user_answer=""
+
+	if [[ -e "$root_path/bak_$DATE/$backup_name_hash" ]]; then
+		echo -n "Backup 'bak_$DATE/$backup_name_hash' exists. Overwrite? [y/N]: "
+		read -r user_answer
+
+		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
+			echo -n "This is a backup! Really overwrite? [y/N]: "
+			read -r user_answer
+		else
+			echo "fopus: aborting"
+			return 1
+		fi
+
+		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
+			rm -rf "$root_path/bak_$DATE/$backup_name_hash"
+		else
+			echo "fopus: aborting"
+			return 1
+		fi
+	fi
+
+	return 0
+}
+
+fopus_encryption_part()
+{
+	local gpg_tool=""
+	local archive_name="$1"
+
 	gpg_tool=( gpg -o "$archive_name.enc" )
+
 	if [[ -n "$gpg_key_id" ]]; then
 		gpg_tool+=( -u "$gpg_key_id" )
 	fi
+
 	gpg_tool+=( -s -c -z 0 "$archive_name" )
-	if ! "${gpg_tool[@]}"; then return 1; fi
+
+	if ! "${gpg_tool[@]}"; then
+		return 1
+	fi
+
 	if [[ "${fopus_config[destroy]}" == "true" ]]; then
 		rm -f "$archive_name"
 		echo "fopus: removed $archive_name"
 	fi
 
-	# split
-	echo "fopus: split"
+	return 0
+}
+
+fopus_split_part()
+{
+	local size_value=""
+	local max_size_value=""
+	local archive_name="$1"
+
 	max_size_value=${fopus_config[max-size]}
 	size_value=$(stat -c %s "$archive_name.enc")
+
 	if [[ "${fopus_config[max-size]}" != "-1" && \
 			"$size_value" -gt "$max_size_value" ]]; then
-		split --verbose -b "$max_size_value" "$archive_name.enc" "$archive_name.enc_"
+		if ! split --verbose -b "$max_size_value" \
+			"$archive_name.enc" "$archive_name.enc_"; then
+				return 1
+		fi
 	else
 		echo "Not necessary."
 	fi
-
-	# hash
-	echo "fopus: hashes"
-	cd ..
-	find "$backup_name_hash/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS
-	find "$backup_name_hash/" -type f -exec md5sum {} \; >> MD5SUMS
-
-	# file permission
-	echo "fopus: file permission"
-	chmod 700 "$backup_name_hash/"
-	find "$backup_name_hash/" -type f -exec chmod 600 {} \;
-	find "$backup_name_hash/" -type d -exec chmod 700 {} \;
 
 	return 0
 }
