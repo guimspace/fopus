@@ -25,7 +25,7 @@ version=0.3.2
 
 typeset -A fopus_config
 fopus_config=(
-    [min-size]="1073741824"
+    [max-size]="1073741824"
 	[default-key]=""
 	[github-username]=""
 	[root-path]="$HOME/Backups/"
@@ -308,7 +308,7 @@ save_conf()
 
 	local check="false"
 	local list_options=( "default-key" "github-username" "compress-algo" \
-							"root-path" "min-size" "destroy" )
+							"root-path" "max-size" "destroy" )
 
 	echo "# fopus" > "$FOPUS_CONF_PATH"
 	for var in ${!fopus_config[*]}; do
@@ -379,12 +379,12 @@ config_fopus()
 
 			fopus_config[root-path]="$conf_value" ;;
 
-		"min-size")
+		max-size)
 			if [[ "$conf_value" == "0" ]]; then
 				conf_value=""
 			fi
 
-			fopus_config[min-size]="$conf_value" ;;
+			fopus_config[max-size]="$conf_value" ;;
 
 		destroy)
 			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
@@ -400,7 +400,7 @@ config_fopus()
 			echo "Options:"
 			echo ""
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
-			echo -e "  min-size SIZE\t\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
+			echo -e "  max-size SIZE\t\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
 			echo -e "  compress-algo n\t\tuse compress algorithm n; default is 1 which is xz; use 2 to use pxz"
 			echo -e "  root-path DIR\t\tput backups in DIR; blank defaults to '\$HOME/Backups'"
 			echo -e "  destroy BOOL\t\tremove compressed archive after encryption"
@@ -489,7 +489,7 @@ evaluate_options()
 				fi ;;
 
 			--no-split)
-				fopus_config[min-size]="-1" ;;
+				fopus_config[max-size]="-1" ;;
 
 			--)
 				break ;;
@@ -632,9 +632,9 @@ fopus_backup_main()
 
 	# split
 	echo "fopus: split"
-	split_size=${fopus_config[min-size]}
+	split_size=${fopus_config[max-size]}
 	file_size=$(stat -c %s "$FILE_NAME.enc")
-	if [[ "${fopus_config[min-size]}" != "-1" && \
+	if [[ "${fopus_config[max-size]}" != "-1" && \
 			"$file_size" -gt "$split_size" ]]; then
 		split --verbose -b "$split_size" "$FILE_NAME.enc" "$FILE_NAME.enc_"
 	else
