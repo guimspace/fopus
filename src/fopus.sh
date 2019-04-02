@@ -27,7 +27,6 @@ typeset -A fopus_config
 fopus_config=(
     [max-size]="1073741824"
 	[default-key]=""
-	[github-username]=""
 	[root-path]="$HOME/Backups/"
 	[compress-algo]="xz"
 	[destroy]="false"
@@ -196,26 +195,11 @@ uninstall_fopus()
 update_fopus()
 {
 	read_conf
-	local github_username=""
 
 	fopus_path="/usr/local/bin/fopus"
 	if [[ ! -f "$fopus_path" ]]; then
 		>&2 echo "fopus: fopus is not installed"
 		exit 1
-	fi
-
-	if [[ "$1" == "-u" ]]; then
-		if [[ -z "$2" ]]; then
-			>&2 echo "fopus: update: missing GitHub username"
-			echo -n "fopus: update: drop authentication and continue? [Y/n]: "
-			read -r user_answer
-			if [[ "$user_answer" == "n" || "$user_answer" == "N" ]]; then
-				exit 1
-			fi
-		fi
-		github_username="$2"
-	else
-		github_username="${fopus_config[github-username]}"
 	fi
 
 	if ! mkdir -p "/tmp/fopus/"; then
@@ -226,12 +210,7 @@ update_fopus()
 		rm -f "/tmp/fopus/fopus"
 	fi
 
-	if [[ -n "$github_username" ]]; then
-		curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" \
-			-u "$github_username" "$remote_url"
-	else
-		curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" "$remote_url"
-	fi
+	curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" "$remote_url"
 
 	dl_file="/tmp/fopus/fopus"
 	if [[ ! -f "$dl_file" ]]; then
@@ -307,8 +286,8 @@ save_conf()
 	fi
 
 	local check="false"
-	local list_options=( "default-key" "github-username" "compress-algo" \
-							"root-path" "max-size" "destroy" )
+	local list_options=( "default-key" "compress-algo" "root-path" \
+							"max-size" "destroy" )
 
 	echo "# fopus" > "$FOPUS_CONF_PATH"
 	for var in ${!fopus_config[*]}; do
@@ -345,9 +324,6 @@ config_fopus()
 	case "$conf_option" in
 		"default-key")
 			fopus_config[default-key]="$conf_value" ;;
-
-		"github-username")
-			fopus_config[github-username]="$conf_value" ;;
 
 		"compress-algo")
 			if [[ -z "$conf_value" || "$conf_value" == "1" ]]; then
