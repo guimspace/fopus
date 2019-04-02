@@ -30,6 +30,7 @@ fopus_config=(
 	[root-path]="$HOME/Backups/"
 	[compress-algo]="xz"
 	[destroy]="false"
+	[group-by]="file"
 )
 
 DATE=$(date +%Y-%m-%d)
@@ -294,7 +295,7 @@ save_conf()
 	local var=""
 	local check="false"
 	local list_options=( "default-key" "compress-algo" "root-path" \
-							"max-size" "destroy" )
+							"max-size" "destroy", "group-by" )
 
 	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
@@ -361,6 +362,14 @@ config_fopus()
 			fi
 
 			fopus_config[root-path]="$conf_value" ;;
+
+		group-by)
+			if [[ "$conf_value" == "file" || "$conf_value" == "date" ]]; then
+				fopus_config[destroy]="$conf_value"
+			else
+				>&2 echo "fopus: config: invalid arg"
+				exit 1
+			fi ;;
 
 		max-size)
 			if [[ "$conf_value" == "0" ]]; then
@@ -457,6 +466,8 @@ evaluate_options()
 	local i=0
 	local N=${#list_args[@]}
 	local destroy_keep="false"
+	local file_date="false"
+	local tmp_value=""
 
 	while [[ $i -lt $N && "${list_args[$i]}" != "--" ]]; do
 		case "${list_args[$i]}" in
@@ -470,6 +481,22 @@ evaluate_options()
 				if [[ "$destroy_keep" == "false" ]]; then
 					fopus_config[destroy]="false"
 					destroy_keep="true"
+				fi ;;
+
+			--group-by)
+				i=$((i+1))
+				if [[ "${list_args[$i]}" == "date" ]]; then
+					tmp_value="date"
+				elif [[ "${list_args[$i]}" == "file" ]]; then
+					tmp_value="file"
+				else
+					>&2 echo "fopus: ${list_args["$i"]}: invalid argument"
+					exit 1
+				fi
+
+				if [[ "$file_date" == "false" ]]; then
+					fopus_config[group-by]="$tmp_value"
+					file_date="true"
 				fi ;;
 
 			--no-split)
@@ -542,6 +569,8 @@ fopus_backup_main()
 	local backup_name=""
 	local backup_name_hash=""
 	local archive_name=""
+	local bak_dir_parent=""
+	local bak_dir_child=""
 
 	local perprefix=""
 	local hash_value=""
@@ -559,17 +588,25 @@ fopus_backup_main()
 	hash_value=$(echo "$TARGET_FILE" | "$sha1sum_tool")
 	backup_name_hash="$backup_name-${hash_value:0:7}"
 
+	if [[ "$fopus_config[group-by]" == "file" ]]; then
+		bak_dir_parent="$backup_name_hash"
+		bak_dir_child="bak_$DATE"
+	else
+		bak_dir_parent="bak_$DATE"
+		bak_dir_child="$backup_name_hash"
+	fi
+
 
 	cd "$HOME" || exit 1
 
 	# test overwrite
-	if ! fopus_overwrite_part; then
+	if ! fopus_overwrite_part "$bak_dir_parent" "$bak_dir_child"; then
 		return
 	fi
 
 	# show backup details
 	echo "Source $TARGET_FILE"
-	echo "Backup $root_path/bak_$DATE/$backup_name_hash"
+	echo "Backup $root_path/$bak_dir_parent/$bak_dir_child"
 	if [[ -n "$gpg_key_id" ]]; then
 		echo "GPG key to sign with $gpg_key_id"
 	else
@@ -578,8 +615,8 @@ fopus_backup_main()
 	du -sh "$TARGET_FILE"
 
 	echo "fopus: start backup file"
-	mkdir -p "$root_path/bak_$DATE/$backup_name_hash" || exit 1
-	cd "$root_path/bak_$DATE/$backup_name_hash" || exit 1
+	mkdir -p "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
+	cd "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
 
 
 	# compress
@@ -606,7 +643,7 @@ fopus_backup_main()
 
 	# hash and file permission
 	cd ..
-	if ! fopus_hash_permission_part "$backup_name_hash"; then
+	if ! fopus_hash_permission_part "$bak_dir_child"; then
 		return 1
 	fi
 
@@ -615,31 +652,33 @@ fopus_backup_main()
 
 fopus_hash_permission_part()
 {
-	local backup_name_hash="$1"
+	local bak_dir_child="$1"
 	local find_command=""
 
 	# hashes
 	echo "fopus: hashes"
-	(find "$backup_name_hash/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS)
-	(find "$backup_name_hash/" -type f -exec md5sum {} \; >> MD5SUMS)
+	(find "$bak_dir_child/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS)
+	(find "$bak_dir_child/" -type f -exec md5sum {} \; >> MD5SUMS)
 
 	# file permission
 	echo "fopus: file permission"
-	if ! chmod 700 "$backup_name_hash/"; then
+	if ! chmod 700 "$bak_dir_child/"; then
 		return 1
 	fi
-	(find "$backup_name_hash/" -type f -exec chmod 600 {} \;)
-	(find "$backup_name_hash/" -type d -exec chmod 700 {} \;)
+	(find "$bak_dir_child/" -type f -exec chmod 600 {} \;)
+	(find "$bak_dir_child/" -type d -exec chmod 700 {} \;)
 
 	return 0
 }
 
 fopus_overwrite_part()
 {
+	local bak_dir_parent="$1"
+	local bak_dir_child="$2"
 	local user_answer=""
 
-	if [[ -e "$root_path/bak_$DATE/$backup_name_hash" ]]; then
-		echo -n "Backup 'bak_$DATE/$backup_name_hash' exists. Overwrite? [y/N]: "
+	if [[ -e "$root_path/$bak_dir_parent/$bak_dir_child" ]]; then
+		echo -n "Backup '$bak_dir_parent/$bak_dir_child' exists. Overwrite? [y/N]: "
 		read -r user_answer
 
 		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
@@ -651,7 +690,7 @@ fopus_overwrite_part()
 		fi
 
 		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-			rm -rf "$root_path/bak_$DATE/$backup_name_hash"
+			rm -rf "$root_path/$bak_dir_parent/$bak_dir_child"
 		else
 			echo "fopus: aborting"
 			return 1
