@@ -32,15 +32,16 @@ fopus_config=(
 	[destroy]="false"
 )
 
-
-remote_url="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
-FOPUS_CONF_PATH="$HOME/.config/fopus/fopus.conf"
-FOPUS_CONF_DIR="$HOME/.config/fopus"
 DATE=$(date +%Y-%m-%d)
+CONFIG_PATH_DIR="$HOME/.config/fopus"
+CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
+REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
+
 
 check_requirements()
 {
-	list_packages=(gpg curl tar xz md5sum shasum)
+	local list_packages=(gpg curl tar xz md5sum shasum)
+	local i=""
 
 	for i in ${!list_packages[*]}; do
 		if ! command -v "${list_packages[$i]}" &> /dev/null; then
@@ -159,14 +160,16 @@ show_help()
 
 install_fopus()
 {
+	local origin_path=""
+
 	if [[ ! -d "/usr/local/bin/" ]]; then
-		>&2 echo "fopus: /usr/local/bin/ not found."
+		>&2 echo "fopus: /usr/local/bin/ not found"
 		exit 1
 	fi
 
-	cli="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
+	origin_path="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
 
-	if ! cp "$cli" "/usr/local/bin/fopus"; then
+	if ! cp "$origin_path" "/usr/local/bin/fopus"; then
 		exit 1
 	fi
 
@@ -194,10 +197,10 @@ uninstall_fopus()
 
 update_fopus()
 {
-	read_conf
+	local local_hashsum=""
+	local remote_hashsum=""
 
-	fopus_path="/usr/local/bin/fopus"
-	if [[ ! -f "$fopus_path" ]]; then
+	if [[ ! -f "/usr/local/bin/fopus" ]]; then
 		>&2 echo "fopus: fopus is not installed"
 		exit 1
 	fi
@@ -210,17 +213,16 @@ update_fopus()
 		rm -f "/tmp/fopus/fopus"
 	fi
 
-	curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" "$remote_url"
+	curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" "$REMOTE_URL"
 
-	dl_file="/tmp/fopus/fopus"
-	if [[ ! -f "$dl_file" ]]; then
+	if [[ ! -f "/tmp/fopus/fopus" ]]; then
 		>&2 echo "fopus: update: download failed"
 		exit 1
 	fi
 
-	remote_hashsum=$($sha512sum_tool "$dl_file" | cut -d " " -f 1)
+	remote_hashsum=$($sha512sum_tool "/tmp/fopus/fopus" | cut -d " " -f 1)
 
-	local_hashsum=$($sha512sum_tool "$fopus_path" | cut -d " " -f 1)
+	local_hashsum=$($sha512sum_tool "/usr/local/bin/fopus" | cut -d " " -f 1)
 	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
 		echo "fopus is up-to-date"
 		exit 0
@@ -228,7 +230,7 @@ update_fopus()
 
 	echo "Updating..."
 
-	cp "$dl_file" "/usr/local/bin/fopus"
+	cp "/tmp/fopus/fopus" "/usr/local/bin/fopus"
 	chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus"
 	chmod 0755 "/usr/local/bin/fopus"
 
@@ -243,17 +245,17 @@ init_conf()
 		exit 1
 	fi
 
-	if [[ -f "$FOPUS_CONF_PATH" ]]; then
+	if [[ -f "$CONFIG_PATH_FILE" ]]; then
 		return 0
 	fi
 
-	if [[ ! -d "$FOPUS_CONF_DIR" ]]; then
-		if ! mkdir -p "$FOPUS_CONF_DIR"; then
+	if [[ ! -d "$CONFIG_PATH_DIR" ]]; then
+		if ! mkdir -p "$CONFIG_PATH_DIR"; then
 			exit 1
 		fi
 	fi
 
-	if ! touch "$FOPUS_CONF_PATH"; then
+	if ! touch "$CONFIG_PATH_FILE"; then
 		exit 1
 	fi
 
@@ -262,7 +264,10 @@ init_conf()
 
 read_conf()
 {
-	if [[ ! -f "$FOPUS_CONF_PATH" ]]; then
+	local var=""
+	local value=""
+
+	if [[ ! -f "$CONFIG_PATH_FILE" ]]; then
 		init_conf
 	fi
 
@@ -276,20 +281,22 @@ read_conf()
 
 			esac
 		fi
-	done < "$FOPUS_CONF_PATH"
+	done < "$CONFIG_PATH_FILE"
 }
 
 save_conf()
 {
-	if [[ ! -f "$FOPUS_CONF_PATH" ]]; then
+	if [[ ! -f "$CONFIG_PATH_FILE" ]]; then
 		init_conf
 	fi
 
+	local opt=""
+	local var=""
 	local check="false"
 	local list_options=( "default-key" "compress-algo" "root-path" \
 							"max-size" "destroy" )
 
-	echo "# fopus" > "$FOPUS_CONF_PATH"
+	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
 		check="false"
 
@@ -307,9 +314,9 @@ save_conf()
 
 		if [[ "${fopus_config[$var]}" == "true" || \
 				"${fopus_config[$var]}" == "false" ]]; then
-			echo "$var" >> "$FOPUS_CONF_PATH"
+			echo "$var" >> "$CONFIG_PATH_FILE"
 		elif [[ -n ${fopus_config[$var]} ]]; then
-			echo "$var ${fopus_config[$var]}" >> "$FOPUS_CONF_PATH"
+			echo "$var ${fopus_config[$var]}" >> "$CONFIG_PATH_FILE"
 		fi
 	done
 }
@@ -318,14 +325,14 @@ config_fopus()
 {
 	read_conf
 
-	conf_option="$1"
-	conf_value="$2"
+	local conf_option="$1"
+	local conf_value="$2"
 
 	case "$conf_option" in
-		"default-key")
+		default-key)
 			fopus_config[default-key]="$conf_value" ;;
 
-		"compress-algo")
+		compress-algo)
 			if [[ -z "$conf_value" || "$conf_value" == "1" ]]; then
 				conf_value="xz"
 			elif [[ "$conf_value" == "2" ]]; then
@@ -337,7 +344,7 @@ config_fopus()
 
 			fopus_config[compress-algo]="$conf_value" ;;
 
-		"root-path")
+		root-path)
 			if [[ "$conf_value" == "$HOME" || "$conf_value" == "$HOME/" ]]; then
 				conf_value=""
 			elif [[ ! -d "$conf_value" ]]; then
@@ -371,7 +378,7 @@ config_fopus()
 			fi ;;
 
 		*)
-			echo "Syntax: fopus --config [OPTION] [ARG]"
+			echo "Usage: fopus --config [OPTION] [ARG]"
 			echo ""
 			echo "Options:"
 			echo ""
@@ -390,18 +397,19 @@ config_fopus()
 fopus_main()
 {
 	read_conf
+	local list_args=("$@")
 
-	user_answer=""
-
-	fopus_input=("$@")
+	local i=""
+	local N=""
 	declare -a list_files
 	declare -a list_clean
 
-	origins="$(pwd -P)"
+	origins_path="$(pwd -P)"
 	root_path="${fopus_config[root-path]}"
-	GPG_KEY_ID="${fopus_config[default-key]}"
+	gpg_key_id="${fopus_config[default-key]}"
 
 
+	user_answer=""
 	if [[ "$UID" -eq 0 ]]; then
 		echo -n "fopus: user is root. Continue? [y/N]: "
 		read -r user_answer
@@ -409,13 +417,13 @@ fopus_main()
 			echo "fopus: exiting"
 			exit 1
 		fi
-	elif [[ ${#fopus_input[@]} -eq 0 ]]; then
+	elif [[ ${#list_args[@]} -eq 0 ]]; then
 		>&2 echo "fopus: missing file operand"
 		echo "Try 'fopus --help' for more information."
 		exit 1
 	fi
 
-	evaluate_options "${fopus_input[@]}"
+	evaluate_options "${list_args[@]}"
 	filter_evaluate_files
 
 	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
@@ -491,12 +499,12 @@ evaluate_options()
 
 filter_evaluate_files()
 {
-	local file=""
 	local i=""
+	local file=""
 
 
 	for i in "${!list_files[@]}"; do
-		cd "$origins" || exit 1
+		cd "$origins_path" || exit 1
 		file="${list_files[$i]}"
 
 		if [[ ! -e "$file" ]]; then
@@ -529,27 +537,38 @@ filter_evaluate_files()
 
 fopus_backup_main()
 {
-	TARGET_DIR="$1"
-	perprefix="dir"
+	local TARGET_FILE="$1"
 
-	cd "$HOME" || exit 1
+	local backup_name=""
+	local backup_name_hash=""
+	local archive_name=""
 
-	BACKUP_DIR=$(basename "$TARGET_DIR")
-	BACKUP_DIR=${BACKUP_DIR// /_}
+	local perprefix=""
+	local hash_value=""
+	local size_value=""
+	local max_size_value=""
 
-	if [[ -d "$TARGET_DIR" ]]; then
+	local gpg_tool=""
+
+	backup_name=$(basename "$TARGET_FILE")
+	backup_name=${backup_name// /_}
+
+	if [[ -d "$TARGET_FILE" ]]; then
 		perprefix="dir"
 	else
 		perprefix="file"
 	fi
-	FILE_NAME="$perprefix-$BACKUP_DIR.tar.xz"
 
-	dir_hash=$(echo "$TARGET_DIR" | "$sha1sum_tool")
-	BACKUP_DIR_HASH="$BACKUP_DIR-${dir_hash:0:7}"
+	archive_name="$perprefix-$backup_name.tar.xz"
+	hash_value=$(echo "$TARGET_FILE" | "$sha1sum_tool")
+	backup_name_hash="$backup_name-${hash_value:0:7}"
+
+
+	cd "$HOME" || exit 1
 
 	user_answer=""
-	if [[ -e "$root_path/bak_$DATE/$BACKUP_DIR_HASH" ]]; then
-		echo -n "Backup 'bak_$DATE/$BACKUP_DIR_HASH' exists. Overwrite? [y/N]: "
+	if [[ -e "$root_path/bak_$DATE/$backup_name_hash" ]]; then
+		echo -n "Backup 'bak_$DATE/$backup_name_hash' exists. Overwrite? [y/N]: "
 		read -r user_answer
 
 		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
@@ -561,7 +580,7 @@ fopus_backup_main()
 		fi
 
 		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-			rm -rf "$root_path/bak_$DATE/$BACKUP_DIR_HASH"
+			rm -rf "$root_path/bak_$DATE/$backup_name_hash"
 		else
 			echo "fopus: aborting"
 			return 1
@@ -569,50 +588,50 @@ fopus_backup_main()
 	fi
 
 	# show backup details
-	echo "Source $TARGET_DIR"
-	echo "Backup $root_path/bak_$DATE/$BACKUP_DIR_HASH"
-	if [[ -n "$GPG_KEY_ID" ]]; then
-		echo "GPG key to sign with $GPG_KEY_ID"
+	echo "Source $TARGET_FILE"
+	echo "Backup $root_path/bak_$DATE/$backup_name_hash"
+	if [[ -n "$gpg_key_id" ]]; then
+		echo "GPG key to sign with $gpg_key_id"
 	else
 		echo "No GPG key to sign with: gpg will use the first key found in the secret keyring"
 	fi
-	du -sh "$TARGET_DIR"
+	du -sh "$TARGET_FILE"
 
 	echo "fopus: start backup file"
-	mkdir -p "$root_path/bak_$DATE/$BACKUP_DIR_HASH" || exit 1
-	cd "$root_path/bak_$DATE/$BACKUP_DIR_HASH" || exit 1
+	mkdir -p "$root_path/bak_$DATE/$backup_name_hash" || exit 1
+	cd "$root_path/bak_$DATE/$backup_name_hash" || exit 1
 
 
 	# compress
 	echo "fopus: compression"
-	tar -I "${fopus_config[compress-algo]}" -cvpf "$FILE_NAME" -- "$TARGET_DIR" > "list_$perprefix-$BACKUP_DIR"
+	tar -I "${fopus_config[compress-algo]}" -cvpf "$archive_name" -- "$TARGET_FILE" > "list_$perprefix-$backup_name"
 
 	# test compression
 	echo "fopus: test compression"
-	if ! xz -tv -- "$FILE_NAME"; then
+	if ! xz -tv -- "$archive_name"; then
 		return 1;
 	fi
 
 	# encrypt
 	echo "fopus: encrypt"
-	gpg_command=( gpg -o "$FILE_NAME.enc" )
-	if [[ -n "$GPG_KEY_ID" ]]; then
-		gpg_command+=( -u "$GPG_KEY_ID" )
+	gpg_tool=( gpg -o "$archive_name.enc" )
+	if [[ -n "$gpg_key_id" ]]; then
+		gpg_tool+=( -u "$gpg_key_id" )
 	fi
-	gpg_command+=( -s -c -z 0 "$FILE_NAME" )
-	if ! "${gpg_command[@]}"; then return 1; fi
+	gpg_tool+=( -s -c -z 0 "$archive_name" )
+	if ! "${gpg_tool[@]}"; then return 1; fi
 	if [[ "${fopus_config[destroy]}" == "true" ]]; then
-		rm -f "$FILE_NAME"
-		echo "fopus: removed $FILE_NAME"
+		rm -f "$archive_name"
+		echo "fopus: removed $archive_name"
 	fi
 
 	# split
 	echo "fopus: split"
-	split_size=${fopus_config[max-size]}
-	file_size=$(stat -c %s "$FILE_NAME.enc")
+	max_size_value=${fopus_config[max-size]}
+	size_value=$(stat -c %s "$archive_name.enc")
 	if [[ "${fopus_config[max-size]}" != "-1" && \
-			"$file_size" -gt "$split_size" ]]; then
-		split --verbose -b "$split_size" "$FILE_NAME.enc" "$FILE_NAME.enc_"
+			"$size_value" -gt "$max_size_value" ]]; then
+		split --verbose -b "$max_size_value" "$archive_name.enc" "$archive_name.enc_"
 	else
 		echo "Not necessary."
 	fi
@@ -620,14 +639,14 @@ fopus_backup_main()
 	# hash
 	echo "fopus: hashes"
 	cd ..
-	find "$BACKUP_DIR_HASH/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS
-	find "$BACKUP_DIR_HASH/" -type f -exec md5sum {} \; >> MD5SUMS
+	find "$backup_name_hash/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS
+	find "$backup_name_hash/" -type f -exec md5sum {} \; >> MD5SUMS
 
 	# file permission
 	echo "fopus: file permission"
-	chmod 700 "$BACKUP_DIR_HASH/"
-	find "$BACKUP_DIR_HASH/" -type f -exec chmod 600 {} \;
-	find "$BACKUP_DIR_HASH/" -type d -exec chmod 700 {} \;
+	chmod 700 "$backup_name_hash/"
+	find "$backup_name_hash/" -type f -exec chmod 600 {} \;
+	find "$backup_name_hash/" -type d -exec chmod 700 {} \;
 
 	return 0
 }
@@ -635,20 +654,20 @@ fopus_backup_main()
 
 check_requirements
 
-user_input="$1"
-if [[ "$user_input" == "--install" || "$user_input" == "--uninstall" || \
-		"$user_input" == "--update" ]]; then
+user_option="$1"
+if [[ "$user_option" == "--install" || "$user_option" == "--uninstall" || \
+		"$user_option" == "--update" ]]; then
 	if [[ "$UID" != 0 ]]; then
 		>&2 echo "fopus: permission denied"
 		exit 1
 	fi
-elif [[ -z "$user_input" ]]; then
+elif [[ -z "$user_option" ]]; then
 	>&2 echo "fopus: missing file operand"
 	echo "Try 'fopus --help' for more information."
 	exit 1
 fi
 
-case "$user_input" in
+case "$user_option" in
 	--install)
 		install_fopus ;;
 
