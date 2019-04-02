@@ -345,7 +345,7 @@ config_fopus()
 			fopus_config[compress-algo]="$conf_value" ;;
 
 		root-path)
-			if [[ "$conf_value" == "$HOME" || "$conf_value" == "$HOME/" ]]; then
+			if [[ "$conf_value" =~ ^"$HOME"/?$ ]]; then
 				conf_value=""
 			elif [[ ! -d "$conf_value" ]]; then
 				>&2 echo "fopus: invalid operand"
