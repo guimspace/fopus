@@ -30,7 +30,8 @@ fopus_config=(
 	[root-path]="$HOME/Backups/"
 	[compress-algo]="xz"
 	[destroy]="false"
-	[group-by]="file"
+	[group-by]="date"
+	[compact]="false"
 )
 
 DATE=$(date +%Y-%m-%d)
@@ -446,15 +447,20 @@ fopus_main()
 	fi
 	root_path=${root_path%/}
 
-	i=1
-	N="${#list_clean[@]}"
-	while [[ $i -le $N ]]; do
+	if [[ "${fopus_config[compact]}" == "true" ]]; then
 		echo ""
-		echo "fopus: ${list_clean[$i-1]} ($i/$N)"
-		fopus_backup_main "${list_clean[$i-1]}"
+		fopus_backup_main "${list_clean[@]}"
+	else
+		i=1
+		N="${#list_clean[@]}"
+		while [[ $i -le $N ]]; do
+			echo ""
+			echo "fopus: ${list_clean[$i-1]} ($i/$N)"
+			fopus_backup_main "${list_clean[$i-1]}"
 
-		i=$((i+1))
-	done
+			i=$((i+1))
+		done
+	fi
 
 	exit 0
 }
@@ -499,6 +505,9 @@ evaluate_options()
 					file_date="true"
 				fi ;;
 
+			--compact)
+				fopus_config[compact]="true" ;;
+
 			--no-split)
 				fopus_config[max-size]="-1" ;;
 
@@ -528,6 +537,13 @@ filter_evaluate_files()
 {
 	local i=""
 	local file=""
+	local command_continue=""
+
+	if [[ "${fopus_config[compact]}" == "true" ]]; then
+		command_continue=( exit 1 )
+	else
+		command_continue=( continue )
+	fi
 
 
 	for i in "${!list_files[@]}"; do
@@ -536,10 +552,10 @@ filter_evaluate_files()
 
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: $file: No such file or directory"
-			continue
+			${command_continue[@]}
 		elif [[ "$file" =~ ^"$HOME"/?$ ]]; then
 			>&2 echo "fopus: $file: Invalid file operand"
-			continue
+			${command_continue[@]}
 		fi
 
 		if [[ -d "$file" ]]; then
@@ -552,7 +568,7 @@ filter_evaluate_files()
 
 		if [[ ! "$file" =~ ^"$HOME"/* ]]; then
 			>&2 echo "fopus: $file: Permission denied"
-			continue
+			${command_continue[@]}
 		fi
 
 		echo "fopus: $(du -sh "$file")"
@@ -565,6 +581,7 @@ filter_evaluate_files()
 fopus_backup_main()
 {
 	local TARGET_FILE="$1"
+	local LIST_FILES=("$@")
 
 	local backup_name=""
 	local backup_name_hash=""
@@ -572,6 +589,8 @@ fopus_backup_main()
 	local bak_dir_parent=""
 	local bak_dir_child=""
 
+	local i=""
+	local N=""
 	local perprefix=""
 	local hash_value=""
 
@@ -606,13 +625,21 @@ fopus_backup_main()
 
 	# show backup details
 	echo "Source $TARGET_FILE"
+	if [[ "${fopus_config[compact]}" == "true" ]]; then
+		i=1
+		N="${#LIST_FILES[@]}"
+		while [[ $i -lt $N ]]; do
+			echo "       ${LIST_FILES[$i]}"
+			i=$((i+1))
+		done
+	fi
 	echo "Backup $root_path/$bak_dir_parent/$bak_dir_child"
 	if [[ -n "$gpg_key_id" ]]; then
 		echo "GPG key to sign with $gpg_key_id"
 	else
 		echo "No GPG key to sign with: gpg will use the first key found in the secret keyring"
 	fi
-	du -sh "$TARGET_FILE"
+	du -sh "${LIST_FILES[@]}"
 
 	echo "fopus: start backup file"
 	mkdir -p "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
@@ -621,7 +648,7 @@ fopus_backup_main()
 
 	# compress
 	echo "fopus: compression"
-	tar -I "${fopus_config[compress-algo]}" -cvpf "$archive_name" -- "$TARGET_FILE" > "list_$perprefix-$backup_name"
+	tar -I "${fopus_config[compress-algo]}" -cvpf "$archive_name" -- "${LIST_FILES[@]}" > "list_$perprefix-$backup_name"
 
 	# test compression
 	echo "fopus: test compression"
