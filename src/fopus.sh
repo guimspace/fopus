@@ -296,7 +296,7 @@ save_conf()
 	local var=""
 	local check="false"
 	local list_options=( "default-key" "compress-algo" "root-path" \
-							"max-size" "destroy" "group-by" )
+							"max-size" "destroy" "group-by" "compact" )
 
 	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
@@ -381,6 +381,14 @@ config_fopus()
 		destroy)
 			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
 				fopus_config[destroy]="$conf_value"
+			else
+				>&2 echo "fopus: config: invalid arg"
+				exit 1
+			fi ;;
+
+		compact)
+			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
+				fopus_config[compact]="$conf_value"
 			else
 				>&2 echo "fopus: config: invalid arg"
 				exit 1
