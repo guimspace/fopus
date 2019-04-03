@@ -614,7 +614,7 @@ fopus_backup_main()
 	hash_value=$(echo "$TARGET_FILE" | "$sha1sum_tool")
 	backup_name_hash="$backup_name-${hash_value:0:7}"
 
-	if [[ "$fopus_config[group-by]" == "file" ]]; then
+	if [[ "${fopus_config[group-by]}" == "file" ]]; then
 		bak_dir_parent="$backup_name_hash"
 		bak_dir_child="bak_$DATE"
 	else
