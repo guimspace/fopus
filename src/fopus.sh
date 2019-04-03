@@ -29,7 +29,7 @@ fopus_config=(
 	[default-key]=""
 	[root-path]="$HOME/Backups/"
 	[compress-algo]="xz"
-	[destroy]="false"
+	[delete]="false"
 	[group-by]="date"
 	[compact]="false"
 )
@@ -127,10 +127,10 @@ show_help()
 	echo "Options:"
 	echo ""
 	echo -e "  --no-split\t\t\tskip split process"
-	echo -e "  --destroy\t\t\tremove compressed archive after encryption"
+	echo -e "  --delete\t\t\tdelete compressed archive after encryption"
 	echo -e "  --keep\t\t\tkeep compressed archive after encryption"
 	echo ""
-	echo "Note that the option 'destroy' does not securely delete the compressed archive."
+	echo "Note that the option 'delete' does not securely delete the compressed archive."
 	echo ""
 	echo "To aces a file whose name starts with a '-', for example '-foo',"
 	echo "use one of these commands:"
@@ -278,7 +278,7 @@ read_conf()
 			fopus_config["$var"]="$value"
 		elif [[ -z "$value" ]]; then
 			case "$var" in
-				destroy)
+				delete)
 					fopus_config["$var"]="true"
 
 			esac
@@ -296,7 +296,7 @@ save_conf()
 	local var=""
 	local check="false"
 	local list_options=( "default-key" "compress-algo" "root-path" \
-							"max-size" "destroy" "group-by" "compact" )
+							"max-size" "delete" "group-by" "compact" )
 
 	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
@@ -378,9 +378,9 @@ config_fopus()
 
 			fopus_config[max-size]="$conf_value" ;;
 
-		destroy)
+		delete)
 			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
-				fopus_config[destroy]="$conf_value"
+				fopus_config[delete]="$conf_value"
 			else
 				>&2 echo "fopus: config: invalid arg"
 				exit 1
@@ -403,7 +403,7 @@ config_fopus()
 			echo -e "  max-size SIZE\t\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
 			echo -e "  compress-algo n\tuse compress algorithm n; default is 1 which is xz; use 2 to use pxz"
 			echo -e "  root-path DIR\t\tput backups in DIR; blank defaults to '\$HOME/Backups'"
-			echo -e "  destroy BOOL\t\tremove compressed archive after encryption"
+			echo -e "  delete BOOL\t\tremove compressed archive after encryption"
 			exit 0 ;;
 	esac
 
@@ -478,22 +478,22 @@ evaluate_options()
 
 	local i=0
 	local N=${#list_args[@]}
-	local destroy_keep="false"
+	local delete_keep="false"
 	local file_date="false"
 	local tmp_value=""
 
 	while [[ $i -lt $N && "${list_args[$i]}" != "--" ]]; do
 		case "${list_args[$i]}" in
-			--destroy)
-				if [[ "$destroy_keep" == "false" ]]; then
-					fopus_config[destroy]="true"
-					destroy_keep="true"
+			--delete)
+				if [[ "$delete_keep" == "false" ]]; then
+					fopus_config[delete]="true"
+					delete_keep="true"
 				fi ;;
 
 			--keep)
-				if [[ "$destroy_keep" == "false" ]]; then
-					fopus_config[destroy]="false"
-					destroy_keep="true"
+				if [[ "$delete_keep" == "false" ]]; then
+					fopus_config[delete]="false"
+					delete_keep="true"
 				fi ;;
 
 			--group-by)
@@ -751,7 +751,7 @@ fopus_encryption_part()
 		return 1
 	fi
 
-	if [[ "${fopus_config[destroy]}" == "true" ]]; then
+	if [[ "${fopus_config[delete]}" == "true" ]]; then
 		rm -f "$archive_name"
 		echo "fopus: removed $archive_name"
 	fi
