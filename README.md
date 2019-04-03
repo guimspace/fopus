@@ -68,11 +68,6 @@ $ chmod u+x fopus.sh
 $ sudo ./fopus.sh --install
 ```
 
-Set the default GPG key to sign with:
-```
-$ fopus --config default-key [GPG KEY ID]
-```
-
 The following GPG key will be used to sign the files and commits:
 
 ```
