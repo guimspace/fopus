@@ -313,10 +313,10 @@ save_conf()
 			continue
 		fi
 
-		if [[ "${fopus_config[$var]}" == "true" || \
-				"${fopus_config[$var]}" == "false" ]]; then
+		if [[ "${fopus_config[$var]}" == "true" ]]; then
 			echo "$var" >> "$CONFIG_PATH_FILE"
-		elif [[ -n ${fopus_config[$var]} ]]; then
+		elif [[ "${fopus_config[$var]}" != "false" && \
+					-n ${fopus_config[$var]} ]]; then
 			echo "$var ${fopus_config[$var]}" >> "$CONFIG_PATH_FILE"
 		fi
 	done
