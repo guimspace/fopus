@@ -17,11 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+set +o allexport
 version=0.5.0
-
-# https://unix.stackexchange.com/a/232083 for the future
-# unset -v password
-# set +o allexport
 
 typeset -A fopus_config
 fopus_config=(
