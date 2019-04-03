@@ -556,10 +556,10 @@ filter_evaluate_files()
 
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: $file: No such file or directory"
-			${command_continue[@]}
+			"${command_continue[@]}"
 		elif [[ "$file" =~ ^"$HOME"/?$ ]]; then
 			>&2 echo "fopus: $file: Invalid file operand"
-			${command_continue[@]}
+			"${command_continue[@]}"
 		fi
 
 		if [[ -d "$file" ]]; then
@@ -572,7 +572,7 @@ filter_evaluate_files()
 
 		if [[ ! "$file" =~ ^"$HOME"/* ]]; then
 			>&2 echo "fopus: $file: Permission denied"
-			${command_continue[@]}
+			"${command_continue[@]}"
 		fi
 
 		echo "fopus: $(du -sh "$file")"
@@ -607,7 +607,7 @@ fopus_backup_main()
 		perprefix="file"
 	fi
 
-	archive_name="$perprefix-$backup_name.tar.xz"
+	archive_name="${perprefix}_${backup_name}.tar.xz"
 	hash_value=$(echo "$TARGET_FILE" | "$sha1sum_tool")
 	backup_name_hash="$backup_name-${hash_value:0:7}"
 
@@ -652,7 +652,7 @@ fopus_backup_main()
 
 	# compress
 	echo "fopus: compression"
-	tar -I "${fopus_config[compress-algo]}" -cvpf "$archive_name" -- "${LIST_FILES[@]}" > "list_$perprefix-$backup_name"
+	tar -I "${fopus_config[compress-algo]}" -cvpf "$archive_name" -- "${LIST_FILES[@]}" > "list_${perprefix}_${backup_name}"
 
 	# test compression
 	echo "fopus: test compression"
@@ -684,7 +684,6 @@ fopus_backup_main()
 fopus_hash_permission_part()
 {
 	local bak_dir_child="$1"
-	local find_command=""
 
 	# hashes
 	echo "fopus: hashes"
@@ -708,24 +707,27 @@ fopus_overwrite_part()
 	local bak_dir_child="$2"
 	local user_answer=""
 
-	if [[ -e "$root_path/$bak_dir_parent/$bak_dir_child" ]]; then
-		echo -n "Backup '$bak_dir_parent/$bak_dir_child' exists. Overwrite? [y/N]: "
+	if [[ ! -e "$root_path/$bak_dir_parent/$bak_dir_child" ]]; then
+		return 0
+	fi
+
+	echo "Backup '$bak_dir_parent/$bak_dir_child' exists."
+	echo -n "Overwrite [y/N]?: "
+	read -r user_answer
+
+	if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
+		echo -n "This is a backup! Really overwrite? [y/N]: "
 		read -r user_answer
+	else
+		echo "fopus: aborting"
+		return 1
+	fi
 
-		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-			echo -n "This is a backup! Really overwrite? [y/N]: "
-			read -r user_answer
-		else
-			echo "fopus: aborting"
-			return 1
-		fi
-
-		if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-			rm -rf "$root_path/$bak_dir_parent/$bak_dir_child"
-		else
-			echo "fopus: aborting"
-			return 1
-		fi
+	if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
+		rm -rf "${root_path:?}/$bak_dir_parent/$bak_dir_child"
+	else
+		echo "fopus: aborting"
+		return 1
 	fi
 
 	return 0
