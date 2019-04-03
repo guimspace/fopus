@@ -296,7 +296,7 @@ save_conf()
 	local var=""
 	local check="false"
 	local list_options=( "default-key" "compress-algo" "root-path" \
-							"max-size" "destroy", "group-by" )
+							"max-size" "destroy" "group-by" )
 
 	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
@@ -310,7 +310,6 @@ save_conf()
 		done
 
 		if [[ "$check" == "false" ]]; then
-			>&2 echo "fopus: $var: invalid option"
 			continue
 		fi
 
@@ -394,7 +393,7 @@ config_fopus()
 			echo ""
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
 			echo -e "  max-size SIZE\t\tput SIZE bytes per output file; 0 and blank defaults to 1073741824"
-			echo -e "  compress-algo n\t\tuse compress algorithm n; default is 1 which is xz; use 2 to use pxz"
+			echo -e "  compress-algo n\tuse compress algorithm n; default is 1 which is xz; use 2 to use pxz"
 			echo -e "  root-path DIR\t\tput backups in DIR; blank defaults to '\$HOME/Backups'"
 			echo -e "  destroy BOOL\t\tremove compressed archive after encryption"
 			exit 0 ;;
