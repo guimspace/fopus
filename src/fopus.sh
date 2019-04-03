@@ -365,7 +365,7 @@ config_fopus()
 
 		group-by)
 			if [[ "$conf_value" == "file" || "$conf_value" == "date" ]]; then
-				fopus_config[destroy]="$conf_value"
+				fopus_config[group-by]="$conf_value"
 			else
 				>&2 echo "fopus: config: invalid arg"
 				exit 1
