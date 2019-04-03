@@ -18,7 +18,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 set +o allexport
-version=0.5.1
+version=0.5.2
 
 typeset -A fopus_config
 fopus_config=(
