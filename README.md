@@ -5,21 +5,22 @@
 
 ## Overview
 
-**fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt** and **split** (aces) a directory. It's main purpose is to reduce the hassles of remembering the correct command names and options, and to automate the **aces** with consistency.
+**fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt** and **split** (**aces**) files. It's main purpose is to reduce the hassles of remembering the correct command names and options, and to automate the **aces** with consistency.
 
-1. **Archive & compress:** The directory is archived and compressed in `.tar.xz` format.  
+- **Archive & compress:** The directory is archived and compressed in `.tar.xz` format.  
 ```
-tar -I ALGO -cvpf dir_DIR.tar.xz -- DIR > list-dir_DIR
-```
-
-2. **Encrypt:** With `gpg`, the compressed file is encrypted with the properties: symmetric cipher, sign, compression disabled.  
-```
-gpg -o dir_DIR.tar.xz.enc -u DEFAULT-KEY -s -c -z 0 dir_DIR.tar.xz
+tar -I ALGO -cvpf file_FILE.tar.xz -- DIR > list-dir_DIR
+xz -tv file_FILE.tar.xz
 ```
 
-3. **Split:** If the encrypted file is larger than 1073741824 bytes, it is split and put 1073741824 bytes per output file.  
+- **Encrypt:** With `gpg`, the compressed file is encrypted with the properties: symmetric cipher, sign, compression disabled.  
 ```
-split --verbose -b SIZE dir_DIR.tar.xz.enc dir_DIR.tar.xz.enc_
+gpg -o file_FILE.tar.xz.enc -u DEFAULT-KEY -s -c -z 0 file_FILE.tar.xz
+```
+
+- **Split:** If the encrypted file is larger than 1073741824 bytes, it is split and put 1073741824 bytes per output file.  
+```
+split --verbose -b SIZE file_FILE.tar.xz.enc file_FILE.tar.xz.enc_
 ```
 
 ### Example
@@ -35,15 +36,15 @@ The directory `/home/username/Backups/bak_yyyy-mm-dd/` and:
    - `dir_Photos.tar.xz` the compressed archive
    - `dir_Photos.tar.xz.enc` the encrypted archive
    - `dir_Photos.tar.xz.enc_aa`, `dir_Photos.tar.xz.enc_ab`, ... the pieces of the encrypted archive
-   - `list-dir_Photos` a list of files processed in compression
+   - `list_dir_Photos` a list of files processed in compression
  - `MD5SUMS` and `SHA1SUMS` hashes of files in `Photos-6910302/` to ensure that the data has not changed due to accidental corruption.
 
-The directory `bak_yyyy-mm-dd` have file permission set to `0700`. Regular files in `bak_yyyy-mm-dd/` have file permission set to `0600`; for directories, `0700`.
+The directory `bak_yyyy-mm-dd` have file permission set to `700`. Regular files in `bak_yyyy-mm-dd/` have file permission set to `600`; for directories, `700`.
 
 
 ## Requirements
 
-`gpg`, `curl`, `tar`, `xz` or `pxz`, `split`, `md5sum`, `shasum`
+`gpg`, `curl`, `tar`, `xz`, `split`, `md5sum`, `shasum`
 
 
 ## Install
@@ -84,10 +85,10 @@ sub   rsa2048/0xBF76CF49CA921C51 2017-11-17 [E] [expires: 2022-11-16]
 
 ## Usage
 
-**Syntax:** `fopus [OPTION]... [DIRECTORY]`
+**Syntax:** `fopus [OPTION]... [FILE]...`
 
 ```
---dir DIR               archive, compress, encrypt and split
+--dir                   archive, compress, encrypt and split
 --config                set options
 --update                update fopus
 --install               install fopus
