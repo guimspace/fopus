@@ -550,6 +550,136 @@ filter_evaluate_files()
 	return 0
 }
 
+fopus_gnupg_backup()
+{
+	read_conf
+	local user_answer=""
+	local gpg_tool=""
+	local gpg_key_id="${fopus_config[default-key]}"
+
+	local root_path=""
+	local archive_name="GnuPG_$DATE.tar"
+
+	local bak_dir_parent=""
+	local bak_dir_child=""
+
+
+	user_answer=""
+	if [[ "$UID" -eq 0 ]]; then
+		echo -n "fopus: user is root. Continue? [y/N]: "
+		read -r user_answer
+		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
+			echo "fopus: exiting"
+			exit 1
+		fi
+	fi
+
+	root_path="${fopus_config[root-path]}"
+	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
+		root_path="$HOME/Backups"
+	elif [[ ! -d "$root_path" ]]; then
+		>&2 echo "fopus: $root_path: No such directory"
+		exit 1
+	elif [[ ! "$root_path" =~ ^"$HOME"/* ]]; then
+		>&2 echo "fopus: $root_path: Permission denied"
+		exit 1
+	fi
+	root_path=${root_path%/}
+
+	if [[ ! -d "$HOME/.gnupg/" ]]; then
+		>&2 echo "fopus: $HOME/.gnupg/ not found"
+		exit 1
+	fi
+
+	if [[ "${fopus_config[group-by]}" == "file" ]]; then
+		bak_dir_parent="GnuPG"
+		bak_dir_child="bak_$DATE"
+	else
+		bak_dir_parent="bak_$DATE"
+		bak_dir_child="GnuPG"
+	fi
+
+	cd "$HOME" || exit 1
+
+	# test overwrite
+	if ! fopus_overwrite_part "$bak_dir_parent" "$bak_dir_child"; then
+		return
+	fi
+
+	echo "fopus: start backup file"
+	mkdir -p "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
+	cd "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
+
+	# .gnupg
+	mkdir -p gnupg
+	echo "fopus: copy \$HOME/.gnupg/gpg.conf"
+	cp "$HOME/.gnupg/gpg.conf" "gnupg/gpg.conf"
+
+	echo "fopus: copy \$HOME/.gnupg/pubring.kbx"
+	cp "$HOME/.gnupg/pubring.kbx" "gnupg/pubring.kbx"
+
+	echo "fopus: copy \$HOME/.gnupg/trustdb.gpg"
+	cp "$HOME/.gnupg/trustdb.gpg" "gnupg/trustdb.gpg"
+
+	# export
+	echo "fopus: export ownertrust"
+	gpg --export-ownertrust > "gpg-ownertrust-me"
+
+	echo "fopus: export public keys"
+	gpg -a --export > "pub.key"
+
+	echo "fopus: export secret keys"
+	while ! gpg -a --export-secret-keys > "sec.key"; do
+		user_answer=""
+		echo "fopus: failed to export secret keys"
+		echo -n "Retry [y/N]?: "
+		read -r "user_answer"
+		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
+			break
+		fi
+	done
+
+	echo "fopus: export sub keys"
+	while ! gpg -a --export-secret-subkeys > "sub.key"; do
+		user_answer=""
+		echo "fopus: failed to export sub keys"
+		echo -n "Retry [y/N]?: "
+		read -r "user_answer"
+		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
+			break
+		fi
+	done
+
+	# list keys
+	gpg --list-keys --with-fingerprint --keyid-format "0xLONG" > "list_gpg_keys"
+
+	# tar
+	echo "fopus: archive files"
+	cd ..
+	if ! tar -cpf "$archive_name" -- "$bak_dir_child/"; then
+		>&2 echo "fopus: failed to archive files"
+	else
+		mv "$archive_name" "$bak_dir_child/"
+	fi
+
+	# encrypt
+	# echo "fopus: encrypt"
+	# gpg_tool=( gpg -o "$archive_name.enc" )
+	# if [[ -n "$gpg_key_id" ]]; then
+	# 	gpg_tool+=( -u "$gpg_key_id" )
+	# fi
+	# gpg_tool+=( -s -c -z 0 "$archive_name" )
+	# if ! "${gpg_tool[@]}"; then
+	# 	>&2 echo "fopus: encryption failed"
+	# 	exit 1
+	# fi
+
+	# hash
+	if ! fopus_hash_permission_part "$bak_dir_child"; then
+		return 1
+	fi
+}
+
 fopus_backup_main()
 {
 	local TARGET_FILE="$1"
