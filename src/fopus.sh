@@ -28,6 +28,7 @@ fopus_config=(
 	[compress-algo]="xz"
 	[group-by]="date"
 	[compact]="false"
+	[gpg-encrypt]="false"
 )
 
 DATE=$(date +%Y-%m-%d)
@@ -461,6 +462,9 @@ evaluate_options()
 				i=$((i+1))
 				fopus_config[default-key]="${list_args[i]}" ;;
 
+			--encrypt)
+				fopus_config[gpg-encrypt]="true" ;;
+
 			--group-by)
 				i=$((i+1))
 				if [[ "${list_args[$i]}" == "date" ]]; then
@@ -609,7 +613,7 @@ fopus_gnupg_backup()
 
 	# test overwrite
 	if ! fopus_overwrite_part "$bak_dir_parent" "$bak_dir_child"; then
-		return
+		exit 1
 	fi
 
 	echo "fopus: start backup file"
@@ -669,21 +673,26 @@ fopus_gnupg_backup()
 	fi
 
 	# encrypt
-	# echo "fopus: encrypt"
-	# gpg_tool=( gpg -o "$archive_name.enc" )
-	# if [[ -n "$gpg_key_id" ]]; then
-	# 	gpg_tool+=( -u "$gpg_key_id" )
-	# fi
-	# gpg_tool+=( -s -c -z 0 "$archive_name" )
-	# if ! "${gpg_tool[@]}"; then
-	# 	>&2 echo "fopus: encryption failed"
-	# 	exit 1
-	# fi
+	echo "fopus: encrypt"
+	if [[ "${fopus_config[gpg-encrypt]}" == "true" ]]; then
+		if [[ ! -e "$archive_name" ]]; then
+			gpg_tool=( gpg -o "$archive_name.enc" )
+			if [[ -n "$gpg_key_id" ]]; then
+				gpg_tool+=( -u "$gpg_key_id" )
+			fi
+			gpg_tool+=( -s -c -z 0 "$archive_name" )
+			if ! "${gpg_tool[@]}"; then
+				>&2 echo "fopus: encryption failed"
+			fi
+		else
+			>&2 echo "fopus: $archive_name not found"
+		fi
+	else
+		echo "Not necessary."
+	fi
 
 	# hash
-	if ! fopus_hash_permission_part "$bak_dir_child"; then
-		return 1
-	fi
+	fopus_hash_permission_part "$bak_dir_child"
 }
 
 fopus_backup_main()
