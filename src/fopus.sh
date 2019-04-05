@@ -553,6 +553,7 @@ filter_evaluate_files()
 fopus_gnupg_backup()
 {
 	read_conf
+	local list_args=("$@")
 	local user_answer=""
 	local gpg_tool=""
 	local gpg_key_id="${fopus_config[default-key]}"
@@ -563,6 +564,8 @@ fopus_gnupg_backup()
 	local bak_dir_parent=""
 	local bak_dir_child=""
 
+	root_path="${fopus_config[root-path]}"
+	gpg_key_id="${fopus_config[default-key]}"
 
 	user_answer=""
 	if [[ "$UID" -eq 0 ]]; then
@@ -574,7 +577,10 @@ fopus_gnupg_backup()
 		fi
 	fi
 
-	root_path="${fopus_config[root-path]}"
+	if [[ ${#list_args[@]} -ge 0 ]]; then
+		evaluate_options "${list_args[@]}"
+	fi
+
 	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
 		root_path="$HOME/Backups"
 	elif [[ ! -d "$root_path" ]]; then
@@ -956,7 +962,7 @@ case "$user_option" in
 		config_fopus "${@:2}" ;;
 
 	--gnupg)
-		fopus_gnupg_backup ;;
+		fopus_gnupg_backup "${@:2}" ;;
 
 	--help)
 		show_help ;;
