@@ -955,6 +955,9 @@ case "$user_option" in
 	--config)
 		config_fopus "${@:2}" ;;
 
+	--gnupg)
+		fopus_gnupg_backup ;;
+
 	--help)
 		show_help ;;
 
