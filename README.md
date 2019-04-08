@@ -5,20 +5,23 @@
 
 ## Overview
 
-**fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt** and **split** (**aces**) files. It's main purpose is to reduce the hassles of remembering the correct command names and options, and to automate the **aces** with consistency.
+> *In Linux and Unix, everything is a file.  Directories are files, files are files and devices are files*.  
+> Ubuntu documentation - FilePermissions (https://help.ubuntu.com/community/FilePermissions)
 
-- **Archive & compress:** The directory is archived and compressed in `.tar.xz` format.  
+**fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt** and **split** (**aces**) files. It's main purpose is to offer consistency to a series of backups.
+
+- **Archive & compress:** The file is archived and compressed in `.tar.xz` format.  
 ```
 tar -I ALGO -cvpf file_FILE.tar.xz -- DIR > list-dir_DIR
 xz -tv file_FILE.tar.xz
 ```
 
-- **Encrypt:** With `gpg`, the compressed file is encrypted with the properties: symmetric cipher, sign, compression disabled.  
+- **Encrypt:** With `gpg`, the compressed file is encrypted in `.enc` format with the properties: symmetric cipher, sign, compression disabled.  
 ```
 gpg -o file_FILE.tar.xz.enc -u DEFAULT-KEY -s -c -z 0 file_FILE.tar.xz
 ```
 
-- **Split:** If the encrypted file is larger than 1073741824 bytes, it is split and put 1073741824 bytes per output file.  
+- **Split:** If the encrypted file is larger than `SIZE` bytes, it is split and put `SIZE` bytes per output file.  
 ```
 split --verbose -b SIZE file_FILE.tar.xz.enc file_FILE.tar.xz.enc_
 ```
@@ -26,7 +29,7 @@ split --verbose -b SIZE file_FILE.tar.xz.enc file_FILE.tar.xz.enc_
 ### Example
 
 ```
-$ fopus --dir Photos/
+$ fopus Photos/
 ```
 
 **Result:**
@@ -83,7 +86,6 @@ sub   rsa2048/0xBF76CF49CA921C51 2017-11-17 [E] [expires: 2022-11-16]
 **Syntax:** `fopus [OPTION]... [FILE]...`
 
 ```
---dir                   archive, compress, encrypt and split
 --config                set options
 --update                update fopus
 --install               install fopus
@@ -94,8 +96,7 @@ sub   rsa2048/0xBF76CF49CA921C51 2017-11-17 [E] [expires: 2022-11-16]
 
 #### Examples
 ```
-$ fopus --dir /home/username/Images/Photos/
-$ fopus --dir Photos/
+$ fopus Photos/ Documents/ text-file.txt
 ```
 
 
