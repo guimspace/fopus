@@ -480,6 +480,10 @@ evaluate_options()
 					delete_keep="true"
 				fi ;;
 
+			--gpg-key)
+				i=$((i+1))
+				fopus_config[default-key]="${list_args[i]}" ;;
+
 			--group-by)
 				i=$((i+1))
 				if [[ "${list_args[$i]}" == "date" ]]; then
