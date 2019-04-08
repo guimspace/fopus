@@ -560,7 +560,7 @@ fopus_gnupg_backup()
 	local list_args=("$@")
 	local user_answer=""
 	local gpg_tool=""
-	local gpg_key_id="${fopus_config[default-key]}"
+	local gpg_key_id=""
 
 	local root_path=""
 	local archive_name="GnuPG_$DATE.tar"
