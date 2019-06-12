@@ -207,9 +207,19 @@ update_fopus()
 
 	echo "Updating..."
 
-	cp "/tmp/fopus/fopus" "/usr/local/bin/fopus"
-	chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus"
-	chmod 0755 "/usr/local/bin/fopus"
+	if ! chown "$USER:$(id -gn "$USER")" "/tmp/fopus/fopus"; then
+		exit 1
+	fi
+
+	if ! chmod 0755 "/tmp/fopus/fopus"; then
+		exit 1
+	fi
+
+	if ! cp "/tmp/fopus/fopus" "/usr/local/bin/fopus"; then
+		exit 1
+	fi
+
+	rm -f "/tmp/fopus/fopus"
 
 	echo "fopus is up-to-date"
 	exit 0
