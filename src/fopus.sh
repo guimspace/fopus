@@ -26,7 +26,6 @@ fopus_config=(
 	[default-key]=""
 	[root-path]="$HOME/Backups/"
 	[compress-algo]="xz"
-	[delete]="false"
 	[group-by]="date"
 	[compact]="false"
 )
@@ -123,12 +122,8 @@ show_help()
 	echo "Options:"
 	echo ""
 	echo -e "  --no-split\t\tskip split process"
-	echo -e "  --delete\t\tdelete compressed archive after encryption"
-	echo -e "  --keep\t\tkeep compressed archive after encryption"
 	echo -e "  --compact\t\tbackup several sources in one archive"
 	echo -e "  --group-by\t\torganize backups by date/file or vice versa"
-	echo ""
-	echo "Note that the option 'delete' does not securely delete the compressed archive."
 	echo ""
 	echo "To aces a file whose name starts with a '-', for example '-foo',"
 	echo "use one of these commands:"
@@ -256,12 +251,6 @@ read_conf()
 	while read -r var value; do
 		if [[ -n "$var" && -n "$value" ]]; then
 			fopus_config["$var"]="$value"
-		elif [[ -z "$value" ]]; then
-			case "$var" in
-				delete)
-					fopus_config["$var"]="true"
-
-			esac
 		fi
 	done < "$CONFIG_PATH_FILE"
 }
@@ -276,7 +265,7 @@ save_conf()
 	local var=""
 	local check="false"
 	local list_options=( "default-key" "compress-algo" "root-path" \
-							"max-size" "delete" "group-by" "compact" )
+							"max-size" "group-by" "compact" )
 
 	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
@@ -358,14 +347,6 @@ config_fopus()
 
 			fopus_config[max-size]="$conf_value" ;;
 
-		delete)
-			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
-				fopus_config[delete]="$conf_value"
-			else
-				>&2 echo "fopus: config: invalid arg"
-				exit 1
-			fi ;;
-
 		compact)
 			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
 				fopus_config[compact]="$conf_value"
@@ -383,7 +364,6 @@ config_fopus()
 			echo -e "  max-size SIZE\t\tsplit files larger than SIZE bytes"
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
 			echo -e "  compress-algo N\tuse compress algorithm N; default is 1 which is xz; use 2 to use pxz"
-			echo -e "  delete BOOL\t\tremove compressed archive after encryption"
 			echo -e "  group-by ARG\t\tset how to organize backups"
 			echo -e "  compact BOOL\t\tbackup several sources in one archive"
 			echo ""
@@ -462,24 +442,11 @@ evaluate_options()
 
 	local i=0
 	local N=${#list_args[@]}
-	local delete_keep="false"
 	local file_date="false"
 	local tmp_value=""
 
 	while [[ $i -lt $N && "${list_args[$i]}" != "--" ]]; do
 		case "${list_args[$i]}" in
-			--delete)
-				if [[ "$delete_keep" == "false" ]]; then
-					fopus_config[delete]="true"
-					delete_keep="true"
-				fi ;;
-
-			--keep)
-				if [[ "$delete_keep" == "false" ]]; then
-					fopus_config[delete]="false"
-					delete_keep="true"
-				fi ;;
-
 			--gpg-key)
 				i=$((i+1))
 				fopus_config[default-key]="${list_args[i]}" ;;
@@ -739,11 +706,6 @@ fopus_encryption_part()
 
 	if ! "${gpg_tool[@]}"; then
 		return 1
-	fi
-
-	if [[ "${fopus_config[delete]}" == "true" ]]; then
-		rm -f "$archive_name"
-		echo "fopus: removed $archive_name"
 	fi
 
 	return 0
