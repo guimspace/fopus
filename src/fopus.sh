@@ -705,6 +705,8 @@ fopus_encryption_part()
 {
 	local gpg_tool=""
 	local archive_name="$1"
+	local user_option_abc=""
+	local check=""
 
 	gpg_tool=( gpg -o "$archive_name.enc" )
 
@@ -714,9 +716,30 @@ fopus_encryption_part()
 
 	gpg_tool+=( -s -c -z 0 "$archive_name" )
 
-	if ! "${gpg_tool[@]}"; then
-		return 1
-	fi
+	check="false"
+	while [[ "$check" == "false" ]]; do
+		if ! "${gpg_tool[@]}"; then
+			echo "Encryption failed."
+			echo -e "e - exit fopus"
+			echo -e "r - retry encryption"
+			echo -e "s - skip encryption"
+			echo ""
+			echo -n "[e,r,s]? "
+
+			read -r user_option_abc
+
+			case "$user_option_abc" in
+				e)
+					return 1 ;;
+
+				s)
+					check="true" ;;
+
+				r)
+					;;
+			esac
+		fi
+	done
 
 	return 0
 }
