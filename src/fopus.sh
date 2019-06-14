@@ -738,6 +738,9 @@ fopus_encryption_part()
 				r)
 					;;
 			esac
+		else
+			check="true"
+			break
 		fi
 	done
 
