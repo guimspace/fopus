@@ -482,6 +482,14 @@ evaluate_options()
 			--no-split)
 				fopus_config[max-size]="-1" ;;
 
+			--output)
+				i=$((i+1))
+				if [[ ! -d "${list_args[$i]}" ]]; then
+					>&2 echo "fopus: ${list_args["$i"]}: invalid argument"
+					exit 1
+				fi
+				fopus_config[root-path]="${list_args[$i]}" ;;
+
 			--)
 				break ;;
 
