@@ -598,7 +598,7 @@ fopus_gnupg_backup()
 	if [[ ! -d "$HOME/.gnupg/" ]]; then
 		>&2 echo "fopus: $HOME/.gnupg/ not found"
 		exit 1
-	elfi [[ ! -r "$HOME/.gnupg/" ]]; then
+	elif [[ ! -r "$HOME/.gnupg/" ]]; then
 		>&2 echo "fopus: $HOME/.gnupg/: Permission denied"
 		exit 1
 	fi
