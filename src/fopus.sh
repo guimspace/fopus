@@ -605,6 +605,8 @@ fopus_gnupg_backup()
 
 	cd "$HOME" || exit 1
 
+	echo "Backup $root_path/$bak_dir_parent/$bak_dir_child"
+
 	# test overwrite
 	if ! fopus_overwrite_part "$bak_dir_parent" "$bak_dir_child"; then
 		exit 1
@@ -630,14 +632,20 @@ fopus_gnupg_backup()
 
 	# export
 	echo "fopus: export ownertrust"
-	gpg --export-ownertrust > "gpg-ownertrust-me"
+	if ! gpg --export-ownertrust > "gpg-ownertrust-me"; then
+		return 1
+	fi
 
 	echo "fopus: export public keys"
-	gpg -a --export > "pub.key"
+	if ! gpg -a --export > "pub.key"; then
+		return 1
+	fi
 
 	# list keys
 	echo "fopus: list keys"
-	gpg --list-keys --with-fingerprint --keyid-format "0xLONG" > "list_gpg_keys"
+	if ! gpg --list-keys --with-fingerprint --keyid-format "0xLONG" > "list_gpg_keys"; then
+		return 1
+	fi
 
 	# export
 	echo "fopus: export secret keys"
