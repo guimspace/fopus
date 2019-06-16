@@ -28,7 +28,6 @@ fopus_config=(
 	[compress-algo]="xz"
 	[group-by]="date"
 	[compact]="false"
-	[gpg-encrypt]="false"
 )
 
 DATE=$(date +%Y-%m-%d)
@@ -462,9 +461,6 @@ evaluate_options()
 				i=$((i+1))
 				fopus_config[default-key]="${list_args[i]}" ;;
 
-			--encrypt)
-				fopus_config[gpg-encrypt]="true" ;;
-
 			--group-by)
 				i=$((i+1))
 				if [[ "${list_args[$i]}" == "date" ]]; then
@@ -557,10 +553,9 @@ filter_evaluate_files()
 fopus_gnupg_backup()
 {
 	read_conf
+
 	local list_args=("$@")
 	local user_answer=""
-	local gpg_tool=""
-	local gpg_key_id=""
 
 	local root_path=""
 	local archive_name="GnuPG_$DATE.tar"
@@ -569,7 +564,6 @@ fopus_gnupg_backup()
 	local bak_dir_child=""
 
 	root_path="${fopus_config[root-path]}"
-	gpg_key_id="${fopus_config[default-key]}"
 
 	user_answer=""
 	if [[ "$UID" -eq 0 ]]; then
@@ -621,15 +615,18 @@ fopus_gnupg_backup()
 	cd "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
 
 	# .gnupg
-	mkdir -p gnupg
-	echo "fopus: copy \$HOME/.gnupg/gpg.conf"
-	cp "$HOME/.gnupg/gpg.conf" "gnupg/gpg.conf"
+	if ! mkdir -p "gnupg"; then
+		exit 1
+	fi
 
-	echo "fopus: copy \$HOME/.gnupg/pubring.kbx"
-	cp "$HOME/.gnupg/pubring.kbx" "gnupg/pubring.kbx"
-
-	echo "fopus: copy \$HOME/.gnupg/trustdb.gpg"
-	cp "$HOME/.gnupg/trustdb.gpg" "gnupg/trustdb.gpg"
+	list=( "gpg.conf" "pubring.kbx" "trustdb.gpg" )
+	for i in "${!list[@]}"; do
+		if [[ ! -e "$HOME/.gnupg/${list[i]}" ]]; then
+			>&2 echo "$HOME/.gnupg/${list[i]} not found"
+		else
+			cp "$HOME/.gnupg/${list[i]}" "gnupg/${list[i]}"
+		fi
+	done
 
 	# export
 	echo "fopus: export ownertrust"
@@ -638,30 +635,20 @@ fopus_gnupg_backup()
 	echo "fopus: export public keys"
 	gpg -a --export > "pub.key"
 
+	# list keys
+	echo "fopus: list keys"
+	gpg --list-keys --with-fingerprint --keyid-format "0xLONG" > "list_gpg_keys"
+
+	# export
 	echo "fopus: export secret keys"
-	while ! gpg -a --export-secret-keys > "sec.key"; do
-		user_answer=""
-		echo "fopus: failed to export secret keys"
-		echo -n "Retry [y/N]?: "
-		read -r "user_answer"
-		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
-			break
-		fi
-	done
+	if ! fopus_export_keys "secret"; then
+		return 1
+	fi
 
 	echo "fopus: export sub keys"
-	while ! gpg -a --export-secret-subkeys > "sub.key"; do
-		user_answer=""
-		echo "fopus: failed to export sub keys"
-		echo -n "Retry [y/N]?: "
-		read -r "user_answer"
-		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
-			break
-		fi
-	done
-
-	# list keys
-	gpg --list-keys --with-fingerprint --keyid-format "0xLONG" > "list_gpg_keys"
+	if ! fopus_export_keys "sub"; then
+		return 1
+	fi
 
 	# tar
 	echo "fopus: archive files"
@@ -672,27 +659,59 @@ fopus_gnupg_backup()
 		mv "$archive_name" "$bak_dir_child/"
 	fi
 
-	# encrypt
-	echo "fopus: encrypt"
-	if [[ "${fopus_config[gpg-encrypt]}" == "true" ]]; then
-		if [[ ! -e "$archive_name" ]]; then
-			gpg_tool=( gpg -o "$archive_name.enc" )
-			if [[ -n "$gpg_key_id" ]]; then
-				gpg_tool+=( -u "$gpg_key_id" )
-			fi
-			gpg_tool+=( -s -c -z 0 "$archive_name" )
-			if ! "${gpg_tool[@]}"; then
-				>&2 echo "fopus: encryption failed"
-			fi
-		else
-			>&2 echo "fopus: $archive_name not found"
-		fi
-	else
-		echo "Not necessary."
-	fi
-
 	# hash
 	fopus_hash_permission_part "$bak_dir_child"
+}
+
+fopus_export_keys()
+{
+	local check=""
+	local option="$1"
+	local user_answer=""
+	local gpg_tool=""
+	local file_name=""
+
+	if [[ "$option" == "secret" ]]; then
+		file_name="sec.key"
+		gpg_tool=( gpg -a --export-secret-keys )
+	elif [[ "$option" == "sub" ]]; then
+		file_name="sub.key"
+		gpg_tool=( gpg -a --export-secret-subkeys )
+	else
+		return 1
+	fi
+
+	check="false"
+
+	while [[ "$check" == "false" ]]; do
+		if ! "${gpg_tool[@]}" > "$file_name"; then
+			echo "Export of $option keys failed."
+			echo -e "e - exit fopus"
+			echo -e "r - retry export"
+			echo -e "s - skip export"
+			echo ""
+			echo -n "[e,r,s]? "
+
+			user_answer=""
+			read -r user_answer
+
+			case "$user_answer" in
+				e)
+					return 1 ;;
+
+				s)
+					check="true" ;;
+
+				r)
+					;;
+			esac
+		else
+			check="true"
+			break
+		fi
+	done
+
+	return 0
 }
 
 fopus_backup_main()
@@ -875,7 +894,7 @@ fopus_overwrite_part()
 
 fopus_encryption_part()
 {
-	local gpg_tool=""
+	local gpg_tool=( )
 	local archive_name="$1"
 	local user_option_abc=""
 	local check=""
