@@ -392,9 +392,7 @@ fopus_main()
 	declare -a list_clean
 
 	origins_path="$(pwd -P)"
-	root_path="${fopus_config[root-path]}"
 	gpg_key_id="${fopus_config[default-key]}"
-
 
 	user_answer=""
 	if [[ "$UID" -eq 0 ]]; then
@@ -412,6 +410,8 @@ fopus_main()
 
 	evaluate_options "${list_args[@]}"
 	filter_evaluate_files
+
+	root_path="${fopus_config[root-path]}"
 
 	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
 		root_path="$HOME/Backups"
