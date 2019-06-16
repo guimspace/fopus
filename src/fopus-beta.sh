@@ -325,19 +325,15 @@ config_fopus()
 			fopus_config[compress-algo]="$conf_value" ;;
 
 		root-path)
-			if [[ "$conf_value" =~ ^"$HOME"/?$ ]]; then
-				conf_value=""
-			elif [[ ! -d "$conf_value" ]]; then
+			if [[ ! -d "$conf_value" ]]; then
 				>&2 echo "fopus: invalid operand"
+				exit 1
+			elif [[ ! -w "$conf_value" ]]; then
+				>&2 echo "fopus: permission denied"
 				exit 1
 			else
 				cd "$(dirname "$conf_value")" || exit 1
 				conf_value="$(pwd -P)/$(basename "$conf_value")/"
-
-				if [[ ! "$conf_value" =~ ^"$HOME"* ]]; then
-					>&2 echo "fopus: permission denied"
-					exit 1
-				fi
 			fi
 
 			fopus_config[root-path]="$conf_value" ;;
@@ -419,13 +415,16 @@ fopus_main()
 
 	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
 		root_path="$HOME/Backups"
-	elif [[ ! -d "$root_path" ]]; then
+	fi
+
+	if [[ ! -d "$root_path" ]]; then
 		>&2 echo "fopus: $root_path: No such directory"
 		exit 1
-	elif [[ ! "$root_path" =~ ^"$HOME"/* ]]; then
+	elif [[ ! -w "$root_path" ]]; then
 		>&2 echo "fopus: $root_path: Permission denied"
 		exit 1
 	fi
+
 	root_path=${root_path%/}
 
 	if [[ "${fopus_config[compact]}" == "true" ]]; then
@@ -525,8 +524,8 @@ filter_evaluate_files()
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: $file: No such file or directory"
 			"${command_continue[@]}"
-		elif [[ "$file" =~ ^"$HOME"/?$ ]]; then
-			>&2 echo "fopus: $file: Invalid file operand"
+		elif [[ ! -r "$file" ]]; then
+			>&2 echo "fopus: $file: Permission denied"
 			"${command_continue[@]}"
 		fi
 
@@ -536,11 +535,6 @@ filter_evaluate_files()
 			cd ..
 		else
 			file="$(cd "$(dirname "$file")" && pwd -P)/$(basename "$file")"
-		fi
-
-		if [[ ! "$file" =~ ^"$HOME"/* ]]; then
-			>&2 echo "fopus: $file: Permission denied"
-			"${command_continue[@]}"
 		fi
 
 		echo "fopus: $(du -sh "$file")"
@@ -581,17 +575,23 @@ fopus_gnupg_backup()
 
 	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
 		root_path="$HOME/Backups"
-	elif [[ ! -d "$root_path" ]]; then
+	fi
+
+	if [[ ! -d "$root_path" ]]; then
 		>&2 echo "fopus: $root_path: No such directory"
 		exit 1
-	elif [[ ! "$root_path" =~ ^"$HOME"/* ]]; then
+	elif [[ ! -r "$root_path" ]]; then
 		>&2 echo "fopus: $root_path: Permission denied"
 		exit 1
 	fi
+
 	root_path=${root_path%/}
 
 	if [[ ! -d "$HOME/.gnupg/" ]]; then
 		>&2 echo "fopus: $HOME/.gnupg/ not found"
+		exit 1
+	elfi [[ ! -r "$HOME/.gnupg/" ]]; then
+		>&2 echo "fopus: $HOME/.gnupg/: Permission denied"
 		exit 1
 	fi
 
