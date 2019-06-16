@@ -33,7 +33,7 @@ fopus_config=(
 DATE=$(date +%Y-%m-%d)
 CONFIG_PATH_DIR="$HOME/.config/fopus"
 CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
-REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
+REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/next-dev/src/fopus-beta.sh"
 
 
 check_requirements()
@@ -146,15 +146,15 @@ install_fopus()
 
 	origin_path="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
 
-	if ! cp "$origin_path" "/usr/local/bin/fopus"; then
+	if ! cp "$origin_path" "/usr/local/bin/fopus-beta"; then
 		exit 1
 	fi
 
-	if ! chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus"; then
+	if ! chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus-beta"; then
 		exit 1
 	fi
 
-	if ! chmod a+rx "/usr/local/bin/fopus"; then
+	if ! chmod a+rx "/usr/local/bin/fopus-beta"; then
 		exit 1
 	fi
 
@@ -164,7 +164,7 @@ install_fopus()
 
 uninstall_fopus()
 {
-	if ! rm -f "/usr/local/bin/fopus"; then
+	if ! rm -f "/usr/local/bin/fopus-beta"; then
 		exit 1
 	fi
 
@@ -177,7 +177,7 @@ update_fopus()
 	local local_hashsum=""
 	local remote_hashsum=""
 
-	if [[ ! -f "/usr/local/bin/fopus" ]]; then
+	if [[ ! -f "/usr/local/bin/fopus-beta" ]]; then
 		>&2 echo "fopus: fopus is not installed"
 		exit 1
 	fi
@@ -186,40 +186,40 @@ update_fopus()
 		exit 1
 	fi
 
-	if [[ -f "/tmp/fopus/fopus" ]]; then
-		rm -f "/tmp/fopus/fopus"
+	if [[ -f "/tmp/fopus/fopus-beta" ]]; then
+		rm -f "/tmp/fopus/fopus-beta"
 	fi
 
-	curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" "$REMOTE_URL"
+	curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus-beta" "$REMOTE_URL"
 
-	if [[ ! -f "/tmp/fopus/fopus" ]]; then
+	if [[ ! -f "/tmp/fopus/fopus-beta" ]]; then
 		>&2 echo "fopus: update: download failed"
 		exit 1
 	fi
 
-	remote_hashsum=$($sha512sum_tool "/tmp/fopus/fopus" | cut -d " " -f 1)
+	remote_hashsum=$($sha512sum_tool "/tmp/fopus/fopus-beta" | cut -d " " -f 1)
 
-	local_hashsum=$($sha512sum_tool "/usr/local/bin/fopus" | cut -d " " -f 1)
+	local_hashsum=$($sha512sum_tool "/usr/local/bin/fopus-beta" | cut -d " " -f 1)
 	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
-		echo "fopus is up-to-date"
+		echo "fopus-beta is up-to-date"
 		exit 0
 	fi
 
 	echo "Updating..."
 
-	if ! chown "$USER:$(id -gn "$USER")" "/tmp/fopus/fopus"; then
+	if ! chown "$USER:$(id -gn "$USER")" "/tmp/fopus/fopus-beta"; then
 		exit 1
 	fi
 
-	if ! chmod 0755 "/tmp/fopus/fopus"; then
+	if ! chmod 0755 "/tmp/fopus/fopus-beta"; then
 		exit 1
 	fi
 
-	if ! cp "/tmp/fopus/fopus" "/usr/local/bin/fopus"; then
+	if ! cp "/tmp/fopus/fopus" "/usr/local/bin/fopus-beta"; then
 		exit 1
 	fi
 
-	rm -f "/tmp/fopus/fopus"
+	rm -f "/tmp/fopus/fopus-beta"
 
 	echo "fopus is up-to-date"
 	exit 0
@@ -550,6 +550,178 @@ filter_evaluate_files()
 	return 0
 }
 
+fopus_gnupg_backup()
+{
+	read_conf
+
+	local list_args=("$@")
+	local user_answer=""
+
+	local root_path=""
+	local archive_name="GnuPG_$DATE.tar"
+
+	local bak_dir_parent=""
+	local bak_dir_child=""
+
+	root_path="${fopus_config[root-path]}"
+
+	user_answer=""
+	if [[ "$UID" -eq 0 ]]; then
+		echo -n "fopus: user is root. Continue? [y/N]: "
+		read -r user_answer
+		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
+			echo "fopus: exiting"
+			exit 1
+		fi
+	fi
+
+	if [[ ${#list_args[@]} -ge 0 ]]; then
+		evaluate_options "${list_args[@]}"
+	fi
+
+	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
+		root_path="$HOME/Backups"
+	elif [[ ! -d "$root_path" ]]; then
+		>&2 echo "fopus: $root_path: No such directory"
+		exit 1
+	elif [[ ! "$root_path" =~ ^"$HOME"/* ]]; then
+		>&2 echo "fopus: $root_path: Permission denied"
+		exit 1
+	fi
+	root_path=${root_path%/}
+
+	if [[ ! -d "$HOME/.gnupg/" ]]; then
+		>&2 echo "fopus: $HOME/.gnupg/ not found"
+		exit 1
+	fi
+
+	if [[ "${fopus_config[group-by]}" == "file" ]]; then
+		bak_dir_parent="GnuPG"
+		bak_dir_child="bak_$DATE"
+	else
+		bak_dir_parent="bak_$DATE"
+		bak_dir_child="GnuPG"
+	fi
+
+	cd "$HOME" || exit 1
+
+	echo "Backup $root_path/$bak_dir_parent/$bak_dir_child"
+
+	# test overwrite
+	if ! fopus_overwrite_part "$bak_dir_parent" "$bak_dir_child"; then
+		exit 1
+	fi
+
+	echo "fopus: start backup file"
+	mkdir -p "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
+	cd "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
+
+	# .gnupg
+	if ! mkdir -p "gnupg"; then
+		exit 1
+	fi
+
+	list=( "gpg.conf" "pubring.kbx" "trustdb.gpg" )
+	for i in "${!list[@]}"; do
+		if [[ ! -e "$HOME/.gnupg/${list[i]}" ]]; then
+			>&2 echo "$HOME/.gnupg/${list[i]} not found"
+		else
+			cp "$HOME/.gnupg/${list[i]}" "gnupg/${list[i]}"
+		fi
+	done
+
+	# export
+	echo "fopus: export ownertrust"
+	if ! gpg --export-ownertrust > "gpg-ownertrust-me"; then
+		return 1
+	fi
+
+	echo "fopus: export public keys"
+	if ! gpg -a --export > "pub.key"; then
+		return 1
+	fi
+
+	# list keys
+	echo "fopus: list keys"
+	if ! gpg --list-keys --with-fingerprint --keyid-format "0xLONG" > "list_gpg_keys"; then
+		return 1
+	fi
+
+	# export
+	echo "fopus: export secret keys"
+	if ! fopus_export_keys "secret"; then
+		return 1
+	fi
+
+	echo "fopus: export sub keys"
+	if ! fopus_export_keys "sub"; then
+		return 1
+	fi
+
+	# tar
+	echo "fopus: archive files"
+	cd ..
+	if ! tar -cpf "$archive_name" -- "$bak_dir_child/"; then
+		>&2 echo "fopus: failed to archive files"
+	else
+		mv "$archive_name" "$bak_dir_child/"
+	fi
+
+	# hash
+	fopus_hash_permission_part "$bak_dir_child"
+}
+
+fopus_export_keys()
+{
+	local check=""
+	local option="$1"
+	local user_answer=""
+	local gpg_tool=""
+	local file_name=""
+
+	if [[ "$option" == "secret" ]]; then
+		file_name="sec.key"
+		gpg_tool=( gpg -a --export-secret-keys )
+	elif [[ "$option" == "sub" ]]; then
+		file_name="sub.key"
+		gpg_tool=( gpg -a --export-secret-subkeys )
+	else
+		return 1
+	fi
+
+	check="false"
+
+	while [[ "$check" == "false" ]]; do
+		if ! "${gpg_tool[@]}" > "$file_name"; then
+			echo "Export of $option keys failed."
+			echo -e "e - exit fopus"
+			echo -e "r - retry export"
+			echo -e "s - skip export"
+			echo ""
+			echo -n "[e,r,s]? "
+
+			user_answer=""
+			read -r user_answer
+
+			case "$user_answer" in
+				e)
+					return 1 ;;
+
+				s)
+					check="true" ;;
+
+				r)
+					;;
+			esac
+		else
+			check="true"
+			break
+		fi
+	done
+
+	return 0
+}
+
 fopus_backup_main()
 {
 	local TARGET_FILE="$1"
@@ -672,7 +844,10 @@ fopus_hash_permission_part()
 fopus_overwrite_part()
 {
 	local bak_dir_parent="$1"
-	local bak_dir_child="$2"
+	bak_dir_child="$2"
+
+	local c=""
+	local suf=""
 	local user_answer=""
 
 	if [[ ! -e "$root_path/$bak_dir_parent/$bak_dir_child" ]]; then
@@ -680,19 +855,43 @@ fopus_overwrite_part()
 	fi
 
 	echo "Backup '$bak_dir_parent/$bak_dir_child' exists."
-	echo -n "Overwrite [y/N]?: "
-	read -r user_answer
 
-	if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-		echo -n "This is a backup! Really overwrite? [y/N]: "
-		read -r user_answer
-	else
-		echo "fopus: aborting"
-		return 1
+	c=0
+	for suf in $(seq -f "%03g" 1 999); do
+		c=$((c+1))
+		if [[ ! -e "$root_path/$bak_dir_parent/$bak_dir_child"_"$suf" ]]; then
+			break
+		fi
+	done
+
+	if [[ -e "$root_path/$bak_dir_parent/$bak_dir_child"_"001" ]]; then
+		echo "$c level(s) of rename exist."
 	fi
 
-	if [[ "$user_answer" == "y" || "$user_answer" == "Y" ]]; then
-		rm -rf "${root_path:?}/$bak_dir_parent/$bak_dir_child"
+	echo -e "y - yes"
+	echo -e "n - no, abort"
+	echo -e "r - rename"
+	echo -e "e - exit fopus"
+	echo ""
+	echo -n "Overwrite [y,n,r,e]?: "
+	read -r user_answer
+
+	if [[ "$user_answer" == "e" ]]; then
+		echo "fopus: exiting"
+		exit 1
+	elif [[ "$user_answer" == "r" ]]; then
+		bak_dir_child="$bak_dir_child"_"$suf"
+		echo "Backup renamed to '$bak_dir_child'."
+	elif [[ "$user_answer" == "y" ]]; then
+		echo -n "This is a backup! Really overwrite? [y/N]: "
+		read -r user_answer
+
+		if [[ "$user_answer" == "y" ]]; then
+			rm -rf "${root_path:?}/$bak_dir_parent/$bak_dir_child"
+		else
+			echo "fopus: aborting"
+			return 1
+		fi
 	else
 		echo "fopus: aborting"
 		return 1
@@ -703,7 +902,7 @@ fopus_overwrite_part()
 
 fopus_encryption_part()
 {
-	local gpg_tool=""
+	local gpg_tool=( )
 	local archive_name="$1"
 	local user_option_abc=""
 	local check=""
@@ -797,6 +996,9 @@ case "$user_option" in
 
 	--config)
 		config_fopus "${@:2}" ;;
+
+	--gnupg)
+		fopus_gnupg_backup "${@:2}" ;;
 
 	--help)
 		show_help ;;
