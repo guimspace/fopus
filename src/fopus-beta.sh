@@ -18,7 +18,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 set +o allexport
-version=1.2.0-beta
+version=1.2.0
 
 typeset -A fopus_config
 fopus_config=(
