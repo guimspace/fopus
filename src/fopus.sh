@@ -33,7 +33,7 @@ fopus_config=(
 DATE=$(date +%Y-%m-%d)
 CONFIG_PATH_DIR="$HOME/.config/fopus"
 CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
-REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/next-dev/src/fopus-beta.sh"
+REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
 
 
 check_requirements()
@@ -146,15 +146,15 @@ install_fopus()
 
 	origin_path="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
 
-	if ! cp "$origin_path" "/usr/local/bin/fopus-beta"; then
+	if ! cp "$origin_path" "/usr/local/bin/fopus"; then
 		exit 1
 	fi
 
-	if ! chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus-beta"; then
+	if ! chown "$USER:$(id -gn "$USER")" "/usr/local/bin/fopus"; then
 		exit 1
 	fi
 
-	if ! chmod a+rx "/usr/local/bin/fopus-beta"; then
+	if ! chmod a+rx "/usr/local/bin/fopus"; then
 		exit 1
 	fi
 
@@ -164,7 +164,7 @@ install_fopus()
 
 uninstall_fopus()
 {
-	if ! rm -f "/usr/local/bin/fopus-beta"; then
+	if ! rm -f "/usr/local/bin/fopus"; then
 		exit 1
 	fi
 
@@ -177,7 +177,7 @@ update_fopus()
 	local local_hashsum=""
 	local remote_hashsum=""
 
-	if [[ ! -f "/usr/local/bin/fopus-beta" ]]; then
+	if [[ ! -f "/usr/local/bin/fopus" ]]; then
 		>&2 echo "fopus: fopus is not installed"
 		exit 1
 	fi
@@ -186,40 +186,40 @@ update_fopus()
 		exit 1
 	fi
 
-	if [[ -f "/tmp/fopus/fopus-beta" ]]; then
-		rm -f "/tmp/fopus/fopus-beta"
+	if [[ -f "/tmp/fopus/fopus" ]]; then
+		rm -f "/tmp/fopus/fopus"
 	fi
 
-	curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus-beta" "$REMOTE_URL"
+	curl -sf --connect-timeout 7 -o "/tmp/fopus/fopus" "$REMOTE_URL"
 
-	if [[ ! -f "/tmp/fopus/fopus-beta" ]]; then
+	if [[ ! -f "/tmp/fopus/fopus" ]]; then
 		>&2 echo "fopus: update: download failed"
 		exit 1
 	fi
 
-	remote_hashsum=$($sha512sum_tool "/tmp/fopus/fopus-beta" | cut -d " " -f 1)
+	remote_hashsum=$($sha512sum_tool "/tmp/fopus/fopus" | cut -d " " -f 1)
 
-	local_hashsum=$($sha512sum_tool "/usr/local/bin/fopus-beta" | cut -d " " -f 1)
+	local_hashsum=$($sha512sum_tool "/usr/local/bin/fopus" | cut -d " " -f 1)
 	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
-		echo "fopus-beta is up-to-date"
+		echo "fopus is up-to-date"
 		exit 0
 	fi
 
 	echo "Updating..."
 
-	if ! chown "$USER:$(id -gn "$USER")" "/tmp/fopus/fopus-beta"; then
+	if ! chown "$USER:$(id -gn "$USER")" "/tmp/fopus/fopus"; then
 		exit 1
 	fi
 
-	if ! chmod 0755 "/tmp/fopus/fopus-beta"; then
+	if ! chmod 0755 "/tmp/fopus/fopus"; then
 		exit 1
 	fi
 
-	if ! cp "/tmp/fopus/fopus" "/usr/local/bin/fopus-beta"; then
+	if ! cp "/tmp/fopus/fopus" "/usr/local/bin/fopus"; then
 		exit 1
 	fi
 
-	rm -f "/tmp/fopus/fopus-beta"
+	rm -f "/tmp/fopus/fopus"
 
 	echo "fopus is up-to-date"
 	exit 0
