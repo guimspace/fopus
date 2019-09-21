@@ -867,12 +867,12 @@ fopus_overwrite_part()
 	c=0
 	for suf in $(seq -f "%03g" 1 999); do
 		c=$((c+1))
-		if [[ ! -e "$root_path/$bak_dir_parent/$bak_dir_child"_"$suf" ]]; then
+		if [[ ! -e "$root_path/$bak_dir_parent/$bak_dir_child_$suf" ]]; then
 			break
 		fi
 	done
 
-	if [[ -e "$root_path/$bak_dir_parent/$bak_dir_child"_"001" ]]; then
+	if [[ -e "$root_path/$bak_dir_parent/$bak_dir_child_001" ]]; then
 		echo "$c level(s) of rename exist."
 	fi
 
