@@ -814,6 +814,12 @@ fopus_backup_main()
 		return 1
 	fi
 
+	# encrypt
+	echo "fopus: verify encryption"
+	if ! fopus_verify_encryption_part "$archive_name"; then
+		return 1
+	fi
+
 	# split
 	echo "fopus: split"
 	if ! fopus_split_part "$archive_name"; then
@@ -950,6 +956,20 @@ fopus_encryption_part()
 			break
 		fi
 	done
+
+	return 0
+}
+
+fopus_verify_encryption_part()
+{
+	local gpg_tool=( )
+	local archive_name="$1"
+
+	gpg_tool=( gpg -o "/dev/null" -d "$archive_name.enc" )
+
+	if ! "${gpg_tool[@]}"; then
+		return 1
+	fi
 
 	return 0
 }
