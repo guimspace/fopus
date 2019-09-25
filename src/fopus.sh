@@ -846,6 +846,11 @@ fopus_backup_main()
 		return 1
 	fi
 
+	# test split
+	if ! fopus_test_split_part "$archive_name"; then
+		return 1
+	fi
+
 	# hash and file permission
 	cd ..
 	if ! fopus_hash_permission_part "$bak_dir_child"; then
@@ -1011,6 +1016,36 @@ fopus_split_part()
 		fi
 	else
 		echo "Not necessary."
+	fi
+
+	return 0
+}
+
+fopus_test_split_part()
+{
+	local first_hashsum=""
+	local split_hashsum=""
+	local size_value=""
+	local max_size_value=""
+	local archive_name="$1"
+
+	max_size_value=${fopus_config[max-size]}
+	size_value=$(stat -c %s "$archive_name.enc")
+
+	if ! [[ "${fopus_config[max-size]}" != "-1" && \
+			"$size_value" -gt "$max_size_value" ]]; then
+			return 0
+	fi
+
+	echo "fopus: test split"
+
+	first_hashsum=$($sha512sum_tool "$archive_name.enc" | cut -d " " -f 1)
+	split_hashsum=$(cat "$archive_name.enc_"* | $sha512sum_tool | cut -d " " -f 1)
+
+	if [[ "$split_hashsum" == "$first_hashsum" ]]; then
+		return 0
+	else
+		return 1
 	fi
 
 	return 0
