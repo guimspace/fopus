@@ -830,7 +830,7 @@ fopus_backup_main()
 		return 1
 	fi
 
-	# encrypt
+	# verify encrypt
 	echo "fopus: verify encryption"
 	if [[ "${fopus_config[test-encryption]}" == "true" ]]; then
 		if ! fopus_verify_encryption_part "$archive_name"; then
