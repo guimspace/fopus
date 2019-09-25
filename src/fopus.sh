@@ -28,6 +28,9 @@ fopus_config=(
 	[compress-algo]="xz"
 	[group-by]="date"
 	[compact]="false"
+	[test-compression]="true"
+	[test-encryption]="true"
+	[test-split]="true"
 )
 
 DATE=$(date +%Y-%m-%d)
@@ -490,6 +493,15 @@ evaluate_options()
 				fi
 				fopus_config[root-path]="${list_args[$i]}" ;;
 
+			-tc)
+				fopus_config[test-compression]="false" ;;
+
+			-te)
+				fopus_config[test-encryption]="false" ;;
+
+			-ts)
+				fopus_config[test-split]="false" ;;
+
 			--)
 				break ;;
 
@@ -804,8 +816,12 @@ fopus_backup_main()
 
 	# test compression
 	echo "fopus: test compression"
-	if ! xz -tv -- "$archive_name"; then
-		return 1;
+	if [[ "${fopus_config[test-compression]}" == "true" ]]; then
+		if ! xz -tv -- "$archive_name"; then
+			return 1;
+		fi
+	else
+		echo "Skip."
 	fi
 
 	# encrypt
@@ -816,8 +832,12 @@ fopus_backup_main()
 
 	# encrypt
 	echo "fopus: verify encryption"
-	if ! fopus_verify_encryption_part "$archive_name"; then
-		return 1
+	if [[ "${fopus_config[test-encryption]}" == "true" ]]; then
+		if ! fopus_verify_encryption_part "$archive_name"; then
+			return 1
+		fi
+	else
+		echo "Skip."
 	fi
 
 	# split
