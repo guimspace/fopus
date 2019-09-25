@@ -43,7 +43,7 @@ CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
 
 # beta
 # EXEC_NAME="fopus-beta"
-# REMOTE_URL=""
+# REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/beta/src/fopus.sh"
 # CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus-beta.conf"
 
 
