@@ -18,7 +18,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 set +o allexport
-version=1.3.0-beta
+version=1.3.0
 
 typeset -A fopus_config
 fopus_config=(
@@ -37,14 +37,14 @@ DATE=$(date +%Y-%m-%d)
 CONFIG_PATH_DIR="$HOME/.config/fopus"
 
 # master
-# EXEC_NAME="fopus"
-# REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
-# CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
+EXEC_NAME="fopus"
+REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
+CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
 
 # beta
-EXEC_NAME="fopus-beta"
-REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/beta/src/fopus.sh"
-CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus-beta.conf"
+# EXEC_NAME="fopus-beta"
+# REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/beta/src/fopus.sh"
+# CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus-beta.conf"
 
 
 check_requirements()
