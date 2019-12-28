@@ -681,10 +681,10 @@ fopus_gnupg_backup()
 		return 1
 	fi
 
-	echo "fopus: export sub keys"
-	if ! fopus_export_keys "sub"; then
-		return 1
-	fi
+	# echo "fopus: export sub keys"
+	# if ! fopus_export_keys "sub"; then
+	# 	return 1
+	# fi
 
 	# tar
 	echo "fopus: archive files"
