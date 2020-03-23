@@ -2,6 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/guimspace/fopus/blob/master/LICENSE) [![Version](https://img.shields.io/github/release-pre/guimspace/fopus.svg)](https://github.com/guimspace/fopus/releases)
 
+**NOtice** _fopus_ is NOT suitable for professional application as it is not meant to be efficient, correct or secure.
 
 ## Overview
 
