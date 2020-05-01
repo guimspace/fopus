@@ -204,6 +204,10 @@ update_fopus()
 		rm -f "/tmp/fopus/$DL_EXE_NAME"
 	fi
 
+	if [[ -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
+		rm -f "/tmp/fopus/$DL_SIG_NAME"
+	fi
+
 	curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_EXE_NAME" "$REMOTE_URL_EXE"
 
 	if [[ ! -f "/tmp/fopus/$DL_EXE_NAME" ]]; then
@@ -244,8 +248,6 @@ update_fopus()
 	if ! cp "/tmp/fopus/$DL_EXE_NAME" "/usr/local/bin/$EXEC_NAME"; then
 		exit 1
 	fi
-
-	rm -f "/tmp/fopus/$DL_EXE_NAME"
 
 	echo "fopus is up-to-date"
 	exit 0
