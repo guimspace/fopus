@@ -222,7 +222,7 @@ update_fopus()
 		exit 1
 	fi
 
-	if ! gpg --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$EXEC_NAME" 2> /dev/null; then
+	if ! gpg --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" 2> /dev/null; then
 		>&2 echo "fopus: update: couldn't verify file integrity"
 		exit 1
 	fi
