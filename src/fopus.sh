@@ -38,8 +38,8 @@ CONFIG_PATH_DIR="$HOME/.config/fopus"
 
 # master
 EXEC_NAME="fopus"
-DL_EXE_NAME="fopus-v$version.sh"
-DL_SIG_NAME="fopus-v$version.sh.sig"
+DL_EXE_NAME="fopus.sh"
+DL_SIG_NAME="fopus.sh.sig"
 REMOTE_URL_EXE="https://github.com/guimspace/fopus/releases/latest/download/$DL_EXE_NAME"
 REMOTE_URL_SIG="https://github.com/guimspace/fopus/releases/latest/download/$DL_SIG_NAME"
 CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
