@@ -38,7 +38,10 @@ CONFIG_PATH_DIR="$HOME/.config/fopus"
 
 # master
 EXEC_NAME="fopus"
-REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh"
+DL_EXE_NAME="fopus-v$version.sh"
+DL_SIG_NAME="fopus-v$version.sh.sig"
+REMOTE_URL_EXE="https://github.com/guimspace/fopus/releases/latest/download/$DL_EXE_NAME"
+REMOTE_URL_SIG="https://github.com/guimspace/fopus/releases/latest/download/$DL_SIG_NAME"
 CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
 
 # beta
@@ -197,18 +200,30 @@ update_fopus()
 		exit 1
 	fi
 
-	if [[ -f "/tmp/fopus/$EXEC_NAME" ]]; then
-		rm -f "/tmp/fopus/$EXEC_NAME"
+	if [[ -f "/tmp/fopus/$DL_EXE_NAME" ]]; then
+		rm -f "/tmp/fopus/$DL_EXE_NAME"
 	fi
 
-	curl -sf --connect-timeout 7 -o "/tmp/fopus/$EXEC_NAME" "$REMOTE_URL"
+	curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_EXE_NAME" "$REMOTE_URL_EXE"
 
-	if [[ ! -f "/tmp/fopus/$EXEC_NAME" ]]; then
+	if [[ ! -f "/tmp/fopus/$DL_EXE_NAME" ]]; then
 		>&2 echo "fopus: update: download failed"
 		exit 1
 	fi
 
-	remote_hashsum=$($sha512sum_tool "/tmp/fopus/$EXEC_NAME" | cut -d " " -f 1)
+	curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_SIG_NAME" "$REMOTE_URL_SIG"
+
+	if [[ ! -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
+		>&2 echo "fopus: update: download failed"
+		exit 1
+	fi
+
+	if ! gpg --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$EXEC_NAME" 2> /dev/null; then
+		>&2 echo "fopus: update: couldn't verify file integrity"
+		exit 1
+	fi
+
+	remote_hashsum=$($sha512sum_tool "/tmp/fopus/$DL_EXE_NAME" | cut -d " " -f 1)
 
 	local_hashsum=$($sha512sum_tool "/usr/local/bin/$EXEC_NAME" | cut -d " " -f 1)
 	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
@@ -218,19 +233,19 @@ update_fopus()
 
 	echo "Updating..."
 
-	if ! chown "$USER:$(id -gn "$USER")" "/tmp/fopus/$EXEC_NAME"; then
+	if ! chown "$USER:$(id -gn "$USER")" "/tmp/fopus/$DL_EXE_NAME"; then
 		exit 1
 	fi
 
-	if ! chmod 0755 "/tmp/fopus/$EXEC_NAME"; then
+	if ! chmod 0755 "/tmp/fopus/$DL_EXE_NAME"; then
 		exit 1
 	fi
 
-	if ! cp "/tmp/fopus/$EXEC_NAME" "/usr/local/bin/$EXEC_NAME"; then
+	if ! cp "/tmp/fopus/$DL_EXE_NAME" "/usr/local/bin/$EXEC_NAME"; then
 		exit 1
 	fi
 
-	rm -f "/tmp/fopus/$EXEC_NAME"
+	rm -f "/tmp/fopus/$DL_EXE_NAME"
 
 	echo "fopus is up-to-date"
 	exit 0
