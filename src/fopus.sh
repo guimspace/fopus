@@ -25,7 +25,6 @@ fopus_config=(
     [max-size]="1073741824"
 	[default-key]=""
 	[root-path]="$HOME/Backups/"
-	[compress-algo]="xz"
 	[group-by]="date"
 	[compact]="false"
 	[test-compression]="true"
@@ -302,8 +301,7 @@ save_conf()
 	local opt=""
 	local var=""
 	local check="false"
-	local list_options=( "default-key" "compress-algo" "root-path" \
-							"max-size" "group-by" "compact" )
+	local list_options=( "default-key" "root-path" "max-size" "group-by" "compact" )
 
 	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
@@ -339,18 +337,6 @@ config_fopus()
 	case "$conf_option" in
 		default-key)
 			fopus_config[default-key]="$conf_value" ;;
-
-		compress-algo)
-			if [[ -z "$conf_value" || "$conf_value" == "1" ]]; then
-				conf_value="xz"
-			elif [[ "$conf_value" == "2" ]]; then
-				conf_value="pxz"
-			else
-				>&2 echo "fopus: invalid operand"
-				exit 1
-			fi
-
-			fopus_config[compress-algo]="$conf_value" ;;
 
 		root-path)
 			if [[ ! -d "$conf_value" ]]; then
@@ -397,7 +383,6 @@ config_fopus()
 			echo -e "  root-path DIR\t\tset name of root directory to DIR"
 			echo -e "  max-size SIZE\t\tsplit files larger than SIZE bytes"
 			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
-			echo -e "  compress-algo N\tuse compress algorithm N; default is 1 which is xz; use 2 to use pxz"
 			echo -e "  group-by ARG\t\tset how to organize backups"
 			echo -e "  compact BOOL\t\tbackup several sources in one archive"
 			echo ""
@@ -836,8 +821,8 @@ fopus_backup_main()
 
 
 	# compress
-	echo "fopus: compression"
-	tar -I "${fopus_config[compress-algo]}" -cvpf "$archive_name" -- "${LIST_FILES[@]}" > "list_${perprefix}_${backup_name}"
+	echo "fopus: archive and compress"
+	tar -cvpf - -- "${LIST_FILES[@]}" 2> "list_${perprefix}_${backup_name}" | xz --threads=0 -z -vv - > "$archive_name"
 
 	# test compression
 	echo "fopus: test compression"
