@@ -138,7 +138,7 @@ show_help()
 	echo -e "  --update\t\tupdate fopus"
 	echo -e "  --install\t\tinstall fopus"
 	echo -e "  --uninstall\t\tuninstall fopus"
-	echo -e "  --help\t\tdisplay this short helpt"
+	echo -e "  --help\t\tdisplay this short help"
 	echo -e "  --version\t\tdisplay the version number"
 	echo ""
 	echo "Options:"
