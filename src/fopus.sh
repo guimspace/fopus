@@ -224,21 +224,19 @@ update_fopus()
 		exit 1
 	fi
 
-	if [[ "$option" == "verify" ]]; then
-		curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_SIG_NAME" "$REMOTE_URL_SIG"
-		if [[ ! -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
-			>&2 echo "fopus: update: download failed"
-			exit 1
-		fi
+	curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_SIG_NAME" "$REMOTE_URL_SIG"
+	if [[ ! -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
+		>&2 echo "fopus: update: download failed"
+		exit 1
+	fi
 
-		mkdir -p "$DATA_PATH_DIR"
-		curl -s --connect-timeout 7 "$REMOTE_GPG_KEY" | gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --import - 2> /dev/null
+	mkdir -p "$DATA_PATH_DIR"
+	curl -s --connect-timeout 7 "$REMOTE_GPG_KEY" | gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --import - 2> /dev/null
 
-		gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --trust-model always --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" 2> /dev/null
-		if [[ "$?" -ne 0 ]]; then
-			>&2 echo "fopus: update: couldn't verify file integrity"
-			exit 1
-		fi
+	gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --trust-model always --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" 2> /dev/null
+	if [[ "$?" -ne 0 ]]; then
+		>&2 echo "fopus: update: couldn't verify file integrity"
+		exit 1
 	fi
 
 	remote_hashsum=$($sha512sum_tool "/tmp/fopus/$DL_EXE_NAME" | cut -d " " -f 1)
