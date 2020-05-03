@@ -40,6 +40,7 @@ fopus_config=(
 
 DATE=$(date +%Y-%m-%d)
 CONFIG_PATH_DIR="$USER_HOME/.config/fopus"
+DATA_PATH_DIR="$USER_HOME/.local/share/fopus"
 
 # master
 EXEC_NAME="fopus"
@@ -48,6 +49,8 @@ DL_SIG_NAME="fopus.sh.sig"
 REMOTE_URL_EXE="https://github.com/guimspace/fopus/releases/latest/download/$DL_EXE_NAME"
 REMOTE_URL_SIG="https://github.com/guimspace/fopus/releases/latest/download/$DL_SIG_NAME"
 CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
+
+REMOTE_GPG_KEY="https://raw.githubusercontent.com/guimspace/fopus/master/gnupg/key.asc"
 
 # beta
 # EXEC_NAME="fopus-beta"
@@ -228,7 +231,11 @@ update_fopus()
 			exit 1
 		fi
 
-		if ! gpg --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" 2> /dev/null; then
+		mkdir -p "$DATA_PATH_DIR"
+		curl -s --connect-timeout 7 "$REMOTE_GPG_KEY" | gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --import - 2> /dev/null
+
+		gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --trust-model always --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" 2> /dev/null
+		if [[ "$?" -ne 0 ]]; then
 			>&2 echo "fopus: update: couldn't verify file integrity"
 			exit 1
 		fi
