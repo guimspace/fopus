@@ -187,6 +187,7 @@ uninstall_fopus()
 
 update_fopus()
 {
+	local option="$1"
 	local local_hashsum=""
 	local remote_hashsum=""
 
@@ -214,21 +215,23 @@ update_fopus()
 		exit 1
 	fi
 
-	curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_SIG_NAME" "$REMOTE_URL_SIG"
+	if [[ "$option" == "verify" ]]; then
+		curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_SIG_NAME" "$REMOTE_URL_SIG"
 
-	if [[ ! -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
-		>&2 echo "fopus: update: download failed"
-		exit 1
-	fi
+		if [[ ! -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
+			>&2 echo "fopus: update: download failed"
+			exit 1
+		fi
 
-	if ! gpg --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" 2> /dev/null; then
-		>&2 echo "fopus: update: couldn't verify file integrity"
-		exit 1
+		if ! gpg --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" 2> /dev/null; then
+			>&2 echo "fopus: update: couldn't verify file integrity"
+			exit 1
+		fi
 	fi
 
 	remote_hashsum=$($sha512sum_tool "/tmp/fopus/$DL_EXE_NAME" | cut -d " " -f 1)
-
 	local_hashsum=$($sha512sum_tool "/usr/local/bin/$EXEC_NAME" | cut -d " " -f 1)
+
 	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
 		echo "fopus is up-to-date"
 		exit 0
