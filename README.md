@@ -56,13 +56,13 @@ The directory `bak_yyyy-mm-dd` have file permission set to `700`. Regular files 
 1. Download `fopus`:
 
 ```
-$ curl https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -o fopus.sh
+$ curl -L https://github.com/guimspace/fopus/releases/latest/download/fopus.sh -o fopus.sh
 ```
 
 If you do not have `curl`, you can alternatively use a recent `wget`:
 
 ```
-$ wget https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -O fopus.sh
+$ wget https://github.com/guimspace/fopus/releases/latest/download/fopus.sh -O fopus.sh
 ```
 
 2. Make the installer executable and then execute it:
