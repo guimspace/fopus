@@ -20,11 +20,17 @@
 set +o allexport
 version=1.5.2
 
+if [[ "$UID" == 0 ]]; then
+	USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+	USER_HOME="$HOME"
+fi
+
 typeset -A fopus_config
 fopus_config=(
     [max-size]="1073741824"
 	[default-key]=""
-	[root-path]="$HOME/Backups/"
+	[root-path]="$USER_HOME/Backups/"
 	[group-by]="date"
 	[compact]="false"
 	[test-compression]="true"
@@ -33,7 +39,7 @@ fopus_config=(
 )
 
 DATE=$(date +%Y-%m-%d)
-CONFIG_PATH_DIR="$HOME/.config/fopus"
+CONFIG_PATH_DIR="$USER_HOME/.config/fopus"
 
 # master
 EXEC_NAME="fopus"
@@ -217,7 +223,6 @@ update_fopus()
 
 	if [[ "$option" == "verify" ]]; then
 		curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_SIG_NAME" "$REMOTE_URL_SIG"
-
 		if [[ ! -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
 			>&2 echo "fopus: update: download failed"
 			exit 1
@@ -429,8 +434,8 @@ fopus_main()
 
 	root_path="${fopus_config[root-path]}"
 
-	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
-		root_path="$HOME/Backups"
+	if [[ "$root_path" =~ ^"$USER_HOME"/?$ ]]; then
+		root_path="$USER_HOME/Backups"
 	fi
 
 	if [[ ! -d "$root_path" ]]; then
@@ -615,7 +620,7 @@ fopus_backup_main()
 	fi
 
 
-	cd "$HOME" || exit 1
+	cd "$USER_HOME" || exit 1
 
 	# test overwrite
 	if ! fopus_overwrite_part "$bak_dir_parent" "$bak_dir_child"; then
