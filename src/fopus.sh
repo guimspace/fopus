@@ -18,7 +18,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 set +o allexport
-version=1.5.2
+version=1.5.3
 
 if [[ "$UID" == 0 ]]; then
 	USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
