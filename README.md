@@ -13,8 +13,8 @@
 
 - **Archive & compress:** The file is archived and compressed in `.tar.xz` format.  
 ```
-tar -I ALGO -cvpf file_FILE.tar.xz -- DIR > list-dir_DIR
-xz -tv file_FILE.tar.xz
+tar -cvpf - -- DIR 2> list-dir_DIR | xz --threads=0 -z -vv - > file_FILE.tar.xz
+xz -t -vv file_FILE.tar.xz
 ```
 
 - **Encrypt:** With `gpg`, the compressed file is encrypted in `.enc` format with the properties: symmetric cipher, sign, compression disabled.  
