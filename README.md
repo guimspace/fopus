@@ -13,8 +13,8 @@
 
 - **Archive & compress:** The file is archived and compressed in `.tar.xz` format.  
 ```
-tar -I ALGO -cvpf file_FILE.tar.xz -- DIR > list-dir_DIR
-xz -tv file_FILE.tar.xz
+tar -cvpf - -- DIR 2> list-dir_DIR | xz --threads=0 -z -vv - > file_FILE.tar.xz
+xz -t -vv file_FILE.tar.xz
 ```
 
 - **Encrypt:** With `gpg`, the compressed file is encrypted in `.enc` format with the properties: symmetric cipher, sign, compression disabled.  
@@ -56,13 +56,13 @@ The directory `bak_yyyy-mm-dd` have file permission set to `700`. Regular files 
 1. Download `fopus`:
 
 ```
-$ curl https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -o fopus.sh
+$ curl -L https://github.com/guimspace/fopus/releases/latest/download/fopus.sh -o fopus.sh
 ```
 
 If you do not have `curl`, you can alternatively use a recent `wget`:
 
 ```
-$ wget https://raw.githubusercontent.com/guimspace/fopus/master/src/fopus.sh -O fopus.sh
+$ wget https://github.com/guimspace/fopus/releases/latest/download/fopus.sh -O fopus.sh
 ```
 
 2. Make the installer executable and then execute it:
