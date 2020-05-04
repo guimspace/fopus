@@ -196,7 +196,6 @@ uninstall_fopus()
 
 update_fopus()
 {
-	local option="$1"
 	local local_hashsum=""
 	local remote_hashsum=""
 
@@ -920,7 +919,7 @@ case "$user_option" in
 		uninstall_fopus ;;
 
 	--update)
-		update_fopus "${@:2}" ;;
+		update_fopus ;;
 
 	--config)
 		config_fopus "${@:2}" ;;
