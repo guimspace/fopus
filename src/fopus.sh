@@ -692,8 +692,10 @@ fopus_backup_main()
 	fi
 
 	# test split
-	if ! fopus_test_split_part "$archive_name"; then
-		return 1
+	if [[ "${fopus_config[test-split]}" == "true" ]]; then
+		if ! fopus_test_split_part "$archive_name"; then
+			return 1
+		fi
 	fi
 
 	# hash and file permission
