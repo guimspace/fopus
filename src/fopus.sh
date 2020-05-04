@@ -590,6 +590,8 @@ filter_evaluate_files()
 fopus_backup_main()
 {
 	local TARGET_FILE="$1"
+	local FILE_EXTENSION=""
+	local MIME_TYPE=""
 	local LIST_FILES=("$@")
 
 	local backup_name=""
@@ -603,16 +605,27 @@ fopus_backup_main()
 	local perprefix=""
 	local hash_value=""
 
-	backup_name=$(basename "$TARGET_FILE")
+	backup_name=$(basename -- "$TARGET_FILE")
 	backup_name=${backup_name// /_}
 
 	if [[ -d "$TARGET_FILE" ]]; then
 		perprefix="dir"
+		archive_name="${perprefix}_${backup_name}.tar.xz"
 	else
 		perprefix="file"
+		if [[ "$backup_name" =~ \.[:alnum:]+$ ]]; then
+			FILE_EXTENSION="${backup_name##*.}"
+		fi
+		MIME_TYPE=$(file --mime-type -b "$TARGET_FILE")
+		if [[ "$MIME_TYPE" == "application/x-xz" || "$FILE_EXTENSION" == "xz" ]]; then
+			archive_name="${perprefix}_${backup_name}"
+		elif [[ "$MIME_TYPE" == "application/x-tar" || "$FILE_EXTENSION" == "tar" ]]; then
+			archive_name="${perprefix}_${backup_name}.xz"
+		else
+			archive_name="${perprefix}_${backup_name}.tar.xz"
+		fi
 	fi
 
-	archive_name="${perprefix}_${backup_name}.tar.xz"
 	hash_value=$(echo "$TARGET_FILE" | "$sha1sum_tool")
 	backup_name_hash="$backup_name-${hash_value:0:7}"
 
@@ -657,7 +670,15 @@ fopus_backup_main()
 
 	# compress
 	echo "fopus: archive and compress"
-	tar -cvpf - -- "${LIST_FILES[@]}" 2> "list_${perprefix}_${backup_name}" | xz --threads=0 -z -vv - > "$archive_name"
+	if [[ "$MIME_TYPE" == "application/x-xz" || "$FILE_EXTENSION" == "xz" ]]; then
+		echo "Skip."
+		cp "${LIST_FILES[@]}" "$archive_name"
+	elif [[ "$MIME_TYPE" == "application/x-tar" || "$FILE_EXTENSION" == "tar" ]]; then
+		echo "Compress only."
+		cat "${LIST_FILES[@]}" | xz --threads=0 -z -vv -k - > "$archive_name"
+	else
+		tar -cvpf - -- "${LIST_FILES[@]}" 2> "list_${perprefix}_${backup_name}" | xz --threads=0 -z -vv - > "$archive_name"
+	fi
 
 	# test compression
 	echo "fopus: test compression"
