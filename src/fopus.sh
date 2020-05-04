@@ -196,6 +196,7 @@ uninstall_fopus()
 
 update_fopus()
 {
+	local gpg_tool=( )
 	local local_hashsum=""
 	local remote_hashsum=""
 
@@ -232,8 +233,8 @@ update_fopus()
 	mkdir -p "$DATA_PATH_DIR"
 	curl -s --connect-timeout 7 "$REMOTE_GPG_KEY" | gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --import - 2> /dev/null
 
-	gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --trust-model always --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" 2> /dev/null
-	if [[ "$?" -ne 0 ]]; then
+	gpg_tool=( gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --trust-model always --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" )
+	if ! "${gpg_tool[@]}"; then
 		>&2 echo "fopus: update: couldn't verify file integrity"
 		exit 1
 	fi
