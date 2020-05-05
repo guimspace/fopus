@@ -39,6 +39,7 @@ fopus_config=(
 )
 
 DATE=$(date +%Y-%m-%d)
+DRY_RUN=false
 CONFIG_PATH_DIR="$USER_HOME/.config/fopus"
 DATA_PATH_DIR="$USER_HOME/.local/share/fopus"
 
@@ -482,6 +483,9 @@ evaluate_options()
 
 	while [[ $i -lt $N && "${list_args[$i]}" != "--" ]]; do
 		case "${list_args[$i]}" in
+			--dry-run)
+				DRY_RUN=true ;;
+
 			--gpg-key)
 				i=$((i+1))
 				fopus_config[default-key]="${list_args[i]}" ;;
@@ -664,27 +668,35 @@ fopus_backup_main()
 	du -sh "${LIST_FILES[@]}"
 
 	echo "fopus: start backup file"
-	mkdir -p "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
-	cd "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
+	if [[ "$DRY_RUN" = false ]]; then
+		mkdir -p "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
+		cd "$root_path/$bak_dir_parent/$bak_dir_child" || exit 1
+	fi
 
 
 	# compress
 	echo "fopus: archive and compress"
 	if [[ "$MIME_TYPE" == "application/x-xz" || "$FILE_EXTENSION" == "xz" ]]; then
 		echo "Skip."
-		cp "${LIST_FILES[@]}" "$archive_name"
+		if [[ "$DRY_RUN" = false ]]; then
+			cp "${LIST_FILES[@]}" "$archive_name"
+		fi
 	elif [[ "$MIME_TYPE" == "application/x-tar" || "$FILE_EXTENSION" == "tar" ]]; then
 		echo "Compress only."
-		cat "${LIST_FILES[@]}" | xz --threads=0 -z -vv -k - > "$archive_name"
-	else
+		if [[ "$DRY_RUN" = false ]]; then
+			cat "${LIST_FILES[@]}" | xz --threads=0 -z -vv -k - > "$archive_name"
+		fi
+	elif [[ "$DRY_RUN" = false ]]; then
 		tar -cvpf - -- "${LIST_FILES[@]}" 2> "list_${perprefix}_${backup_name}" | xz --threads=0 -z -vv - > "$archive_name"
 	fi
 
 	# test compression
 	echo "fopus: test compression"
 	if [[ "${fopus_config[test-compression]}" == "true" ]]; then
-		if ! xz -tv -- "$archive_name"; then
-			return 1;
+		if [[ "$DRY_RUN" = false ]]; then
+			if ! xz -tv -- "$archive_name"; then
+				return 1;
+			fi
 		fi
 	else
 		echo "Skip."
@@ -720,7 +732,7 @@ fopus_backup_main()
 	fi
 
 	# hash and file permission
-	cd ..
+	"$DRY_RUN" = true || cd ..
 	if ! fopus_hash_permission_part "$bak_dir_child"; then
 		return 1
 	fi
@@ -734,11 +746,15 @@ fopus_hash_permission_part()
 
 	# hashes
 	echo "fopus: hashes"
-	(find "$bak_dir_child/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS)
-	(find "$bak_dir_child/" -type f -exec md5sum {} \; >> MD5SUMS)
+	if [[ "$DRY_RUN" = false ]]; then
+		(find "$bak_dir_child/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS)
+		(find "$bak_dir_child/" -type f -exec md5sum {} \; >> MD5SUMS)
+	fi
 
 	# file permission
 	echo "fopus: file permission"
+	"$DRY_RUN" = false || return 0
+
 	if ! chmod 700 "$bak_dir_child/"; then
 		return 1
 	fi
@@ -794,7 +810,9 @@ fopus_overwrite_part()
 		read -r user_answer
 
 		if [[ "$user_answer" == "y" ]]; then
-			rm -rf "${root_path:?}/$bak_dir_parent/$bak_dir_child"
+			if [[ "$DRY_RUN" = false ]]; then
+				rm -rf "${root_path:?}/$bak_dir_parent/$bak_dir_child"
+			fi
 		else
 			echo "fopus: aborting"
 			return 1
@@ -823,7 +841,7 @@ fopus_encryption_part()
 	gpg_tool+=( -s -c -z 0 "$archive_name" )
 
 	check="false"
-	while [[ "$check" == "false" ]]; do
+	while [[ "$check" == "false" && "$DRY_RUN" = false ]]; do
 		if ! "${gpg_tool[@]}"; then
 			echo "Encryption failed."
 			echo -e "e - exit fopus"
@@ -860,8 +878,10 @@ fopus_verify_encryption_part()
 
 	gpg_tool=( gpg -o "/dev/null" -d "$archive_name.enc" )
 
-	if ! "${gpg_tool[@]}"; then
-		return 1
+	if [[ "$DRY_RUN" = false ]]; then
+		if ! "${gpg_tool[@]}"; then
+			return 1
+		fi
 	fi
 
 	return 0
@@ -874,10 +894,14 @@ fopus_split_part()
 	local archive_name="$1"
 
 	max_size_value=${fopus_config[max-size]}
-	size_value=$(stat -c %s "$archive_name.enc")
+	if [[ "$DRY_RUN" = false ]]; then
+		size_value=$(stat -c %s "$archive_name.enc")
+	fi
 
 	if [[ "${fopus_config[max-size]}" != "-1" && \
 			"$size_value" -gt "$max_size_value" ]]; then
+		"$DRY_RUN" = false || return 0
+
 		if ! split --verbose -b "$max_size_value" \
 			"$archive_name.enc" "$archive_name.enc_"; then
 				return 1
@@ -898,7 +922,9 @@ fopus_test_split_part()
 	local archive_name="$1"
 
 	max_size_value=${fopus_config[max-size]}
-	size_value=$(stat -c %s "$archive_name.enc")
+	if [[ "$DRY_RUN" = false ]]; then
+		size_value=$(stat -c %s "$archive_name.enc")
+	fi
 
 	if ! [[ "${fopus_config[max-size]}" != "-1" && \
 			"$size_value" -gt "$max_size_value" ]]; then
@@ -906,6 +932,7 @@ fopus_test_split_part()
 	fi
 
 	echo "fopus: test split"
+	"$DRY_RUN" = false || return 0
 
 	first_hashsum=$($sha512sum_tool "$archive_name.enc" | cut -d " " -f 1)
 	split_hashsum=$(cat "$archive_name.enc_"* | $sha512sum_tool | cut -d " " -f 1)
