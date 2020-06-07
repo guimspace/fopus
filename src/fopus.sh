@@ -732,7 +732,7 @@ fopus_backup_main()
 	fi
 
 	# hash and file permission
-	"$DRY_RUN" = true || cd ..
+	"$DRY_RUN" || cd ..
 	if ! fopus_hash_permission_part "$bak_dir_child"; then
 		return 1
 	fi
@@ -753,7 +753,7 @@ fopus_hash_permission_part()
 
 	# file permission
 	echo "fopus: file permission"
-	"$DRY_RUN" = false || return 0
+	"$DRY_RUN" && return 0
 
 	if ! chmod 700 "$bak_dir_child/"; then
 		return 1
@@ -900,7 +900,7 @@ fopus_split_part()
 
 	if [[ "${fopus_config[max-size]}" != "-1" && \
 			"$size_value" -gt "$max_size_value" ]]; then
-		"$DRY_RUN" = false || return 0
+		"$DRY_RUN" && return 0
 
 		if ! split --verbose -b "$max_size_value" \
 			"$archive_name.enc" "$archive_name.enc_"; then
@@ -932,7 +932,7 @@ fopus_test_split_part()
 	fi
 
 	echo "fopus: test split"
-	"$DRY_RUN" = false || return 0
+	"$DRY_RUN" && return 0
 
 	first_hashsum=$($sha512sum_tool "$archive_name.enc" | cut -d " " -f 1)
 	split_hashsum=$(cat "$archive_name.enc_"* | $sha512sum_tool | cut -d " " -f 1)
