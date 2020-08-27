@@ -78,7 +78,6 @@ The following GPG key will be used to sign the files and commits:
 pub   rsa2048/0xEBAE28FD2FEA00BC 2017-11-17 [SC] [expires: 2022-11-16]
       Key fingerprint = 78D3 B7C5 3E14 9768 EBEF  E814 EBAE 28FD 2FEA 00BC
 uid                   [ unknown] Guilherme Tadashi Maeoka <gui.mspace@gmail.com>
-sub   rsa2048/0xBF76CF49CA921C51 2017-11-17 [E] [expires: 2022-11-16]
 ```
 
 
