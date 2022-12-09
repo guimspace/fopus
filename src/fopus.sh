@@ -20,11 +20,11 @@
 set +o allexport
 version=1.6.1
 
-if [[ "$UID" == 0 ]]; then
-	USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-else
-	USER_HOME="$HOME"
+if [[ "$UID" -lt 1000 ]]; then
+	exit 1
 fi
+
+USER_HOME="$HOME"
 
 typeset -A fopus_config
 fopus_config=(
@@ -125,11 +125,6 @@ show_help()
 
 init_conf()
 {
-	if [[ "$UID" -eq 0 ]]; then
-		>&2 echo "fopus: user is root: Permission denied"
-		exit 1
-	fi
-
 	if [[ -f "$CONFIG_PATH_FILE" ]]; then
 		return 0
 	fi
@@ -278,15 +273,7 @@ fopus_main()
 	origins_path="$(pwd -P)"
 	gpg_key_id="${fopus_config[default-key]}"
 
-	user_answer=""
-	if [[ "$UID" -eq 0 ]]; then
-		echo -n "fopus: user is root. Continue? [y/N]: "
-		read -r user_answer
-		if [[ "$user_answer" != "y" && "$user_answer" != "Y" ]]; then
-			echo "fopus: exiting"
-			exit 1
-		fi
-	elif [[ ${#list_args[@]} -eq 0 ]]; then
+	if [[ ${#list_args[@]} -eq 0 ]]; then
 		>&2 echo "fopus: missing file operand"
 		echo "Try 'fopus --help' for more information."
 		exit 1
