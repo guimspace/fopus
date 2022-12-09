@@ -29,7 +29,7 @@ fopus_config=(
     [max-size]="1073741824"
 	[root-path]="$HOME/Backups/"
 	[group-by]="date"
-	[compact]="false"
+	[one]="false"
 )
 
 DATE=$(date +%Y-%m-%d)
@@ -107,7 +107,7 @@ show_help()
 	echo "Options:"
 	echo ""
 	echo -e "  --no-split\t\tskip split process"
-	echo -e "  --compact\t\tbackup several sources in one archive"
+	echo -e "  --one\t\tall-in-one"
 	echo -e "  --group-by\t\torganize backups by date/file or vice versa"
 	echo ""
 	echo "To aces a file whose name starts with a '-', for example '-foo',"
@@ -164,7 +164,7 @@ save_conf()
 	local opt=""
 	local var=""
 	local check="false"
-	local list_options=( "root-path" "max-size" "group-by" "compact" )
+	local list_options=( "root-path" "max-size" "group-by" "one" )
 
 	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
@@ -227,9 +227,9 @@ config_fopus()
 
 			fopus_config[max-size]="$conf_value" ;;
 
-		compact)
+		one)
 			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
-				fopus_config[compact]="$conf_value"
+				fopus_config[one]="$conf_value"
 			else
 				>&2 echo "fopus: config: invalid arg"
 				exit 1
@@ -243,7 +243,7 @@ config_fopus()
 			echo -e "  root-path DIR\t\tset name of root directory to DIR"
 			echo -e "  max-size SIZE\t\tsplit files larger than SIZE bytes"
 			echo -e "  group-by ARG\t\tset how to organize backups"
-			echo -e "  compact BOOL\t\tbackup several sources in one archive"
+			echo -e "  one BOOL\t\tbackup several sources in one archive"
 			echo ""
 			echo "For more information visit https://github.com/guimspace/fopus."
 			exit 0 ;;
@@ -290,7 +290,7 @@ fopus_main()
 
 	root_path=${root_path%/}
 
-	if [[ "${fopus_config[compact]}" == "true" ]]; then
+	if [[ "${fopus_config[one]}" == "true" ]]; then
 		echo ""
 		fopus_backup_main "${list_clean[@]}"
 	else
@@ -338,8 +338,8 @@ evaluate_options()
 					file_date="true"
 				fi ;;
 
-			--compact)
-				fopus_config[compact]="true" ;;
+			--one)
+				fopus_config[one]="true" ;;
 
 			--no-split)
 				fopus_config[max-size]="-1" ;;
@@ -380,7 +380,7 @@ filter_evaluate_files()
 	local file=""
 	local command_continue=""
 
-	if [[ "${fopus_config[compact]}" == "true" ]]; then
+	if [[ "${fopus_config[one]}" == "true" ]]; then
 		command_continue=( exit 1 )
 	else
 		command_continue=( continue )
@@ -474,7 +474,7 @@ fopus_backup_main()
 
 	# show backup details
 	echo "Source $TARGET_FILE"
-	if [[ "${fopus_config[compact]}" == "true" ]]; then
+	if [[ "${fopus_config[one]}" == "true" ]]; then
 		i=1
 		N="${#LIST_FILES[@]}"
 		while [[ $i -lt $N ]]; do
