@@ -538,34 +538,15 @@ fopus_backup_main()
 		tar -cvpf - -- "${LIST_FILES[@]}" 2> "list_${perprefix}_${backup_name}" | xz --threads=0 -z -vv - > "$archive_name"
 	fi
 
-	# test compression
-	echo "fopus: test compression"
-	if [[ "$DRY_RUN" = false ]]; then
-		if ! xz -tv -- "$archive_name"; then
-			return 1;
-		fi
-	fi
-
 	# encrypt
 	echo "fopus: encrypt"
 	if ! fopus_encryption_part "$archive_name"; then
 		return 1
 	fi
 
-	# verify encrypt
-	echo "fopus: verify encryption"
-	if ! fopus_verify_encryption_part "$archive_name"; then
-		return 1
-	fi
-
 	# split
 	echo "fopus: split"
 	if ! fopus_split_part "$archive_name"; then
-		return 1
-	fi
-
-	# test split
-	if ! fopus_test_split_part "$archive_name"; then
 		return 1
 	fi
 
@@ -709,22 +690,6 @@ fopus_encryption_part()
 	return 0
 }
 
-fopus_verify_encryption_part()
-{
-	local gpg_tool=( )
-	local archive_name="$1"
-
-	gpg_tool=( gpg -o "/dev/null" -d "$archive_name.enc" )
-
-	if [[ "$DRY_RUN" = false ]]; then
-		if ! "${gpg_tool[@]}"; then
-			return 1
-		fi
-	fi
-
-	return 0
-}
-
 fopus_split_part()
 {
 	local size_value=""
@@ -746,39 +711,6 @@ fopus_split_part()
 		fi
 	else
 		echo "Not necessary."
-	fi
-
-	return 0
-}
-
-fopus_test_split_part()
-{
-	local first_hashsum=""
-	local split_hashsum=""
-	local size_value=""
-	local max_size_value=""
-	local archive_name="$1"
-
-	max_size_value=${fopus_config[max-size]}
-	if [[ "$DRY_RUN" = false ]]; then
-		size_value=$(stat -c %s "$archive_name.enc")
-	fi
-
-	if ! [[ "${fopus_config[max-size]}" != "-1" && \
-			"$size_value" -gt "$max_size_value" ]]; then
-			return 0
-	fi
-
-	echo "fopus: test split"
-	"$DRY_RUN" && return 0
-
-	first_hashsum=$($sha256sum_tool "$archive_name.enc" | cut -d " " -f 1)
-	split_hashsum=$(cat "$archive_name.enc_"* | $sha256sum_tool | cut -d " " -f 1)
-
-	if [[ "$split_hashsum" == "$first_hashsum" ]]; then
-		return 0
-	else
-		return 1
 	fi
 
 	return 0
