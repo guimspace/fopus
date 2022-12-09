@@ -33,9 +33,6 @@ fopus_config=(
 	[root-path]="$USER_HOME/Backups/"
 	[group-by]="date"
 	[compact]="false"
-	[test-compression]="true"
-	[test-encryption]="true"
-	[test-split]="true"
 )
 
 DATE=$(date +%Y-%m-%d)
@@ -380,15 +377,6 @@ evaluate_options()
 				fi
 				fopus_config[root-path]="${list_args[$i]}" ;;
 
-			-tc)
-				fopus_config[test-compression]="false" ;;
-
-			-te)
-				fopus_config[test-encryption]="false" ;;
-
-			-ts)
-				fopus_config[test-split]="false" ;;
-
 			--)
 				break ;;
 
@@ -552,14 +540,10 @@ fopus_backup_main()
 
 	# test compression
 	echo "fopus: test compression"
-	if [[ "${fopus_config[test-compression]}" == "true" ]]; then
-		if [[ "$DRY_RUN" = false ]]; then
-			if ! xz -tv -- "$archive_name"; then
-				return 1;
-			fi
+	if [[ "$DRY_RUN" = false ]]; then
+		if ! xz -tv -- "$archive_name"; then
+			return 1;
 		fi
-	else
-		echo "Skip."
 	fi
 
 	# encrypt
@@ -570,12 +554,8 @@ fopus_backup_main()
 
 	# verify encrypt
 	echo "fopus: verify encryption"
-	if [[ "${fopus_config[test-encryption]}" == "true" ]]; then
-		if ! fopus_verify_encryption_part "$archive_name"; then
-			return 1
-		fi
-	else
-		echo "Skip."
+	if ! fopus_verify_encryption_part "$archive_name"; then
+		return 1
 	fi
 
 	# split
@@ -585,10 +565,8 @@ fopus_backup_main()
 	fi
 
 	# test split
-	if [[ "${fopus_config[test-split]}" == "true" ]]; then
-		if ! fopus_test_split_part "$archive_name"; then
-			return 1
-		fi
+	if ! fopus_test_split_part "$archive_name"; then
+		return 1
 	fi
 
 	# hash and file permission
