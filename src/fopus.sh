@@ -34,10 +34,6 @@ fopus_config=(
 
 DATE=$(date +%Y-%m-%d)
 DRY_RUN=false
-CONFIG_PATH_DIR="$HOME/.config/fopus"
-
-# master
-CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
 
 check_requirements()
 {
@@ -100,7 +96,6 @@ show_help()
 	echo ""
 	echo "Commands:"
 	echo ""
-	echo -e "  --config\t\tedit configuration"
 	echo -e "  --help\t\tdisplay this short help"
 	echo -e "  --version\t\tdisplay the version number"
 	echo ""
@@ -120,142 +115,8 @@ show_help()
 	echo "fopus repository: <https://github.com/guimspace/fopus>"
 }
 
-init_conf()
-{
-	if [[ -f "$CONFIG_PATH_FILE" ]]; then
-		return 0
-	fi
-
-	if [[ ! -d "$CONFIG_PATH_DIR" ]]; then
-		if ! mkdir -p "$CONFIG_PATH_DIR"; then
-			exit 1
-		fi
-	fi
-
-	if ! touch "$CONFIG_PATH_FILE"; then
-		exit 1
-	fi
-
-	return 0
-}
-
-read_conf()
-{
-	local var=""
-	local value=""
-
-	if [[ ! -f "$CONFIG_PATH_FILE" ]]; then
-		init_conf
-	fi
-
-	while read -r var value; do
-		if [[ -n "$var" && -n "$value" ]]; then
-			fopus_config["$var"]="$value"
-		fi
-	done < "$CONFIG_PATH_FILE"
-}
-
-save_conf()
-{
-	if [[ ! -f "$CONFIG_PATH_FILE" ]]; then
-		init_conf
-	fi
-
-	local opt=""
-	local var=""
-	local check="false"
-	local list_options=( "root-path" "max-size" "group-by" "one" )
-
-	echo "# fopus" > "$CONFIG_PATH_FILE"
-	for var in ${!fopus_config[*]}; do
-		check="false"
-
-		for opt in ${!list_options[*]}; do
-			if [[ "$var" == "${list_options[$opt]}" ]]; then
-				check="true"
-				break
-			fi
-		done
-
-		if [[ "$check" == "false" ]]; then
-			continue
-		fi
-
-		if [[ "${fopus_config[$var]}" == "true" ]]; then
-			echo "$var" >> "$CONFIG_PATH_FILE"
-		elif [[ "${fopus_config[$var]}" != "false" && \
-					-n ${fopus_config[$var]} ]]; then
-			echo "$var ${fopus_config[$var]}" >> "$CONFIG_PATH_FILE"
-		fi
-	done
-}
-
-config_fopus()
-{
-	read_conf
-
-	local conf_option="$1"
-	local conf_value="$2"
-
-	case "$conf_option" in
-		root-path)
-			if [[ ! -d "$conf_value" ]]; then
-				>&2 echo "fopus: invalid operand"
-				exit 1
-			elif [[ ! -w "$conf_value" ]]; then
-				>&2 echo "fopus: permission denied"
-				exit 1
-			else
-				cd "$(dirname "$conf_value")" || exit 1
-				conf_value="$(pwd -P)/$(basename "$conf_value")/"
-			fi
-
-			fopus_config[root-path]="$conf_value" ;;
-
-		group-by)
-			if [[ "$conf_value" == "file" || "$conf_value" == "date" ]]; then
-				fopus_config[group-by]="$conf_value"
-			else
-				>&2 echo "fopus: config: invalid arg"
-				exit 1
-			fi ;;
-
-		max-size)
-			if [[ "$conf_value" == "0" ]]; then
-				conf_value=""
-			fi
-
-			fopus_config[max-size]="$conf_value" ;;
-
-		one)
-			if [[ "$conf_value" == "true" || "$conf_value" == "false" ]]; then
-				fopus_config[one]="$conf_value"
-			else
-				>&2 echo "fopus: config: invalid arg"
-				exit 1
-			fi ;;
-
-		*)
-			echo "Syntax: fopus --config [OPTION] [ARG]"
-			echo ""
-			echo "Options:"
-			echo ""
-			echo -e "  root-path DIR\t\tset name of root directory to DIR"
-			echo -e "  max-size SIZE\t\tsplit files larger than SIZE bytes"
-			echo -e "  group-by ARG\t\tset how to organize backups"
-			echo -e "  one BOOL\t\tbackup several sources in one archive"
-			echo ""
-			echo "For more information visit https://github.com/guimspace/fopus."
-			exit 0 ;;
-	esac
-
-	save_conf
-	exit 0
-}
-
 fopus_main()
 {
-	read_conf
 	local list_args=("$@")
 
 	local i=""
@@ -694,9 +555,6 @@ if [[ -z "$user_option" ]]; then
 fi
 
 case "$user_option" in
-	--config)
-		config_fopus "${@:2}" ;;
-
 	--help)
 		show_help ;;
 
