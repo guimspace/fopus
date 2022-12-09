@@ -352,7 +352,7 @@ fopus_backup_main()
 			cat "${LIST_FILES[@]}" | xz --threads=0 -z -vv -k - > "$archive_name"
 		fi
 	elif [[ "$DRY_RUN" = false ]]; then
-		tar -cvpf - -- "${LIST_FILES[@]}" 2> "list_${perprefix}_${backup_name}" | xz --threads=0 -z -vv - > "$archive_name"
+		tar -cvf - -- "${LIST_FILES[@]}" 2> "list_${perprefix}_${backup_name}" | xz --threads=0 -z -vv - > "$archive_name"
 	fi
 
 	# encrypt
