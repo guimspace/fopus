@@ -356,9 +356,10 @@ fopus_backup_main()
 	fi
 
 	# encrypt
-	echo "fopus: encrypt"
-	if ! fopus_encryption_part "$archive_name"; then
-		return 1
+	if [[ "$DRY_RUN" = false ]]; then
+		if ! gpg -o "$archive_name.enc" -s -c -z 0 "$archive_name"; then
+			return 1
+		fi
 	fi
 
 	# split
@@ -396,48 +397,6 @@ fopus_hash_permission_part()
 	fi
 	(find "$bak_dir_child/" -type f -exec chmod 600 {} \;)
 	(find "$bak_dir_child/" -type d -exec chmod 700 {} \;)
-
-	return 0
-}
-
-fopus_encryption_part()
-{
-	local gpg_tool=( )
-	local archive_name="$1"
-	local user_option_abc=""
-	local check=""
-
-	gpg_tool=( gpg -o "$archive_name.enc" )
-
-	gpg_tool+=( -s -c -z 0 "$archive_name" )
-
-	check="false"
-	while [[ "$check" == "false" && "$DRY_RUN" = false ]]; do
-		if ! "${gpg_tool[@]}"; then
-			echo "Encryption failed."
-			echo -e "e - exit fopus"
-			echo -e "r - retry encryption"
-			echo -e "s - skip encryption"
-			echo ""
-			echo -n "[e,r,s]? "
-
-			read -r user_option_abc
-
-			case "$user_option_abc" in
-				e)
-					return 1 ;;
-
-				s)
-					check="true" ;;
-
-				r)
-					;;
-			esac
-		else
-			check="true"
-			break
-		fi
-	done
 
 	return 0
 }
