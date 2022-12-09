@@ -28,7 +28,7 @@ typeset -A fopus_config
 fopus_config=(
     [max-size]="1073741824"
 	[root-path]="$HOME/Backups/"
-	[group-by]="date"
+	[by-name]="false"
 	[one]="false"
 )
 
@@ -103,7 +103,7 @@ show_help()
 	echo ""
 	echo -e "  --no-split\t\tskip split process"
 	echo -e "  --one\t\tall-in-one"
-	echo -e "  --group-by\t\torganize backups by date/file or vice versa"
+	echo -e "  --by-name\t\tgroup backups by file/date instead of date/name"
 	echo ""
 	echo "To aces a file whose name starts with a '-', for example '-foo',"
 	echo "use one of these commands:"
@@ -175,29 +175,14 @@ evaluate_options()
 
 	local i=0
 	local N=${#list_args[@]}
-	local file_date="false"
-	local tmp_value=""
 
 	while [[ $i -lt $N && "${list_args[$i]}" != "--" ]]; do
 		case "${list_args[$i]}" in
 			--dry-run)
 				DRY_RUN=true ;;
 
-			--group-by)
-				i=$((i+1))
-				if [[ "${list_args[$i]}" == "date" ]]; then
-					tmp_value="date"
-				elif [[ "${list_args[$i]}" == "file" ]]; then
-					tmp_value="file"
-				else
-					>&2 echo "fopus: ${list_args["$i"]}: invalid argument"
-					exit 1
-				fi
-
-				if [[ "$file_date" == "false" ]]; then
-					fopus_config[group-by]="$tmp_value"
-					file_date="true"
-				fi ;;
+			--by-name)
+				fopus_config[by-name]="true" ;;
 
 			--one)
 				fopus_config[one]="true" ;;
@@ -317,7 +302,7 @@ fopus_backup_main()
 	hash_value=$(echo "$TARGET_FILE" | "$sha1sum_tool")
 	backup_name_hash="$backup_name-${hash_value:0:7}"
 
-	if [[ "${fopus_config[group-by]}" == "file" ]]; then
+	if [[ "${fopus_config[by-name]}" == "true" ]]; then
 		bak_dir_parent="$backup_name_hash"
 		bak_dir_child="bak_$DATE"
 	else
