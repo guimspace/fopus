@@ -313,9 +313,9 @@ fopus_backup_main()
 
 	cd "$HOME" || exit 1
 
-	# test overwrite
-	if ! fopus_overwrite_part "$bak_dir_parent" "$bak_dir_child"; then
-		return
+	if [[ -e "$root_path/$bak_dir_parent/$bak_dir_child" ]]; then
+		>&2 echo "fopus: cannot create backup: Backup exists"
+		return 0
 	fi
 
 	# show backup details
@@ -396,67 +396,6 @@ fopus_hash_permission_part()
 	fi
 	(find "$bak_dir_child/" -type f -exec chmod 600 {} \;)
 	(find "$bak_dir_child/" -type d -exec chmod 700 {} \;)
-
-	return 0
-}
-
-fopus_overwrite_part()
-{
-	local bak_dir_parent="$1"
-	bak_dir_child="$2"
-
-	local c=""
-	local suf=""
-	local user_answer=""
-
-	if [[ ! -e "$root_path/$bak_dir_parent/$bak_dir_child" ]]; then
-		return 0
-	fi
-
-	echo "Backup '$bak_dir_parent/$bak_dir_child' exists."
-
-	c=0
-	for suf in $(seq -f "%03g" 1 999); do
-		c=$((c+1))
-		if [[ ! -e "$root_path/$bak_dir_parent/$bak_dir_child""_$suf" ]]; then
-			break
-		fi
-	done
-
-	if [[ -e "$root_path/$bak_dir_parent/$bak_dir_child""_001" ]]; then
-		echo "$c level(s) of rename exist."
-	fi
-
-	echo -e "y - yes"
-	echo -e "n - no, abort"
-	echo -e "r - rename"
-	echo -e "e - exit fopus"
-	echo ""
-	echo -n "Overwrite [y,n,r,e]?: "
-	read -r user_answer
-
-	if [[ "$user_answer" == "e" ]]; then
-		echo "fopus: exiting"
-		exit 1
-	elif [[ "$user_answer" == "r" ]]; then
-		bak_dir_child="$bak_dir_child"_"$suf"
-		echo "Backup renamed to '$bak_dir_child'."
-	elif [[ "$user_answer" == "y" ]]; then
-		echo -n "This is a backup! Really overwrite? [y/N]: "
-		read -r user_answer
-
-		if [[ "$user_answer" == "y" ]]; then
-			if [[ "$DRY_RUN" = false ]]; then
-				rm -rf "${root_path:?}/$bak_dir_parent/$bak_dir_child"
-			fi
-		else
-			echo "fopus: aborting"
-			return 1
-		fi
-	else
-		echo "fopus: aborting"
-		return 1
-	fi
 
 	return 0
 }
