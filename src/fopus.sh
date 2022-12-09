@@ -41,27 +41,13 @@ fopus_config=(
 DATE=$(date +%Y-%m-%d)
 DRY_RUN=false
 CONFIG_PATH_DIR="$USER_HOME/.config/fopus"
-DATA_PATH_DIR="$USER_HOME/.local/share/fopus"
 
 # master
-EXEC_NAME="fopus"
-DL_EXE_NAME="fopus.sh"
-DL_SIG_NAME="fopus.sh.sig"
-REMOTE_URL_EXE="https://github.com/guimspace/fopus/releases/latest/download/$DL_EXE_NAME"
-REMOTE_URL_SIG="https://github.com/guimspace/fopus/releases/latest/download/$DL_SIG_NAME"
 CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
-
-REMOTE_GPG_KEY="https://raw.githubusercontent.com/guimspace/fopus/master/gnupg/key.asc"
-
-# beta
-# EXEC_NAME="fopus-beta"
-# REMOTE_URL="https://raw.githubusercontent.com/guimspace/fopus/beta/src/fopus.sh"
-# CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus-beta.conf"
-
 
 check_requirements()
 {
-	local list_packages=(gpg curl tar xz md5sum shasum)
+	local list_packages=(gpg tar xz md5sum shasum)
 	local i=""
 
 	for i in ${!list_packages[*]}; do
@@ -136,9 +122,6 @@ show_help()
 	echo "Commands:"
 	echo ""
 	echo -e "  --config\t\tedit configuration"
-	echo -e "  --update\t\tupdate fopus"
-	echo -e "  --install\t\tinstall fopus"
-	echo -e "  --uninstall\t\tuninstall fopus"
 	echo -e "  --help\t\tdisplay this short help"
 	echo -e "  --version\t\tdisplay the version number"
 	echo ""
@@ -156,114 +139,6 @@ show_help()
 	echo ""
 	echo "Report bugs, comments and suggestions to <gui.mspace@gmail.com> (in English or Portuguese)."
 	echo "fopus repository: <https://github.com/guimspace/fopus>"
-}
-
-install_fopus()
-{
-	local origin_path=""
-
-	if [[ ! -d "/usr/local/bin/" ]]; then
-		>&2 echo "fopus: /usr/local/bin/ not found"
-		exit 1
-	fi
-
-	origin_path="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
-
-	if ! cp "$origin_path" "/usr/local/bin/$EXEC_NAME"; then
-		exit 1
-	fi
-
-	if ! chown "$USER:$(id -gn "$USER")" "/usr/local/bin/$EXEC_NAME"; then
-		exit 1
-	fi
-
-	if ! chmod a+rx "/usr/local/bin/$EXEC_NAME"; then
-		exit 1
-	fi
-
-	echo "fopus is installed."
-	exit 0
-}
-
-uninstall_fopus()
-{
-	if ! rm -f "/usr/local/bin/$EXEC_NAME"; then
-		exit 1
-	fi
-
-	echo "fopus is uninstalled."
-	exit 0
-}
-
-update_fopus()
-{
-	local gpg_tool=( )
-	local local_hashsum=""
-	local remote_hashsum=""
-
-	if [[ ! -f "/usr/local/bin/$EXEC_NAME" ]]; then
-		>&2 echo "fopus: fopus is not installed"
-		exit 1
-	fi
-
-	if ! mkdir -p "/tmp/fopus/"; then
-		exit 1
-	fi
-
-	if [[ -f "/tmp/fopus/$DL_EXE_NAME" ]]; then
-		rm -f "/tmp/fopus/$DL_EXE_NAME"
-	fi
-
-	if [[ -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
-		rm -f "/tmp/fopus/$DL_SIG_NAME"
-	fi
-
-	curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_EXE_NAME" "$REMOTE_URL_EXE"
-
-	if [[ ! -f "/tmp/fopus/$DL_EXE_NAME" ]]; then
-		>&2 echo "fopus: update: download failed"
-		exit 1
-	fi
-
-	curl -sf -L --connect-timeout 7 -o "/tmp/fopus/$DL_SIG_NAME" "$REMOTE_URL_SIG"
-	if [[ ! -f "/tmp/fopus/$DL_SIG_NAME" ]]; then
-		>&2 echo "fopus: update: download failed"
-		exit 1
-	fi
-
-	mkdir -p "$DATA_PATH_DIR"
-	curl -s --connect-timeout 7 "$REMOTE_GPG_KEY" | gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --import - 2> /dev/null
-
-	gpg_tool=( gpg --no-default-keyring --keyring "$DATA_PATH_DIR/keyring.gpg" --trust-model always --verify "/tmp/fopus/$DL_SIG_NAME" "/tmp/fopus/$DL_EXE_NAME" )
-	if ! "${gpg_tool[@]}"; then
-		>&2 echo "fopus: update: couldn't verify file integrity"
-		exit 1
-	fi
-
-	remote_hashsum=$($sha512sum_tool "/tmp/fopus/$DL_EXE_NAME" | cut -d " " -f 1)
-	local_hashsum=$($sha512sum_tool "/usr/local/bin/$EXEC_NAME" | cut -d " " -f 1)
-
-	if [[ "$local_hashsum" == "$remote_hashsum" ]]; then
-		echo "fopus is up-to-date"
-		exit 0
-	fi
-
-	echo "Updating..."
-
-	if ! chown "$USER:$(id -gn "$USER")" "/tmp/fopus/$DL_EXE_NAME"; then
-		exit 1
-	fi
-
-	if ! chmod 0755 "/tmp/fopus/$DL_EXE_NAME"; then
-		exit 1
-	fi
-
-	if ! cp "/tmp/fopus/$DL_EXE_NAME" "/usr/local/bin/$EXEC_NAME"; then
-		exit 1
-	fi
-
-	echo "fopus is up-to-date"
-	exit 0
 }
 
 init_conf()
@@ -950,28 +825,13 @@ fopus_test_split_part()
 check_requirements
 
 user_option="$1"
-if [[ "$user_option" == "--install" || "$user_option" == "--uninstall" || \
-		"$user_option" == "--update" ]]; then
-	if [[ "$UID" != 0 ]]; then
-		>&2 echo "fopus: permission denied"
-		exit 1
-	fi
-elif [[ -z "$user_option" ]]; then
+if [[ -z "$user_option" ]]; then
 	>&2 echo "fopus: missing file operand"
 	echo "Try 'fopus --help' for more information."
 	exit 1
 fi
 
 case "$user_option" in
-	--install)
-		install_fopus ;;
-
-	--uninstall)
-		uninstall_fopus ;;
-
-	--update)
-		update_fopus ;;
-
 	--config)
 		config_fopus "${@:2}" ;;
 
