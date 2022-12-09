@@ -27,7 +27,6 @@ fi
 typeset -A fopus_config
 fopus_config=(
     [max-size]="1073741824"
-	[default-key]=""
 	[root-path]="$HOME/Backups/"
 	[group-by]="date"
 	[compact]="false"
@@ -165,7 +164,7 @@ save_conf()
 	local opt=""
 	local var=""
 	local check="false"
-	local list_options=( "default-key" "root-path" "max-size" "group-by" "compact" )
+	local list_options=( "root-path" "max-size" "group-by" "compact" )
 
 	echo "# fopus" > "$CONFIG_PATH_FILE"
 	for var in ${!fopus_config[*]}; do
@@ -199,9 +198,6 @@ config_fopus()
 	local conf_value="$2"
 
 	case "$conf_option" in
-		default-key)
-			fopus_config[default-key]="$conf_value" ;;
-
 		root-path)
 			if [[ ! -d "$conf_value" ]]; then
 				>&2 echo "fopus: invalid operand"
@@ -246,7 +242,6 @@ config_fopus()
 			echo ""
 			echo -e "  root-path DIR\t\tset name of root directory to DIR"
 			echo -e "  max-size SIZE\t\tsplit files larger than SIZE bytes"
-			echo -e "  default-key NAME\tuse NAME as the default key to sign with"
 			echo -e "  group-by ARG\t\tset how to organize backups"
 			echo -e "  compact BOOL\t\tbackup several sources in one archive"
 			echo ""
@@ -269,7 +264,6 @@ fopus_main()
 	declare -a list_clean
 
 	origins_path="$(pwd -P)"
-	gpg_key_id="${fopus_config[default-key]}"
 
 	if [[ ${#list_args[@]} -eq 0 ]]; then
 		>&2 echo "fopus: missing file operand"
@@ -327,10 +321,6 @@ evaluate_options()
 		case "${list_args[$i]}" in
 			--dry-run)
 				DRY_RUN=true ;;
-
-			--gpg-key)
-				i=$((i+1))
-				fopus_config[default-key]="${list_args[i]}" ;;
 
 			--group-by)
 				i=$((i+1))
@@ -493,11 +483,7 @@ fopus_backup_main()
 		done
 	fi
 	echo "Backup $root_path/$bak_dir_parent/$bak_dir_child"
-	if [[ -n "$gpg_key_id" ]]; then
-		echo "GPG key to sign with $gpg_key_id"
-	else
-		echo "No GPG key to sign with: gpg will use the first key found in the secret keyring"
-	fi
+
 	du -sh "${LIST_FILES[@]}"
 
 	echo "fopus: start backup file"
@@ -637,10 +623,6 @@ fopus_encryption_part()
 	local check=""
 
 	gpg_tool=( gpg -o "$archive_name.enc" )
-
-	if [[ -n "$gpg_key_id" ]]; then
-		gpg_tool+=( -u "$gpg_key_id" )
-	fi
 
 	gpg_tool+=( -s -c -z 0 "$archive_name" )
 
