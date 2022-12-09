@@ -58,12 +58,6 @@ check_requirements()
 	done
 
 
-	sha512sum_func
-    if [[ -z "$sha512sum_tool" ]]; then
-		>&2 echo "fopus: sha512sum not found"
-  		exit 1
-    fi
-
   	sha256sum_func
     if [[ -z "$sha256sum_tool" ]]; then
 		>&2 echo "fopus: sha256sum not found"
@@ -75,15 +69,6 @@ check_requirements()
 		>&2 echo "fopus: sha1sum not found"
 		exit 1
     fi
-}
-
-sha512sum_func() {
-	if command -v sha512sum &> /dev/null; then
-		sha512sum_tool="$(command -v sha512sum)"
-	elif command -v shasum &> /dev/null; then
-		sha512sum_tool="$(command -v shasum) -a 512 "
-	fi
-	export sha512sum_tool
 }
 
 sha256sum_func() {
@@ -809,8 +794,8 @@ fopus_test_split_part()
 	echo "fopus: test split"
 	"$DRY_RUN" && return 0
 
-	first_hashsum=$($sha512sum_tool "$archive_name.enc" | cut -d " " -f 1)
-	split_hashsum=$(cat "$archive_name.enc_"* | $sha512sum_tool | cut -d " " -f 1)
+	first_hashsum=$($sha256sum_tool "$archive_name.enc" | cut -d " " -f 1)
+	split_hashsum=$(cat "$archive_name.enc_"* | $sha256sum_tool | cut -d " " -f 1)
 
 	if [[ "$split_hashsum" == "$first_hashsum" ]]; then
 		return 0
