@@ -37,7 +37,7 @@ DRY_RUN=false
 
 check_requirements()
 {
-	local list_packages=(gpg tar xz md5sum shasum)
+	local list_packages=(age tar xz md5sum shasum)
 	local i=""
 
 	for i in ${!list_packages[*]}; do
@@ -357,7 +357,7 @@ fopus_backup_main()
 
 	# encrypt
 	if [[ "$DRY_RUN" = false ]]; then
-		if ! gpg -o "$archive_name.enc" -s -c -z 0 "$archive_name"; then
+		if ! age --encrypt --passphrase "$archive_name" > "$archive_name.age"; then
 			return 1
 		fi
 	fi
@@ -409,7 +409,7 @@ fopus_split_part()
 
 	max_size_value=${fopus_config[max-size]}
 	if [[ "$DRY_RUN" = false ]]; then
-		size_value=$(stat -c %s "$archive_name.enc")
+		size_value=$(stat -c %s "$archive_name.age")
 	fi
 
 	if [[ "${fopus_config[max-size]}" != "-1" && \
@@ -417,7 +417,7 @@ fopus_split_part()
 		"$DRY_RUN" && return 0
 
 		if ! split --verbose -b "$max_size_value" \
-			"$archive_name.enc" "$archive_name.enc_"; then
+			"$archive_name.age" "$archive_name.age_"; then
 				return 1
 		fi
 	else
