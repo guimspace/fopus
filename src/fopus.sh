@@ -24,20 +24,18 @@ if [[ "$UID" -lt 1000 ]]; then
 	exit 1
 fi
 
-USER_HOME="$HOME"
-
 typeset -A fopus_config
 fopus_config=(
     [max-size]="1073741824"
 	[default-key]=""
-	[root-path]="$USER_HOME/Backups/"
+	[root-path]="$HOME/Backups/"
 	[group-by]="date"
 	[compact]="false"
 )
 
 DATE=$(date +%Y-%m-%d)
 DRY_RUN=false
-CONFIG_PATH_DIR="$USER_HOME/.config/fopus"
+CONFIG_PATH_DIR="$HOME/.config/fopus"
 
 # master
 CONFIG_PATH_FILE="$CONFIG_PATH_DIR/fopus.conf"
@@ -284,8 +282,8 @@ fopus_main()
 
 	root_path="${fopus_config[root-path]}"
 
-	if [[ "$root_path" =~ ^"$USER_HOME"/?$ ]]; then
-		root_path="$USER_HOME/Backups"
+	if [[ "$root_path" =~ ^"$HOME"/?$ ]]; then
+		root_path="$HOME/Backups"
 	fi
 
 	if [[ ! -d "$root_path" ]]; then
@@ -477,7 +475,7 @@ fopus_backup_main()
 	fi
 
 
-	cd "$USER_HOME" || exit 1
+	cd "$HOME" || exit 1
 
 	# test overwrite
 	if ! fopus_overwrite_part "$bak_dir_parent" "$bak_dir_child"; then
