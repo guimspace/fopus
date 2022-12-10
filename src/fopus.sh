@@ -28,7 +28,7 @@ typeset -A fopus_config
 fopus_config=(
     [max-size]="1073741824"
 	[root-path]="$HOME/Backups/"
-	[by-name]="false"
+	[group-by-name]="false"
 	[one]="false"
 )
 
@@ -103,7 +103,7 @@ show_help()
 	echo ""
 	echo -e "  --no-split\t\tskip split process"
 	echo -e "  --one\t\tall-in-one"
-	echo -e "  --by-name\t\tgroup backups by file/date instead of date/name"
+	echo -e "  --group-by-name\t\tgroup backups by file/date instead of date/name"
 	echo ""
 	echo "To aces a file whose name starts with a '-', for example '-foo',"
 	echo "use one of these commands:"
@@ -181,8 +181,8 @@ evaluate_options()
 			--dry-run)
 				DRY_RUN=true ;;
 
-			--by-name)
-				fopus_config[by-name]="true" ;;
+			--group-by-name)
+				fopus_config[group-by-name]="true" ;;
 
 			--one)
 				fopus_config[one]="true" ;;
@@ -302,7 +302,7 @@ fopus_backup_main()
 	hash_value=$(echo "$TARGET_FILE" | "$sha1sum_tool")
 	backup_name_hash="$backup_name-${hash_value:0:7}"
 
-	if [[ "${fopus_config[by-name]}" == "true" ]]; then
+	if [[ "${fopus_config[group-by-name]}" == "true" ]]; then
 		bak_dir_parent="$backup_name_hash"
 		bak_dir_child="bak_$DATE"
 	else
