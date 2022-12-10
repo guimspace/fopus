@@ -1,6 +1,6 @@
 # fopus
 
-[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/guimspace/fopus/blob/master/LICENSE) [![Version](https://img.shields.io/github/release-pre/guimspace/fopus.svg)](https://github.com/guimspace/fopus/releases)
+[![License](https://img.shields.io/github/license/guimspace/fopus)](https://github.com/guimspace/fopus/blob/master/LICENSE) [![Version](https://img.shields.io/github/release-pre/guimspace/fopus.svg)](https://github.com/guimspace/fopus/releases)
 
 **Notice** _fopus_ is NOT suitable for professional application as it is not meant to be the most efficient, correct or secure.
 
@@ -115,5 +115,8 @@ For larger changes and feature ideas, please open an issue first for a discussio
 
 ## License
 
-Copyright (C) 2019 Guilherme Tadashi Maeoka  
-License GPLv3+: GNU GPL version 3 or later <https://www.gnu.org/licenses/>.
+Copyright (C) 2019-2022 Guilherme Tadashi Maeoka
+
+2022 MIT License
+
+2019-2022 License GPLv3+: GNU GPL version 3 or later <https://www.gnu.org/licenses/>.
