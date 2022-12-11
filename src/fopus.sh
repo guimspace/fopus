@@ -90,14 +90,15 @@ show_help()
 	echo "Usage: fopus [OPTION]... FILE..."
 	echo ""
 	echo "Commands:"
-	echo -e "\t--help\t\tdisplay this short help"
-	echo -e "\t--version\tdisplay version number"
+	echo -e "\t--help\t\t\tdisplay this short help"
+	echo -e "\t--version\t\tdisplay version number"
 	echo ""
 	echo "Options:"
-	echo -e "\t--one\t\tput FILEs in one backup."
-	echo -e "\t--no-split\tdon't split backup in chunks."
-	echo -e "\t--group-by-name\tgroup backups by file/date instead of date/name."
-	echo -e "\t--output OUTPUT\tbackup in the directory at path OUTPUT."
+	echo -e "\t--one\t\t\tput FILEs in one backup."
+	echo -e "\t--no-split\t\tdon't split backup in parts."
+	echo -e "\t--split-size SIZE\tsplit backup pieces of SIZE"
+	echo -e "\t--group-by-name\t\tgroup backups by file/date instead of date/name."
+	echo -e "\t--output OUTPUT\t\tbackup in the directory at path OUTPUT."
 }
 
 main()
