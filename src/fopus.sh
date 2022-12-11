@@ -302,14 +302,12 @@ fopus_backup()
 
 	(du -shL "${LIST_FILES[@]}")
 
-	echo "fopus: start backup file"
 	if [[ "$DRY_RUN" = "false" ]]; then
 		mkdir -p "$BACKUP_PATH/$BACKUP_DIR" || exit 1
 		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
 	fi
 
 	# compress
-	echo "fopus: archive and compress"
 	if [[ "$DRY_RUN" = "false" ]]; then
 		tar -cvf - -- "${LIST_FILES[@]}" 2> "${REPO_NAME}.txt" | xz --threads=0 -z -vv - > "$BACKUP_FILE"
 	fi
@@ -322,7 +320,6 @@ fopus_backup()
 	fi
 
 	# split
-	echo "fopus: split"
 	if ! split_file "$BACKUP_FILE"; then
 		return 1
 	fi
@@ -344,7 +341,6 @@ fopus_backup()
 split_file()
 {
 	if [[ "${CONFIG[part-size]}" = "-1" ]]; then
-		echo "Skip."
 		return 0
 	fi
 
@@ -371,11 +367,9 @@ sign_files()
 {
 	if [[ "$DRY_RUN" = "false" ]]; then
 		# hash
-		echo "fopus: hashes"
 		if ! "$sha256sum_tool" ./* > "SHA256SUMS"; then
 			return 1
 		fi
-		echo "fopus: sign"
 		if ! minisign -Sm "SHA256SUMS"; then
 			return 1
 		fi
@@ -393,7 +387,6 @@ hash_permission()
 	fi
 
 	# file permission
-	echo "fopus: file permission"
 	if [[ "$DRY_RUN" = "false" ]]; then
 		if ! chmod 700 "$1/"; then
 			return 1
