@@ -116,6 +116,7 @@ main()
 	declare -r DRY_RUN="$DRY_RUN"
 
 	OUTPUT_PATH="${CONFIG[repo-path]}"
+	OUTPUT_PATH=$(cd "$OUTPUT_PATH" && pwd -P)
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
