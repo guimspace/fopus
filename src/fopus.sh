@@ -44,7 +44,7 @@ declare -A CONFIG=(
 
 check_requirements()
 {
-	declare -ar apps=(age tar xz md5sum shasum)
+	declare -ar apps=(age minisign tar xz md5sum shasum)
 	local app=""
 
 	for app in "${apps[@]}"; do
@@ -325,6 +325,11 @@ fopus_backup()
 		return 1
 	fi
 
+	# sign
+	if ! sign_files; then
+		return 1
+	fi
+
 	# hash and file permission
 	[[ "$DRY_RUN" = "true" ]] || cd ..
 	if ! hash_permission "$BACKUP_DIR"; then
@@ -360,10 +365,26 @@ split_file()
 	return 0
 }
 
+sign_files()
+{
+	if [[ "$DRY_RUN" = "false" ]]; then
+		# hash
+		echo "fopus: hashes"
+		if ! "$sha256sum_tool" ./* > "SHA256SUMS"; then
+			return 1
+		fi
+		echo "fopus: sign"
+		if ! minisign -Sm "SHA256SUMS"; then
+			return 1
+		fi
+	fi
+
+	return 0
+}
+
 hash_permission()
 {
 	# hashes
-	echo "fopus: hashes"
 	if [[ "$DRY_RUN" = "false" ]]; then
 		(find "$1/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS)
 		(find "$1/" -type f -exec md5sum {} \; >> MD5SUMS)
