@@ -350,7 +350,7 @@ split_file()
 	local FILE_SIZE=""
 	local LIMIT_SIZE=""
 
-	if [[ "$DRY_RUN" = false ]]; then
+	if [[ "$DRY_RUN" = "false" ]]; then
 		FILE_SIZE=$(stat -c %s "$1.age")
 		LIMIT_SIZE=$(echo "${CONFIG[part-size]}" | numfmt --from=iec)
 
@@ -386,7 +386,10 @@ hash_permission()
 	# hashes
 	if [[ "$DRY_RUN" = "false" ]]; then
 		(find "$1/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS)
+		chmod 600 SHA1SUMS
+
 		(find "$1/" -type f -exec md5sum {} \; >> MD5SUMS)
+		chmod 600 MD5SUMS
 	fi
 
 	# file permission
