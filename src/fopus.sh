@@ -92,13 +92,13 @@ show_help()
 	echo ""
 	echo "Options:"
 	echo -e "\t-1, --one\t\tPut FILEs in one backup."
-	echo -e "\t--no-split\t\tDon't split backup in parts."
-	echo -e "\t-b, --split-size SIZE\tSplit backup pieces of SIZE"
-	echo -e "\t--group-by-name\t\tGroup backups by file/date instead of date/name."
+	echo -e "\t-s, --no-split\t\tDon't split backup in parts."
+	echo -e "\t-b, --split-size SIZE\tSplit backup pieces of SIZE. Default is 1G."
+	echo -e "\t-g, --group-by-name\tGroup backups by file/date instead of date/name."
 	echo -e "\t-o, --output OUTPUT\tBackup in the directory at path OUTPUT."
-	echo -e "\t-n --dry-run\t\tDon't perform any action."
+	echo -e "\t-n, --dry-run\t\tDon't perform any action."
 	echo ""
-	echo "Example:"
+	echo "Examples:"
 	echo -e "\t$ fopus --output ~/Backups --split-size 1G Documents/ lorem-ipsum.txt"
 	echo -e "\t$ fopus --one --no-split Pictures/ Videos/"
 }
@@ -171,13 +171,13 @@ evaluate_arguments()
 			"--dry-run"|"-n")
 				DRY_RUN="true" ;;
 
-			"--group-by-name")
+			"--group-by-name"|"-g")
 				CONFIG[groupbyname]="true" ;;
 
 			"--one"|"-1")
 				CONFIG[one]="true" ;;
 
-			"--no-split")
+			"--no-split"|"-s")
 				if [[ -n "${CONFIG[partsize]}" ]]; then
 					>&2 echo "fopus: --split-size can't be used with --no-split"
 					exit 1
