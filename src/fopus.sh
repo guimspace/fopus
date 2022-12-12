@@ -103,6 +103,8 @@ show_help()
 
 main()
 {
+	check_requirements
+
 	declare -r ORIGIN="$(pwd -P)"
 	declare -a FILES=()
 
@@ -403,8 +405,6 @@ hash_permission()
 
 	return 0
 }
-
-check_requirements
 
 if [[ -z "$1" ]]; then
 	>&2 echo "fopus: missing file operand"
