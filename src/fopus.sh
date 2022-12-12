@@ -111,7 +111,6 @@ main()
 {
 	check_requirements
 
-	declare -r ORIGIN="$(pwd -P)"
 	declare -a FILES=()
 
 	if [[ -z "$*" ]]; then
@@ -124,7 +123,7 @@ main()
 	declare -r DRY_RUN="$DRY_RUN"
 
 	OUTPUT_PATH="${CONFIG[repo-path]}"
-	OUTPUT_PATH=$(cd "$OUTPUT_PATH" && pwd -P)
+	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
@@ -204,7 +203,7 @@ evaluate_arguments()
 					>&2 echo "fopus: ${ARGS["$i"]}: No such directory"
 					exit 1
 				fi
-				CONFIG[repo-path]="${ARGS[$i]}" ;;
+				CONFIG[repo-path]=$(realpath "${ARGS[$i]}") ;;
 
 			"--")
 				break ;;
@@ -244,7 +243,8 @@ evaluate_files()
 	declare -ir N="${#FILES[@]}"
 
 	while [[ "$i" -lt "$N" ]]; do
-		file="${FILES[$i]}"
+		file=$(realpath "${FILES[$i]}")
+
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: $file: No such file or directory"
 			exit 1
@@ -253,18 +253,9 @@ evaluate_files()
 			exit 1
 		fi
 
-		if [[ -d "$file" ]]; then
-			cd "$file" || exit 1
-			file=$(pwd -P)
-		else
-			file="$(cd "$(dirname "$file")" && pwd -P)/$(basename "$file")"
-		fi
-
 		FILES["$i"]="$file"
 		((i++))
 	done
-
-	cd "$ORIGIN" || exit 1
 
 	return 0
 }
@@ -282,8 +273,6 @@ fopus_backup()
 	REPO_NAME=$(basename -- "${LIST_FILES[0]}")
 	REPO_NAME=${REPO_NAME// /_}
 
-	BACKUP_FILE="${REPO_NAME}.tar.xz"
-
 	tmp=$(echo "${LIST_FILES[0]}" | "$sha1sum_tool")
 	tmp="$REPO_NAME-${tmp:0:11}"
 
@@ -295,12 +284,16 @@ fopus_backup()
 		BACKUP_DIR="$tmp"
 	fi
 
-	cd "$HOME" || exit 1
+	local -r BACKUP_PATH="$BACKUP_PATH"
+	local -r BACKUP_DIR="$BACKUP_DIR"
 
 	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
 		>&2 echo "fopus: cannot create backup: Backup exists"
 		exit 1
 	fi
+
+	BACKUP_FILE="$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.tar.xz"
+	local -r BACKUP_FILE="$BACKUP_FILE"
 
 	# show backup details
 	echo -e "${JOB} ${LIST_FILES[0]}"
@@ -315,23 +308,23 @@ fopus_backup()
 
 	if [[ "$DRY_RUN" = "false" ]]; then
 		mkdir -p "$BACKUP_PATH/$BACKUP_DIR" || exit 1
-		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
 	fi
 
 	# compress
 	if [[ "$DRY_RUN" = "false" ]]; then
-		tar -cvpf - -- "${LIST_FILES[@]}" 2> "${REPO_NAME}.txt" | xz --threads=0 -z - > "$BACKUP_FILE"
+		tar -cvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.txt" |\
+			xz --threads=0 -z - > "$BACKUP_FILE"
 	fi
 
 	# encrypt
 	if [[ "$DRY_RUN" = "false" ]]; then
-		if ! age --encrypt --passphrase "$BACKUP_FILE" > "$BACKUP_FILE.age"; then
+		if ! age --encrypt --passphrase "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
 			return 1
 		fi
 	fi
 
 	# split
-	if ! split_file "$BACKUP_FILE"; then
+	if ! split_file; then
 		return 1
 	fi
 
@@ -341,8 +334,7 @@ fopus_backup()
 	fi
 
 	# hash and file permission
-	[[ "$DRY_RUN" = "true" ]] || cd ..
-	if ! hash_permission "$BACKUP_DIR"; then
+	if ! hash_permission; then
 		return 1
 	fi
 
@@ -359,13 +351,13 @@ split_file()
 	local LIMIT_SIZE=""
 
 	if [[ "$DRY_RUN" = "false" ]]; then
-		FILE_SIZE=$(stat -c %s "$1.age")
+		FILE_SIZE=$(stat -c %s "$BACKUP_FILE.age")
 		LIMIT_SIZE=$(echo "${CONFIG[part-size]}" | numfmt --from=iec)
 
 		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
 			# split
 			if ! split --verbose --bytes="${CONFIG[part-size]}" \
-				"$1.age" "$1.age_"; then
+				"$BACKUP_FILE.age" "$BACKUP_FILE.age_"; then
 					return 1
 			fi
 		fi
@@ -378,10 +370,10 @@ sign_files()
 {
 	if [[ "$DRY_RUN" = "false" ]]; then
 		# hash
-		if ! "$sha256sum_tool" ./* > "SHA256SUMS"; then
+		if ! "$sha256sum_tool" "$BACKUP_PATH/$BACKUP_DIR/"* > "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS"; then
 			return 1
 		fi
-		if ! minisign -Sm "SHA256SUMS"; then
+		if ! minisign -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS"; then
 			return 1
 		fi
 	fi
@@ -391,22 +383,23 @@ sign_files()
 
 hash_permission()
 {
+	echo "$BACKUP_PATH/$BACKUP_DIR/"
 	# hashes
 	if [[ "$DRY_RUN" = "false" ]]; then
-		(find "$1/" -type f -exec "$sha1sum_tool" {} \; >> SHA1SUMS)
-		chmod 600 SHA1SUMS
+		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "$BACKUP_PATH/SHA1SUMS")
+		chmod 600 "$BACKUP_PATH/SHA1SUMS"
 
-		(find "$1/" -type f -exec md5sum {} \; >> MD5SUMS)
-		chmod 600 MD5SUMS
+		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec md5sum {} \; >> "$BACKUP_PATH/MD5SUMS")
+		chmod 600 "$BACKUP_PATH/MD5SUMS"
 	fi
 
 	# file permission
 	if [[ "$DRY_RUN" = "false" ]]; then
-		if ! chmod 700 "$1/"; then
+		if ! chmod 700 "$BACKUP_PATH/$BACKUP_DIR/"; then
 			return 1
 		fi
-		(find "$1/" -type f -exec chmod 600 {} \;)
-		(find "$1/" -type d -exec chmod 700 {} \;)
+		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec chmod 600 {} \;)
+		(find "$BACKUP_PATH/$BACKUP_DIR/" -type d -exec chmod 700 {} \;)
 	fi
 
 	return 0
