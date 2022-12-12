@@ -23,7 +23,7 @@ age --encrypt --passphrase FILE.tar.xz > FILE.tar.xz.age
 
 - **Split:** If the encrypted file is larger than `SIZE` bytes, it is split and put `SIZE` bytes per output file.  
 ```
-split -b SIZE FILE.tar.xz.enc FILE.tar.xz.enc_
+split -b SIZE FILE.tar.xz.age FILE.tar.xz.age_
 ```
 
 - **Hash:** Files are hashed with SHA-256
