@@ -7,7 +7,7 @@
 # Overview
 
 > *In Linux and Unix, everything is a file.  Directories are files, files are files and devices are files*.  
-> Ubuntu documentation - FilePermissions: https://help.ubuntu.com/community/FilePermissions (as 2022-12-12)
+> Ubuntu documentation - [FilePermissions](https://help.ubuntu.com/community/FilePermissions) (as 2022-12-12)
 
 **fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt**, **split**, **hash** and **sign** files. It aims consistency in the process of backup.
 
