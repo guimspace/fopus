@@ -90,17 +90,13 @@ show_help()
 	echo "Usage:"
 	echo -e "\tfopus [--one] [--no-split | --split-size SIZE] [--group-by-name] [--ouput OUTPUT] FILE..."
 	echo ""
-	echo "Commands:"
-	echo -e "\t--help\t\t\tDisplay this short help."
-	echo -e "\t--version\t\tDisplay version number."
-	echo ""
 	echo "Options:"
-	echo -e "\t--one\t\t\tPut FILEs in one backup."
+	echo -e "\t-1, --one\t\tPut FILEs in one backup."
 	echo -e "\t--no-split\t\tDon't split backup in parts."
-	echo -e "\t--split-size SIZE\tSplit backup pieces of SIZE"
+	echo -e "\t-b, --split-size SIZE\tSplit backup pieces of SIZE"
 	echo -e "\t--group-by-name\t\tGroup backups by file/date instead of date/name."
-	echo -e "\t--output OUTPUT\t\tBackup in the directory at path OUTPUT."
-	echo -e "\t--dry-run\t\tDon't perform any action."
+	echo -e "\t-o, --output OUTPUT\tBackup in the directory at path OUTPUT."
+	echo -e "\t-n --dry-run\t\tDon't perform any action."
 	echo ""
 	echo "Example:"
 	echo -e "\t$ fopus --output ~/Backups --split-size 1G Documents/ lorem-ipsum.txt"
@@ -170,13 +166,13 @@ evaluate_arguments()
 
 	while [[ $i -lt $N && "${ARGS[$i]}" != "--" ]]; do
 		case "${ARGS[$i]}" in
-			"--dry-run")
+			"--dry-run"|"-n")
 				DRY_RUN="true" ;;
 
 			"--group-by-name")
 				CONFIG[groupbyname]="true" ;;
 
-			"--one")
+			"--one"|"-1")
 				CONFIG[one]="true" ;;
 
 			"--no-split")
@@ -186,7 +182,7 @@ evaluate_arguments()
 				fi
 				CONFIG[partsize]="-1" ;;
 
-			"--split-size")
+			"--split-size"|"-b")
 				if [[ -n "${CONFIG[partsize]}" ]]; then
 					>&2 echo "fopus: --split-size can't be used with --no-split"
 					exit 1
@@ -197,7 +193,7 @@ evaluate_arguments()
 				fi
 				CONFIG[partsize]="${ARGS["$i"]}" ;;
 
-			"--output")
+			"--output"|"-o")
 				((i++))
 				if [[ ! -d "${ARGS[$i]}" ]]; then
 					>&2 echo "fopus: ${ARGS["$i"]}: No such directory"
@@ -412,10 +408,10 @@ if [[ -z "$1" ]]; then
 fi
 
 case "$1" in
-	"--help")
+	"--help"|"-h")
 		show_help ;;
 
-	"--version")
+	"--version"|"-V")
 		echo "v${VERSION}" ;;
 
 	"--")
