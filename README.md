@@ -54,7 +54,7 @@ A directory `/home/username/Backups/backup_yyyy-mm-dd/` and:
    - `list_Photos.txt` a list of files processed in compression
  - `MD5SUMS` and `SHA1SUMS` hashes of files in `Photos-15e2ef83315/` to ensure that the data has not changed due to accidental corruption.
 
-The directory `bak_yyyy-mm-dd` have file permission set to `700`. Regular files in `backup_yyyy-mm-dd/` have file permission set to `600`; for directories, `700`.
+The directory `backup_yyyy-mm-dd` have file permission set to `700`. Regular files in `backup_yyyy-mm-dd/` have file permission set to `600`; for directories, `700`.
 
 
 # Requirements
