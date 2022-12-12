@@ -227,7 +227,7 @@ evaluate_arguments()
 
 	((i++))
 	FILES=("${ARGS[@]:$i}")
-	if [[ -z "${FILES[@]}" ]]; then
+	if [[ "${#FILES[@]}" -eq 0 ]]; then
 		>&2 echo "fopus: missing file operand"
 		echo "Try 'fopus --help' for more information."
 		exit 1
