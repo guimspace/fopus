@@ -36,9 +36,9 @@ declare -r DATE
 DRY_RUN="false"
 
 declare -A CONFIG=(
-	[part-size]=""
-	[repo-path]="$HOME/Backups/"
-	[group-by-name]="false"
+	[partsize]=""
+	[repopath]="$HOME/Backups/"
+	[groupbyname]="false"
 	[one]="false"
 )
 
@@ -122,7 +122,7 @@ main()
 	evaluate_arguments "$@"
 	declare -r DRY_RUN="$DRY_RUN"
 
-	OUTPUT_PATH="${CONFIG[repo-path]}"
+	OUTPUT_PATH="${CONFIG[repopath]}"
 	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
@@ -174,20 +174,20 @@ evaluate_arguments()
 				DRY_RUN="true" ;;
 
 			"--group-by-name")
-				CONFIG[group-by-name]="true" ;;
+				CONFIG[groupbyname]="true" ;;
 
 			"--one")
 				CONFIG[one]="true" ;;
 
 			"--no-split")
-				if [[ -n "${CONFIG[part-size]}" ]]; then
+				if [[ -n "${CONFIG[partsize]}" ]]; then
 					>&2 echo "fopus: --split-size can't be used with --no-split"
 					exit 1
 				fi
-				CONFIG[part-size]="-1" ;;
+				CONFIG[partsize]="-1" ;;
 
 			"--split-size")
-				if [[ -n "${CONFIG[part-size]}" ]]; then
+				if [[ -n "${CONFIG[partsize]}" ]]; then
 					>&2 echo "fopus: --split-size can't be used with --no-split"
 					exit 1
 				fi
@@ -195,7 +195,7 @@ evaluate_arguments()
 				if ! split --bytes="${ARGS["$i"]}" /dev/null; then
 					exit 1
 				fi
-				CONFIG[part-size]="${ARGS["$i"]}" ;;
+				CONFIG[partsize]="${ARGS["$i"]}" ;;
 
 			"--output")
 				((i++))
@@ -203,7 +203,7 @@ evaluate_arguments()
 					>&2 echo "fopus: ${ARGS["$i"]}: No such directory"
 					exit 1
 				fi
-				CONFIG[repo-path]=$(realpath "${ARGS[$i]}") ;;
+				CONFIG[repopath]=$(realpath "${ARGS[$i]}") ;;
 
 			"--")
 				break ;;
@@ -220,8 +220,8 @@ evaluate_arguments()
 		((i++))
 	done
 
-	if [[ -z "${CONFIG[part-size]}" ]]; then
-		CONFIG[part-size]="1073741824"
+	if [[ -z "${CONFIG[partsize]}" ]]; then
+		CONFIG[partsize]="1073741824"
 	fi
 
 	((i++))
@@ -276,7 +276,7 @@ fopus_backup()
 	tmp=$(echo "${LIST_FILES[0]}" | "$sha1sum_tool")
 	tmp="$REPO_NAME-${tmp:0:11}"
 
-	if [[ "${CONFIG[group-by-name]}" = "true" ]]; then
+	if [[ "${CONFIG[groupbyname]}" = "true" ]]; then
 		BACKUP_PATH="$OUTPUT_PATH/$tmp"
 		BACKUP_DIR="backup_$DATE"
 	else
@@ -343,7 +343,7 @@ fopus_backup()
 
 split_file()
 {
-	if [[ "${CONFIG[part-size]}" = "-1" ]]; then
+	if [[ "${CONFIG[partsize]}" = "-1" ]]; then
 		return 0
 	fi
 
@@ -352,11 +352,11 @@ split_file()
 
 	if [[ "$DRY_RUN" = "false" ]]; then
 		FILE_SIZE=$(stat -c %s "$BACKUP_FILE.age")
-		LIMIT_SIZE=$(echo "${CONFIG[part-size]}" | numfmt --from=iec)
+		LIMIT_SIZE=$(echo "${CONFIG[partsize]}" | numfmt --from=iec)
 
 		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
 			# split
-			if ! split --verbose --bytes="${CONFIG[part-size]}" \
+			if ! split --verbose --bytes="${CONFIG[partsize]}" \
 				"$BACKUP_FILE.age" "$BACKUP_FILE.age_"; then
 					return 1
 			fi
