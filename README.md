@@ -4,31 +4,31 @@
 
 **Notice** _fopus_ is NOT suitable for professional application as it is not meant to be the most efficient, correct or secure.
 
-## Overview
+# Overview
 
 > *In Linux and Unix, everything is a file.  Directories are files, files are files and devices are files*.  
 > Ubuntu documentation - FilePermissions (https://help.ubuntu.com/community/FilePermissions)
 
-**fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt**, **split**, **hash** and **sign** files. It's main purpose is to offer consistency in a series of backups.
+**fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt**, **split**, **hash** and **sign** files. It aims consistency in the process of backup.
 
 - **Archive & compress:** The file is archived and compressed in `.tar.xz` format.  
 ```
-tar -cvpf - -- FILE 2> list_FILE.txt | xz --threads=0 -z -vv - > FILE.tar.xz
+tar -cvpf - -- FILE 2> list_FILE.txt | xz --threads=0 -z - > FILE.tar.xz
 ```
 
 - **Encrypt:** With `age`, the compressed file is encrypted in `.age` format.  
 ```
-age -p FILE.tar.xz > FILE.tar.xz.age
+age --encrypt --passphrase FILE.tar.xz > FILE.tar.xz.age
 ```
 
 - **Split:** If the encrypted file is larger than `SIZE` bytes, it is split and put `SIZE` bytes per output file.  
 ```
-split --verbose -b SIZE FILE.tar.xz.enc FILE.tar.xz.enc_
+split -b SIZE FILE.tar.xz.enc FILE.tar.xz.enc_
 ```
 
-- **Hash:** All files are hashes with SHA-256
+- **Hash:** Files are hashed with SHA-256
 ```
-sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] list_FILE > SHA256SUMS
+sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] list_FILE.txt > SHA256SUMS
 ```
 
 - **Sign:** The hashes are signed with `minisign`.
@@ -36,65 +36,61 @@ sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] list_FILE > SHA25
 minisign -Sm SHA256SUMS
 ```
 
+- **Permissions:** Permission of files are set to 600, and 700 for directories.
+
 ### Example
 
 ```
 $ fopus Photos/
 ```
 
-**Result:**
+**Output:**
 
-The directory `/home/username/Backups/backup_yyyy-mm-dd/` and:
- - `Photos-15e2ef83315/` where `15e2ef83315` is the first eleven digits of SHA1 of `/home/username/Images/Photos`
-   - `dir_Photos.tar.xz` the compressed archive
-   - `dir_Photos.tar.xz.age` the encrypted archive
-   - `dir_Photos.tar.xz.age_aa`, `dir_Photos.tar.xz.age_ab`, ... the pieces of the encrypted archive
+A directory `/home/username/Backups/backup_yyyy-mm-dd/` and:
+ - `Photos-15e2ef83315/` where `15e2ef83315` is the first eleven digits of SHA-1 of `/home/username/Images/Photos`
+   - `Photos.tar.xz` the compressed archive
+   - `Photos.tar.xz.age` the encrypted archive
+   - `Photos.tar.xz.age_aa`, `Photos.tar.xz.age_ab`, ... the pieces of the encrypted archive
    - `list_Photos.txt` a list of files processed in compression
  - `MD5SUMS` and `SHA1SUMS` hashes of files in `Photos-15e2ef83315/` to ensure that the data has not changed due to accidental corruption.
 
 The directory `bak_yyyy-mm-dd` have file permission set to `700`. Regular files in `backup_yyyy-mm-dd/` have file permission set to `600`; for directories, `700`.
 
 
-## Requirements
+# Requirements
 
-`age`, `minisign`, `xz`
+[`age`](https://github.com/FiloSottile/age), [`minisign`](https://github.com/jedisct1/minisign), `xz`
 
 
-## Install
-
-1. Download `fopus`:
+# Install
 
 ```
-$ sudo curl -L https://github.com/guimspace/fopus/releases/latest/download/fopus.sh -o /usr/local/bin/fopus
-```
-
-2. Make the installer executable and then execute it:
-
-```
-$ sudo chmod a+rx /usr/local/bin/fopus
+sudo curl -L https://github.com/guimspace/fopus/releases/latest/download/fopus.sh -o /usr/local/bin/fopus
+sudo chmod a+rx /usr/local/bin/fopus
 ```
 
 
-## Usage
+# Usage
 
-**Syntax:** `fopus [OPTION]... [FILE]...`
+**Syntax:** `fopus [--one] [--no-split | --split-size SIZE] [--group-by-name] [--ouput OUTPUT] FILE...`
 
 ```
---config                set options
---update                update fopus
---install               install fopus
---uninstall             uninstall fopus
---help                  display a short help and exit
---version               display the version number and exit
+-1, --one		Put FILEs in one backup.
+--no-split		Don't split backup in parts.
+-b, --split-size SIZE	Split backup pieces of SIZE
+--group-by-name		Group backups by file/date instead of date/name.
+-o, --output OUTPUT	Backup in the directory at path OUTPUT.
+-n --dry-run		Don't perform any action.
 ```
 
-#### Examples
+### Examples
+
 ```
-$ fopus Photos/ Documents/ text-file.txt
+$ fopus --output ~/Backups --split-size 1G Documents/ lorem-ipsum.txt
+$ fopus --one --no-split Pictures/ Videos/
 ```
 
-
-## Contribute code and ideas
+# Contribute code and ideas
 
 Contributors *sign-off* that they adhere to the [Developer Certificate of Origin (DCO)](https://developercertificate.org/) by adding a `Signed-off-by` line to commit messages.
 
@@ -107,7 +103,7 @@ For straight forward patches and minor changes, [create a pull request](https://
 For larger changes and feature ideas, please open an issue first for a discussion before implementation.
 
 
-## License
+# License
 
 Copyright (C) 2019-2022 Guilherme Tadashi Maeoka
 
