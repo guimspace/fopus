@@ -320,7 +320,7 @@ fopus_backup()
 
 	# compress
 	if [[ "$DRY_RUN" = "false" ]]; then
-		tar -cvf - -- "${LIST_FILES[@]}" 2> "${REPO_NAME}.txt" | xz --threads=0 -z - > "$BACKUP_FILE"
+		tar -cvpf - -- "${LIST_FILES[@]}" 2> "${REPO_NAME}.txt" | xz --threads=0 -z - > "$BACKUP_FILE"
 	fi
 
 	# encrypt
