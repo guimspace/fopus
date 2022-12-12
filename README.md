@@ -7,26 +7,34 @@
 # Overview
 
 > *In Linux and Unix, everything is a file.  Directories are files, files are files and devices are files*.  
-> Ubuntu documentation - FilePermissions (https://help.ubuntu.com/community/FilePermissions)
+> Ubuntu documentation - FilePermissions: https://help.ubuntu.com/community/FilePermissions (as 2022-12-12)
 
 **fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt**, **split**, **hash** and **sign** files. It aims consistency in the process of backup.
 
-- **Archive & compress:** The file is archived and compressed in `.tar.xz` format.  
+Backup archive is encrypted by [**age**](https://github.com/FiloSottile/age) with a passphrase. An age identity key is not required.
+
+Large backups are split in pieces of 1G.
+
+Hashes are signed by [**minisign**](https://github.com/jedisct1/minisign). A minisign secret key is required.
+
+### Process summary
+
+- **Archive & compress:** The file is archived and compressed in `.tar.xz` format.
 ```
 tar -cvpf - -- FILE 2> list_FILE.txt | xz --threads=0 -z - > FILE.tar.xz
 ```
 
-- **Encrypt:** With `age`, the compressed file is encrypted in `.age` format.  
+- **Encrypt:** With `age`, the compressed file is encrypted in `.age` format.
 ```
 age --encrypt --passphrase FILE.tar.xz > FILE.tar.xz.age
 ```
 
-- **Split:** If the encrypted file is larger than `SIZE` bytes, it is split and put `SIZE` bytes per output file.  
+- **Split:** If the encrypted file is larger than `SIZE` bytes, it is split and put `SIZE` bytes per output file.
 ```
 split -b SIZE FILE.tar.xz.age FILE.tar.xz.age_
 ```
 
-- **Hash:** Files are hashed with SHA-256
+- **Hash:** Files are hashed with SHA-256.
 ```
 sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] list_FILE.txt > SHA256SUMS
 ```
@@ -59,7 +67,7 @@ The directory `backup_yyyy-mm-dd` have file permission set to `700`. Regular fil
 
 # Requirements
 
-[`age`](https://github.com/FiloSottile/age), [`minisign`](https://github.com/jedisct1/minisign), `xz`
+`age`, `minisign`, `xz`
 
 
 # Install
@@ -76,11 +84,11 @@ sudo chmod a+rx /usr/local/bin/fopus
 
 ```
 -1, --one		Put FILEs in one backup.
---no-split		Don't split backup in parts.
--b, --split-size SIZE	Split backup pieces of SIZE
---group-by-name		Group backups by file/date instead of date/name.
+-s, --no-split		Don't split backup in parts.
+-b, --split-size SIZE	Split backup pieces of SIZE. Default is 1G.
+-g, --group-by-name	Group backups by file/date instead of date/name.
 -o, --output OUTPUT	Backup in the directory at path OUTPUT.
--n --dry-run		Don't perform any action.
+-n, --dry-run		Don't perform any action.
 ```
 
 ### Examples
