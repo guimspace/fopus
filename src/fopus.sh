@@ -150,7 +150,9 @@ main()
 		for file in "${FILES[@]}"; do
 			((i++))
 			JOB="Backup $i of $N"
-			fopus_backup "$file"
+			if ! fopus_backup "$file"; then
+				return 1
+			fi
 		done
 	fi
 
