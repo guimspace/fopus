@@ -134,8 +134,11 @@ main()
 
 	evaluate_files
 
+	echo "Repository $OUTPUT_PATH"
+
+	declare JOB=""
 	if [[ "${CONFIG[one]}" = "true" ]]; then
-		echo ""
+		JOB="Backup"
 		fopus_backup "${FILES[@]}"
 	else
 		declare -i i=0
@@ -143,8 +146,7 @@ main()
 		local file=""
 		for file in "${FILES[@]}"; do
 			((i++))
-			echo ""
-			echo "fopus: ${FILES[$i-1]} ($i of $N)"
+			JOB="Backup $i of $N"
 			fopus_backup "$file"
 		done
 	fi
@@ -251,7 +253,6 @@ evaluate_files()
 		fi
 
 		FILES["$i"]="$file"
-		echo "fopus: $(du -shL "${file}")"
 		((i++))
 	done
 
@@ -294,7 +295,7 @@ fopus_backup()
 	fi
 
 	# show backup details
-	echo "Source ${LIST_FILES[0]}"
+	echo -e "${JOB} ${LIST_FILES[0]}"
 	if [[ "${CONFIG[one]}" = "true" ]]; then
 		declare -i i=1
 		N="${#LIST_FILES[@]}"
@@ -303,9 +304,6 @@ fopus_backup()
 			((i++))
 		done
 	fi
-	echo "Backup $BACKUP_PATH/$BACKUP_DIR"
-
-	(du -shL "${LIST_FILES[@]}")
 
 	if [[ "$DRY_RUN" = "false" ]]; then
 		mkdir -p "$BACKUP_PATH/$BACKUP_DIR" || exit 1
@@ -314,7 +312,7 @@ fopus_backup()
 
 	# compress
 	if [[ "$DRY_RUN" = "false" ]]; then
-		tar -cvf - -- "${LIST_FILES[@]}" 2> "${REPO_NAME}.txt" | xz --threads=0 -z -vv - > "$BACKUP_FILE"
+		tar -cvf - -- "${LIST_FILES[@]}" 2> "${REPO_NAME}.txt" | xz --threads=0 -z - > "$BACKUP_FILE"
 	fi
 
 	# encrypt
