@@ -87,18 +87,24 @@ sha1sum_func() {
 
 show_help()
 {
-	echo "Usage: fopus [OPTION]... FILE..."
+	echo "Usage:"
+	echo -e "\tfopus [--one] [--no-split | --split-size SIZE] [--group-by-name] [--ouput OUTPUT] FILE..."
 	echo ""
 	echo "Commands:"
-	echo -e "\t--help\t\t\tdisplay this short help"
-	echo -e "\t--version\t\tdisplay version number"
+	echo -e "\t--help\t\t\tDisplay this short help."
+	echo -e "\t--version\t\tDisplay version number."
 	echo ""
 	echo "Options:"
-	echo -e "\t--one\t\t\tput FILEs in one backup."
-	echo -e "\t--no-split\t\tdon't split backup in parts."
-	echo -e "\t--split-size SIZE\tsplit backup pieces of SIZE"
-	echo -e "\t--group-by-name\t\tgroup backups by file/date instead of date/name."
-	echo -e "\t--output OUTPUT\t\tbackup in the directory at path OUTPUT."
+	echo -e "\t--one\t\t\tPut FILEs in one backup."
+	echo -e "\t--no-split\t\tDon't split backup in parts."
+	echo -e "\t--split-size SIZE\tSplit backup pieces of SIZE"
+	echo -e "\t--group-by-name\t\tGroup backups by file/date instead of date/name."
+	echo -e "\t--output OUTPUT\t\tBackup in the directory at path OUTPUT."
+	echo -e "\t--dry-run\t\tDon't perform any action."
+	echo ""
+	echo "Example:"
+	echo -e "\t$ fopus --output ~/Backups --split-size 1G Documents/ lorem-ipsum.txt"
+	echo -e "\t$ fopus --one --no-split Pictures/ Videos/"
 }
 
 main()
