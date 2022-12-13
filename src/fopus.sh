@@ -37,7 +37,7 @@ DRY_RUN="false"
 
 declare -A CONFIG=(
 	[partsize]=""
-	[repopath]="$HOME/Backups/"
+	[repopath]="$(pwd -P)"
 	[groupbyname]="false"
 	[one]="false"
 )
