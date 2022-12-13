@@ -119,7 +119,6 @@ main()
 	declare -r DRY_RUN="$DRY_RUN"
 
 	OUTPUT_PATH="${CONFIG[repopath]}"
-	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
@@ -132,6 +131,7 @@ main()
 		exit 1
 	fi
 
+	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
 	OUTPUT_PATH=${OUTPUT_PATH%/}
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
 
@@ -201,7 +201,7 @@ evaluate_arguments()
 					>&2 echo "fopus: ${ARGS["$i"]}: No such directory"
 					exit 1
 				fi
-				CONFIG[repopath]=$(realpath "${ARGS[$i]}") ;;
+				CONFIG[repopath]="${ARGS[$i]}" ;;
 
 			"--")
 				break ;;
@@ -241,7 +241,7 @@ evaluate_files()
 	declare -ir N="${#FILES[@]}"
 
 	while [[ "$i" -lt "$N" ]]; do
-		file=$(realpath "${FILES[$i]}")
+		file="${FILES[$i]}"
 
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: $file: No such file or directory"
@@ -251,7 +251,7 @@ evaluate_files()
 			exit 1
 		fi
 
-		FILES["$i"]="$file"
+		FILES["$i"]=$(realpath "$file")
 		((i++))
 	done
 
