@@ -206,11 +206,6 @@ evaluate_arguments()
 			"--")
 				break ;;
 
-			"--"*)
-				>&2 echo "fopus: ${ARGS["$i"]}: invalid option"
-				echo "Try 'fopus --help' for more information."
-				exit 1 ;;
-
 			*)
 				((i--))
 				break ;;
