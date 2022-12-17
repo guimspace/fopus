@@ -28,7 +28,7 @@ if [[ "$UID" -lt 1000 ]]; then
 	exit 1
 fi
 
-declare -r VERSION="2.0.0-beta"
+declare -r VERSION="2.0.0"
 
 DATE=$(date +%Y-%m-%d)
 declare -r DATE
