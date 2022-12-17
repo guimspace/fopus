@@ -54,7 +54,7 @@ $ fopus Photos/
 
 **Output:**
 
-A directory `/home/username/Backups/backup_yyyy-mm-dd/` and:
+A directory `./Backups/backup_yyyy-mm-dd/` and:
  - `Photos-15e2ef83315/` where `15e2ef83315` is the first eleven digits of SHA-1 of `/home/username/Images/Photos`
    - `Photos.tar.xz` the compressed archive
    - `Photos.tar.xz.age` the encrypted archive
