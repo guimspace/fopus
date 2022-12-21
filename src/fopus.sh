@@ -44,7 +44,7 @@ declare -A CONFIG=(
 
 check_requirements()
 {
-	declare -ar apps=(age minisign tar xz md5sum shasum)
+	declare -ar apps=(age minisign tar xz shasum)
 	local app=""
 
 	for app in "${apps[@]}"; do
@@ -381,9 +381,6 @@ hash_permission()
 	if [[ "$DRY_RUN" = "false" ]]; then
 		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "$BACKUP_PATH/SHA1SUMS")
 		chmod 600 "$BACKUP_PATH/SHA1SUMS"
-
-		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec md5sum {} \; >> "$BACKUP_PATH/MD5SUMS")
-		chmod 600 "$BACKUP_PATH/MD5SUMS"
 	fi
 
 	# file permission
