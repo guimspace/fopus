@@ -123,7 +123,7 @@ main()
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
 		exit 1
-	elif [[ "$OUTPUT_PATH" =~ ^"$HOME"/?$ ]]; then
+	elif [[ "$OUTPUT_PATH" =~ ^"$HOME"$ ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
 		exit 1
 	elif [[ ! -w "$OUTPUT_PATH" ]]; then
