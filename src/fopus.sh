@@ -40,6 +40,7 @@ declare -A CONFIG=(
 	[repopath]="$(pwd -P)"
 	[groupbyname]="false"
 	[one]="false"
+	[seckey]=""
 )
 
 check_requirements()
@@ -96,6 +97,7 @@ show_help()
 	echo -e "\t-b, --split-size SIZE\tSplit backup pieces of SIZE. Default is 1G."
 	echo -e "\t-g, --group-by-name\tGroup backups by file/date instead of date/name."
 	echo -e "\t-o, --output OUTPUT\tBackup in the directory at path OUTPUT."
+	echo -e "\t-k, --seckey SECKEY_FILE\tMinisign with SECKEY_FILE."
 	echo -e "\t-n, --dry-run\t\tDon't perform any action."
 	echo ""
 	echo "Examples:"
@@ -202,6 +204,14 @@ evaluate_arguments()
 					exit 1
 				fi
 				CONFIG[repopath]="${ARGS[$i]}" ;;
+
+			"--seckey"|"-k")
+				((i++))
+				if [[ ! -f "${ARGS[$i]}" ]]; then
+					>&2 echo "fopus: ${ARGS["$i"]}: No such file"
+					exit 1
+				fi
+				CONFIG[seckey]=$(realpath "${ARGS[$i]}") ;;
 
 			"--")
 				break ;;
