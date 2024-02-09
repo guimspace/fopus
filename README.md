@@ -88,6 +88,7 @@ sudo chmod a+rx /usr/local/bin/fopus
 -b, --split-size SIZE	Split backup pieces of SIZE. Default is 1G.
 -g, --group-by-name	Group backups by file/date instead of date/name.
 -o, --output OUTPUT	Backup in the directory at path OUTPUT.
+-k, --seckey SECKEY_FILE Minisign with SECKEY_FILE.
 -n, --dry-run		Don't perform any action.
 ```
 
