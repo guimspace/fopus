@@ -373,9 +373,12 @@ sign_files()
 {
 	if [[ "$DRY_RUN" = "false" ]]; then
 		# hash
-		if ! "$sha256sum_tool" "$BACKUP_PATH/$BACKUP_DIR/"* > "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS.txt"; then
+		(
+		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
+		if ! "$sha256sum_tool" "./"* > "./SHA256SUMS.txt"; then
 			return 1
 		fi
+		)
 
 		#sign
 		if [[ -z "${CONFIG[seckey]}" ]]; then
@@ -397,7 +400,10 @@ hash_permission()
 	echo "$BACKUP_PATH/$BACKUP_DIR/"
 	# hashes
 	if [[ "$DRY_RUN" = "false" ]]; then
-		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "$BACKUP_PATH/SHA1SUMS.txt")
+		(
+		cd "$BACKUP_PATH" || exit 1
+		find "$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "./SHA1SUMS.txt"
+		)
 		chmod 600 "$BACKUP_PATH/SHA1SUMS.txt"
 	fi
 
