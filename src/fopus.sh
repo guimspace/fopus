@@ -376,8 +376,16 @@ sign_files()
 		if ! "$sha256sum_tool" "$BACKUP_PATH/$BACKUP_DIR/"* > "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS"; then
 			return 1
 		fi
-		if ! minisign -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS"; then
-			return 1
+
+		#sign
+		if [[ -z "${CONFIG[seckey]}" ]]; then
+			if ! minisign -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS"; then
+				return 1
+			fi
+		else
+			if ! minisign -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS" -s "${CONFIG[seckey]}"; then
+				return 1
+			fi
 		fi
 	fi
 
