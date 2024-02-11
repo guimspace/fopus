@@ -97,7 +97,7 @@ show_help()
 	echo -e "\t-b, --split-size SIZE\tSplit backup pieces of SIZE. Default is 1G."
 	echo -e "\t-g, --group-by-name\tGroup backups by file/date instead of date/name."
 	echo -e "\t-o, --output OUTPUT\tBackup in the directory at path OUTPUT."
-	echo -e "\t-k, --seckey SECKEY_FILE\tMinisign with SECKEY_FILE."
+	echo -e "\t-k, --seckey SECKEY\tMinisign with SECKEY."
 	echo -e "\t-n, --dry-run\t\tDon't perform any action."
 	echo ""
 	echo "Examples:"
