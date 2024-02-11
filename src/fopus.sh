@@ -36,7 +36,7 @@ declare -r DATE
 DRY_RUN="false"
 
 declare -A CONFIG=(
-	[partsize]=""
+	[partsize]="1073741824"
 	[repopath]="$(pwd -P)"
 	[groupbyname]="false"
 	[one]="false"
@@ -89,35 +89,34 @@ sha1sum_func() {
 show_help()
 {
 	echo "Usage:"
-	echo -e "\tfopus [--one] [--no-split | --split-size SIZE] [--group-by-name] [--ouput OUTPUT] FILE..."
+	echo -e "\tfopus [-1sgn] [-b SIZE] [-o OUTPUT] [-k SECKEY] FILE..."
 	echo ""
 	echo "Options:"
-	echo -e "\t-1, --one\t\tPut FILEs in one backup."
-	echo -e "\t-s, --no-split\t\tDon't split backup in parts."
-	echo -e "\t-b, --split-size SIZE\tSplit backup pieces of SIZE. Default is 1G."
-	echo -e "\t-g, --group-by-name\tGroup backups by file/date instead of date/name."
-	echo -e "\t-o, --output OUTPUT\tBackup in the directory at path OUTPUT."
-	echo -e "\t-k, --seckey SECKEY_FILE\tMinisign with SECKEY_FILE."
-	echo -e "\t-n, --dry-run\t\tDon't perform any action."
+	echo -e "\t-1\t\tPut FILEs in one backup."
+	echo -e "\t-s\t\tDon't split backup in parts."
+	echo -e "\t-b SIZE\t\tSplit backup pieces of SIZE. Default is 1G."
+	echo -e "\t-g\t\tGroup backups by file/date instead of date/name."
+	echo -e "\t-o OUTPUT\tBackup in the directory at path OUTPUT."
+	echo -e "\t-k SECKEY\tMinisign with SECKEY."
+	echo -e "\t-n\t\tDon't perform any action."
 	echo ""
 	echo "Examples:"
-	echo -e "\t$ fopus --output ~/Backups --split-size 1G Documents/ lorem-ipsum.txt"
-	echo -e "\t$ fopus --one --no-split Pictures/ Videos/"
+	echo -e "\t$ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt"
+	echo -e "\t$ fopus -1s Pictures/ Videos/"
 }
 
 main()
 {
 	check_requirements
 
-	declare -a FILES=()
+	declare -a FILES=("$@")
 
-	if [[ -z "$*" ]]; then
+	if [[ -z "$FILES" ]]; then
 		>&2 echo "fopus: missing file operand"
 		echo "Try 'fopus --help' for more information."
 		exit 1
 	fi
 
-	evaluate_arguments "$@"
 	declare -r DRY_RUN="$DRY_RUN"
 
 	OUTPUT_PATH="${CONFIG[repopath]}"
@@ -161,92 +160,10 @@ main()
 	exit 0
 }
 
-evaluate_arguments()
-{
-	declare -ar ARGS=("$@")
-
-	local -ir N=${#ARGS[@]}
-	local -i i=0
-
-	while [[ $i -lt $N && "${ARGS[$i]}" != "--" ]]; do
-		case "${ARGS[$i]}" in
-			"--dry-run"|"-n")
-				DRY_RUN="true" ;;
-
-			"--group-by-name"|"-g")
-				CONFIG[groupbyname]="true" ;;
-
-			"--one"|"-1")
-				CONFIG[one]="true" ;;
-
-			"--no-split"|"-s")
-				if [[ -n "${CONFIG[partsize]}" ]]; then
-					>&2 echo "fopus: --split-size can't be used with --no-split"
-					exit 1
-				fi
-				CONFIG[partsize]="-1" ;;
-
-			"--split-size"|"-b")
-				if [[ -n "${CONFIG[partsize]}" ]]; then
-					>&2 echo "fopus: --split-size can't be used with --no-split"
-					exit 1
-				fi
-				((i++))
-				if ! split --bytes="${ARGS["$i"]}" /dev/null; then
-					exit 1
-				fi
-				CONFIG[partsize]="${ARGS["$i"]}" ;;
-
-			"--output"|"-o")
-				((i++))
-				if [[ ! -d "${ARGS[$i]}" ]]; then
-					>&2 echo "fopus: ${ARGS["$i"]}: No such directory"
-					exit 1
-				fi
-				CONFIG[repopath]="${ARGS[$i]}" ;;
-
-			"--seckey"|"-k")
-				((i++))
-				if [[ ! -f "${ARGS[$i]}" ]]; then
-					>&2 echo "fopus: ${ARGS["$i"]}: No such file"
-					exit 1
-				fi
-				CONFIG[seckey]=$(realpath "${ARGS[$i]}") ;;
-
-			"--")
-				break ;;
-
-			*)
-				((i--))
-				break ;;
-		esac
-		((i++))
-	done
-
-	if [[ -z "${CONFIG[partsize]}" ]]; then
-		CONFIG[partsize]="1073741824"
-	fi
-
-	((i++))
-	FILES=("${ARGS[@]:$i}")
-	if [[ "${#FILES[@]}" -eq 0 ]]; then
-		>&2 echo "fopus: missing file operand"
-		echo "Try 'fopus --help' for more information."
-		exit 1
-	fi
-
-	return 0
-}
-
 evaluate_files()
 {
-	local file=""
-
-	declare -i i=0
-	declare -ir N="${#FILES[@]}"
-
-	while [[ "$i" -lt "$N" ]]; do
-		file="${FILES[$i]}"
+	for i in "${!FILES[@]}"; do
+		local file="${FILES[$i]}"
 
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: $file: No such file or directory"
@@ -257,7 +174,6 @@ evaluate_files()
 		fi
 
 		FILES["$i"]=$(realpath "$file")
-		((i++))
 	done
 
 	return 0
@@ -425,18 +341,59 @@ if [[ -z "$1" ]]; then
 	exit 1
 fi
 
-case "$1" in
-	"--help"|"-h")
-		show_help ;;
+s_opt="false"
+b_opt="false"
+while getopts "hvng1sb:o:k:" opt; do
+    case "$opt" in
+		n) DRY_RUN="true" ;;
 
-	"--version"|"-V")
-		echo "v${VERSION}" ;;
+		g) CONFIG[groupbyname]="true" ;;
 
-	"--")
-		main "${@:2}" ;;
+		1) CONFIG[one]="true" ;;
 
-	*)
-		main "${@:1}" ;;
-esac
+		s)
+			if [[ "$b_opt" = "true" ]]; then
+				>&2 echo "fopus: -b can't be used with -s"
+				exit 2
+			fi
+			CONFIG[partsize]="-1"; s_opt="true" ;;
+
+		b)
+			if [[ "$s_opt" = "true" ]]; then
+				>&2 echo "fopus: -s can't be used with -b"
+				exit 2
+			fi
+			if ! split --bytes="$OPTARG" /dev/null; then
+				exit 1
+			fi
+			CONFIG[partsize]="$OPTARG"; b_opt="true" ;;
+
+		o)
+			if [[ ! -d "$OPTARG" ]]; then
+				>&2 echo "fopus: $OPTARG: No such directory"
+				exit 1
+			fi
+			CONFIG[repopath]="$OPTARG" ;;
+
+		k)
+			if [[ ! -f "$OPTARG" ]]; then
+				>&2 echo "fopus: $OPTARG: No such file"
+				exit 1
+			fi
+			CONFIG[seckey]=$(realpath "$OPTARG") ;;
+
+		v) echo "v${VERSION}"
+			exit 0 ;;
+
+		h) show_help
+			exit 0 ;;
+
+        ?) show_help
+			exit 2 ;;
+    esac
+done
+
+shift $((OPTIND - 1))
+main "$@"
 
 exit 0
