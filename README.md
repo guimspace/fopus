@@ -6,7 +6,7 @@
 
 # Overview
 
-> *In Linux and Unix, everything is a file.  Directories are files, files are files and devices are files*.  
+> *In Linux and Unix, everything is a file.  Directories are files, files are files and devices are files*.
 > Ubuntu documentation - [FilePermissions](https://help.ubuntu.com/community/FilePermissions) (as 2022-12-12)
 
 **fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt**, **split**, **hash** and **sign** files. It aims consistency in the process of backup.
@@ -80,23 +80,23 @@ sudo chmod a+rx /usr/local/bin/fopus
 
 # Usage
 
-**Syntax:** `fopus [--one] [--no-split | --split-size SIZE] [--group-by-name] [--ouput OUTPUT] FILE...`
+**Syntax:** `fopus [-1sgn] [-b SIZE] [-o OUTPUT] [-k SECKEY] FILE...`
 
 ```
--1, --one		Put FILEs in one backup.
--s, --no-split		Don't split backup in parts.
--b, --split-size SIZE	Split backup pieces of SIZE. Default is 1G.
--g, --group-by-name	Group backups by file/date instead of date/name.
--o, --output OUTPUT	Backup in the directory at path OUTPUT.
--k, --seckey SECKEY_FILE Minisign with SECKEY_FILE.
--n, --dry-run		Don't perform any action.
+-1		Put FILEs in one backup.
+-s		Don't split backup in parts.
+-b SIZE		Split backup pieces of SIZE. Default is 1G.
+-g		Group backups by file/date instead of date/name.
+-o OUTPUT	Backup in the directory at path OUTPUT.
+-k SECKEY	Minisign with SECKEY.
+-n		Don't perform any action.
 ```
 
 ### Examples
 
 ```
-$ fopus --output ~/Backups --split-size 1G Documents/ lorem-ipsum.txt
-$ fopus --one --no-split Pictures/ Videos/
+$ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
+$ fopus -1s Pictures/ Videos/
 ```
 
 # Contribute code and ideas
