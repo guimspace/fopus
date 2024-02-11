@@ -394,7 +394,6 @@ sign_files()
 
 hash_permission()
 {
-	echo "$BACKUP_PATH/$BACKUP_DIR/"
 	# hashes
 	if [[ "$DRY_RUN" = "false" ]]; then
 		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "$BACKUP_PATH/SHA1SUMS")
