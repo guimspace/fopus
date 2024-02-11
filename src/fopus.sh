@@ -36,7 +36,7 @@ declare -r DATE
 DRY_RUN="false"
 
 declare -A CONFIG=(
-	[partsize]=""
+	[partsize]="1073741824"
 	[repopath]="$(pwd -P)"
 	[groupbyname]="false"
 	[one]="false"
@@ -109,15 +109,14 @@ main()
 {
 	check_requirements
 
-	declare -a FILES=()
+	declare -a FILES=("$@")
 
-	if [[ -z "$*" ]]; then
+	if [[ -z "$FILES" ]]; then
 		>&2 echo "fopus: missing file operand"
 		echo "Try 'fopus --help' for more information."
 		exit 1
 	fi
 
-	evaluate_arguments "$@"
 	declare -r DRY_RUN="$DRY_RUN"
 
 	OUTPUT_PATH="${CONFIG[repopath]}"
@@ -425,18 +424,59 @@ if [[ -z "$1" ]]; then
 	exit 1
 fi
 
-case "$1" in
-	"--help"|"-h")
-		show_help ;;
+s_opt="false"
+b_opt="false"
+while getopts "hvng1sb:o:k:" opt; do
+    case "$opt" in
+		n) DRY_RUN="true" ;;
 
-	"--version"|"-V")
-		echo "v${VERSION}" ;;
+		g) CONFIG[groupbyname]="true" ;;
 
-	"--")
-		main "${@:2}" ;;
+		1) CONFIG[one]="true" ;;
 
-	*)
-		main "${@:1}" ;;
-esac
+		s)
+			if [[ "$b_opt" = "true" ]]; then
+				>&2 echo "fopus: -b can't be used with -s"
+				exit 2
+			fi
+			CONFIG[partsize]="-1"; s_opt="true" ;;
+
+		b)
+			if [[ "$s_opt" = "true" ]]; then
+				>&2 echo "fopus: -s can't be used with -b"
+				exit 2
+			fi
+			if ! split --bytes="$OPTARG" /dev/null; then
+				exit 1
+			fi
+			CONFIG[partsize]="$OPTARG"; b_opt="true" ;;
+
+		o)
+			if [[ ! -d "$OPTARG" ]]; then
+				>&2 echo "fopus: $OPTARG: No such directory"
+				exit 1
+			fi
+			CONFIG[repopath]="$OPTARG" ;;
+
+		k)
+			if [[ ! -f "$OPTARG" ]]; then
+				>&2 echo "fopus: $OPTARG: No such file"
+				exit 1
+			fi
+			CONFIG[seckey]=$(realpath "$OPTARG") ;;
+
+		v) echo "v${VERSION}"
+			exit 0 ;;
+
+		h) show_help
+			exit 0 ;;
+
+        ?) show_help
+			exit 2 ;;
+    esac
+done
+
+shift $((OPTIND - 1))
+main "$*"
 
 exit 0
