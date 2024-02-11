@@ -2,7 +2,7 @@
 
 # MIT License
 #
-# Copyright (c) 2019-2022 Guilherme Tadashi Maeoka
+# Copyright (c) 2019-2024 Guilherme Tadashi Maeoka
 # fopus: command-line tool to archive, compress, encrypt and split.
 # <https://github.com/guimspace/fopus>
 #
