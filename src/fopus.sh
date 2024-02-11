@@ -162,13 +162,8 @@ main()
 
 evaluate_files()
 {
-	local file=""
-
-	declare -i i=0
-	declare -ir N="${#FILES[@]}"
-
-	while [[ "$i" -lt "$N" ]]; do
-		file="${FILES[$i]}"
+	for i in "${!FILES[@]}"; do
+		local file="${FILES[$i]}"
 
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: $file: No such file or directory"
@@ -179,7 +174,6 @@ evaluate_files()
 		fi
 
 		FILES["$i"]=$(realpath "$file")
-		((i++))
 	done
 
 	return 0
@@ -400,6 +394,6 @@ while getopts "hvng1sb:o:k:" opt; do
 done
 
 shift $((OPTIND - 1))
-main "$*"
+main "$@"
 
 exit 0
