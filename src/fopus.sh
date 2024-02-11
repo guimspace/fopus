@@ -274,7 +274,7 @@ fopus_backup()
 	local tmp=""
 
 	REPO_NAME=$(basename -- "${LIST_FILES[0]}")
-	REPO_NAME=${REPO_NAME// /_}
+	REPO_NAME=$(echo -n "$REPO_NAME" | tr "[:space:]" "_" | tr -s "_")
 
 	tmp=$(echo "${LIST_FILES[0]}" | "$sha1sum_tool")
 	tmp="$REPO_NAME-${tmp:0:11}"
