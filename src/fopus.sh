@@ -113,7 +113,7 @@ main()
 
 	declare -a FILES=("$@")
 
-	if [[ -z "$FILES" ]]; then
+	if [[ -z "${FILES-}" ]]; then
 		>&2 echo "fopus: missing file operand"
 		echo "Try 'fopus --help' for more information."
 		exit 1
@@ -151,7 +151,7 @@ main()
 		declare -ir N="${#FILES[@]}"
 		local file=""
 		for file in "${FILES[@]}"; do
-			((i++))
+			((i += 1))
 			JOB="Backup $i of $N"
 			if ! fopus_backup "$file"; then
 				return 1
@@ -223,7 +223,7 @@ fopus_backup()
 		N="${#LIST_FILES[@]}"
 		while [[ $i -lt $N ]]; do
 			echo "       ${LIST_FILES[$i]}"
-			((i++))
+			((i += 1))
 		done
 	fi
 
@@ -337,7 +337,7 @@ hash_permission()
 	return 0
 }
 
-if [[ -z "$1" ]]; then
+if [[ -z "${1-}" ]]; then
 	>&2 echo "fopus: missing file operand"
 	echo "Try 'fopus --help' for more information."
 	exit 1
