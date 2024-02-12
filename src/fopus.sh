@@ -24,6 +24,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+set -euo pipefail
+
 if [[ "$UID" -lt 1000 ]]; then
 	exit 1
 fi
