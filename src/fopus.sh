@@ -90,21 +90,23 @@ sha1sum_func() {
 
 show_help()
 {
-	echo "Usage:"
-	echo -e "\tfopus [-1sgn] [-b SIZE] [-o OUTPUT] [-k SECKEY] FILE..."
-	echo ""
-	echo "Options:"
-	echo -e "\t-1\t\tPut FILEs in one backup."
-	echo -e "\t-s\t\tDon't split backup in parts."
-	echo -e "\t-b SIZE\t\tSplit backup pieces of SIZE. Default is 1G."
-	echo -e "\t-g\t\tGroup backups by file/date instead of date/name."
-	echo -e "\t-o OUTPUT\tBackup in the directory at path OUTPUT."
-	echo -e "\t-k SECKEY\tMinisign with SECKEY."
-	echo -e "\t-n\t\tDon't perform any action."
-	echo ""
-	echo "Examples:"
-	echo -e "\t$ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt"
-	echo -e "\t$ fopus -1s Pictures/ Videos/"
+	cat << EOT
+Usage:
+    fopus [-1sgn] [-b SIZE] [-o OUTPUT] [-k SECKEY] FILE...
+
+Options:
+    -1         Put FILEs in one backup.
+    -s         Don't split backup in parts.
+    -b SIZE    Split backup pieces of SIZE. Default is 1G.
+    -g         Group backups by file/date instead of date/name.
+    -o OUTPUT  Backup in the directory at path OUTPUT.
+    -k SECKEY  Minisign with SECKEY.
+    -n         Don't perform any action.
+
+Examples:
+    $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
+    $ fopus -1s Pictures/ Videos/
+EOT
 }
 
 main()
