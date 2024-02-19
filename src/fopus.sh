@@ -47,7 +47,7 @@ declare -A CONFIG=(
 
 check_requirements()
 {
-	declare -ar apps=(age minisign tar xz shasum)
+	declare -ar apps=(age minisign tar xz shasum realpath tr split numfmt stat basename find cat date)
 	local app=""
 
 	for app in "${apps[@]}"; do
