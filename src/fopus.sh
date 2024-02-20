@@ -265,7 +265,9 @@ fopus_backup()
 encrypt_file()
 {
 	if [[ "$DRY_RUN" = "false" ]]; then
-		if ! age --encrypt --passphrase "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
+		local params=()
+		params+=(--encrypt --passphrase)
+		if ! age "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
 			return 1
 		fi
 	fi
@@ -310,14 +312,13 @@ sign_files()
 		)
 
 		#sign
-		if [[ -z "${CONFIG[seckey]}" ]]; then
-			if ! minisign -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS.txt"; then
-				return 1
-			fi
-		else
-			if ! minisign -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS.txt" -s "${CONFIG[seckey]}"; then
-				return 1
-			fi
+		local params=()
+		if [[ -n "${CONFIG[seckey]}" ]]; then
+			params+=(-s "${CONFIG[seckey]}")
+		fi
+
+		if ! minisign "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS.txt"; then
+			return 1
 		fi
 	fi
 
