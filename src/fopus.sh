@@ -212,7 +212,14 @@ encrypt_file()
 {
 	if [[ "$DRY_RUN" = "false" ]]; then
 		local params=()
-		params+=(--encrypt --passphrase)
+		if [[ -n "${CONFIG[ageRECIPIENT]}" ]]; then
+			params+=(--recipient "${CONFIG[ageRECIPIENT]}")
+		elif [[ -n "${CONFIG[agePATH]}" ]]; then
+			params+=(--recipients-file "${CONFIG[agePATH]}")
+		else
+			params+=(--encrypt --passphrase)
+		fi
+
 		if ! "$age_tool" "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
 			return 1
 		fi
@@ -301,8 +308,10 @@ digest_options()
 {
 	local s_opt="false"
 	local b_opt="false"
+	local r_opt="false"
+	local R_opt="false"
 
-	while getopts "hvng1sb:o:k:t:" opt; do
+	while getopts "hvng1sb:o:k:t:r:R:" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
@@ -343,6 +352,26 @@ digest_options()
 				fi
 				CONFIG[seckey]=$(realpath "$OPTARG") ;;
 
+			r)
+				if [[ "$R_opt" = "true" ]]; then
+					>&2 echo "fopus: duplicate specification of age recipient"
+					exit 1
+				fi
+				if ! "$age_tool" --recipient "$OPTARG" "$0" > /dev/null ; then
+					exit 2
+				fi
+				CONFIG[ageRECIPIENT]="$OPTARG"; r_opt="true" ;;
+
+			R)
+				if [[ "$r_opt" = "true" ]]; then
+					>&2 echo "fopus: duplicate specification of age recipient"
+					exit 1
+				fi
+				if ! "$age_tool" --recipients-file "$OPTARG" "$0" > /dev/null ; then
+					exit 2
+				fi
+				CONFIG[agePATH]=$(realpath "$OPTARG"); R_opt="true" ;;
+
 			v) echo "v${VERSION}"
 				exit 0 ;;
 
@@ -370,6 +399,8 @@ main()
 		[one]="false"
 		[seckey]=""
 		[trusted]=""
+		[ageRECIPIENT]=""
+		[agePATH]=""
 	)
 
 	local FILES=()
