@@ -240,10 +240,8 @@ fopus_backup()
 	fi
 
 	# encrypt
-	if [[ "$DRY_RUN" = "false" ]]; then
-		if ! age --encrypt --passphrase "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
-			return 1
-		fi
+	if ! encrypt_file; then
+		return 1
 	fi
 
 	# split
@@ -259,6 +257,17 @@ fopus_backup()
 	# hash and file permission
 	if ! hash_permission; then
 		return 1
+	fi
+
+	return 0
+}
+
+encrypt_file()
+{
+	if [[ "$DRY_RUN" = "false" ]]; then
+		if ! age --encrypt --passphrase "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
+			return 1
+		fi
 	fi
 
 	return 0
