@@ -259,6 +259,9 @@ sign_files()
 
 		#sign
 		local params=()
+		if [[ -n "${CONFIG[trusted]}" ]]; then
+			params+=(-t "${CONFIG[trusted]}")
+		fi
 		if [[ -n "${CONFIG[seckey]}" ]]; then
 			params+=(-s "${CONFIG[seckey]}")
 		fi
@@ -299,13 +302,15 @@ digest_options()
 	local s_opt="false"
 	local b_opt="false"
 
-	while getopts "hvng1sb:o:k:" opt; do
+	while getopts "hvng1sb:o:k:t:" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
 			g) CONFIG[groupbyname]="true" ;;
 
 			1) CONFIG[one]="true" ;;
+
+			t) CONFIG[trusted]="$OPTARG" ;;
 
 			s)
 				if [[ "$b_opt" = "true" ]]; then
@@ -364,6 +369,7 @@ main()
 		[groupbyname]="false"
 		[one]="false"
 		[seckey]=""
+		[trusted]=""
 	)
 
 	local FILES=()
