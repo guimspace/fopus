@@ -35,6 +35,27 @@ declare -r VERSION="3.1.0-rc2"
 printf -v DATE "%(%Y-%m-%d)T" -1
 declare -r DATE
 
+declare -g CLEANUP_DIR=""
+
+cleanup()
+{
+	trap - SIGINT SIGTERM
+
+	declare -rg CLEANUP_DIR
+	local -r target=$(realpath "$CLEANUP_DIR")
+
+	if [[ ! -e "$target" ]]; then
+		:
+	elif [[ ! -d "$target" ]]; then
+		:
+	elif [[ "$target" =~ ^"/"$ ]]; then
+		:
+	else
+		rm -rf "$target"
+	fi
+
+	kill -SIGINT $$
+}
 
 check_requirements()
 {
@@ -155,6 +176,8 @@ fopus_backup()
 
 	local -r BACKUP_PATH="$BACKUP_PATH"
 	local -r BACKUP_DIR="$BACKUP_DIR"
+
+	CLEANUP_DIR="$BACKUP_PATH/$BACKUP_DIR"
 
 	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
 		>&2 echo "fopus: cannot create backup: Backup exists"
@@ -445,6 +468,7 @@ main()
 	OUTPUT_PATH=${OUTPUT_PATH%/}
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
 
+	trap cleanup SIGINT SIGTERM
 	echo "Repository $OUTPUT_PATH"
 
 	declare JOB=""
