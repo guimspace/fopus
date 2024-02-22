@@ -48,35 +48,25 @@ check_requirements()
 		fi
 	done
 
-  	sha256sum_func
-    if [[ -z "$sha256sum_tool" ]]; then
-		>&2 echo "fopus: sha256sum not found"
-		exit 1
-    fi
-
-	sha1sum_func
-    if [[ -z "$sha1sum_tool" ]]; then
-		>&2 echo "fopus: sha1sum not found"
-		exit 1
-    fi
-}
-
-sha256sum_func() {
-	if command -v sha256sum &> /dev/null; then
-		sha256sum_tool="$(command -v sha256sum)"
-	elif command -v shasum &> /dev/null; then
-		sha256sum_tool="$(command -v shasum) -a 256 "
-	fi
-	declare -gr sha256sum_tool
-}
-
-sha1sum_func() {
 	if command -v sha1sum &> /dev/null; then
 		sha1sum_tool="$(command -v sha1sum)"
 	elif command -v shasum &> /dev/null; then
 		sha1sum_tool="$(command -v shasum) "
+	else
+		>&2 echo "fopus: sha1sum not found"
+		exit 1
 	fi
 	declare -gr sha1sum_tool
+
+  	if command -v sha256sum &> /dev/null; then
+		sha256sum_tool="$(command -v sha256sum)"
+	elif command -v shasum &> /dev/null; then
+		sha256sum_tool="$(command -v shasum) -a 256 "
+	else
+		>&2 echo "fopus: sha256sum not found"
+		exit 1
+	fi
+	declare -gr sha256sum_tool
 }
 
 show_help()
