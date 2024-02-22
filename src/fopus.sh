@@ -94,6 +94,8 @@ EOT
 
 evaluate_files()
 {
+	declare -i i
+
 	for i in "${!FILES[@]}"; do
 		local file="${FILES[$i]}"
 
@@ -362,6 +364,11 @@ main()
 	declare -gr CONFIG
 	declare -gr DRY_RUN
 
+	if ! evaluate_files; then
+		exit 1
+	fi
+	local -r FILES
+
 	if [[ -z "${FILES-}" ]]; then
 		>&2 echo "fopus: missing file operand"
 		echo "Try 'fopus --help' for more information."
@@ -384,8 +391,6 @@ main()
 	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
 	OUTPUT_PATH=${OUTPUT_PATH%/}
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
-
-	evaluate_files
 
 	echo "Repository $OUTPUT_PATH"
 
