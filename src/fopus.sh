@@ -74,7 +74,7 @@ check_requirements()
 	fi
 	declare -gr sha1sum_tool
 
-  	if command -v sha256sum &> /dev/null; then
+	if command -v sha256sum &> /dev/null; then
 		sha256sum_tool="$(command -v sha256sum)"
 	elif command -v shasum &> /dev/null; then
 		sha256sum_tool="$(command -v shasum) -a 256 "
