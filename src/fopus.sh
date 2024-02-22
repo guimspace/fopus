@@ -32,7 +32,7 @@ fi
 
 declare -r VERSION="3.0.0"
 
-DATE=$(date +%Y-%m-%d)
+printf -v DATE "%(%Y-%m-%d)T" -1
 declare -r DATE
 
 DRY_RUN="false"
@@ -47,7 +47,7 @@ declare -A CONFIG=(
 
 check_requirements()
 {
-	declare -ar apps=(age minisign tar xz shasum realpath tr split numfmt stat basename find cat date)
+	declare -ar apps=(age minisign tar xz shasum realpath tr split numfmt stat basename find cat)
 	local app=""
 
 	for app in "${apps[@]}"; do
