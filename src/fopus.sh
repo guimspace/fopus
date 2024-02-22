@@ -348,12 +348,6 @@ hash_permission()
 	return 0
 }
 
-if [[ -z "${1-}" ]]; then
-	>&2 echo "fopus: missing file operand"
-	echo "Try 'fopus --help' for more information."
-	exit 1
-fi
-
 s_opt="false"
 b_opt="false"
 while getopts "hvng1sb:o:k:" opt; do
