@@ -35,6 +35,7 @@ declare -r VERSION="3.0.0"
 printf -v DATE "%(%Y-%m-%d)T" -1
 declare -r DATE
 
+
 check_requirements()
 {
 	declare -ar apps=(age minisign tar xz shasum realpath tr split numfmt stat basename find cat)
@@ -97,59 +98,6 @@ Examples:
     $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
     $ fopus -1s Pictures/ Videos/
 EOT
-}
-
-main()
-{
-	check_requirements
-
-	declare -a FILES=("$@")
-
-	if [[ -z "${FILES-}" ]]; then
-		>&2 echo "fopus: missing file operand"
-		echo "Try 'fopus --help' for more information."
-		exit 1
-	fi
-
-	OUTPUT_PATH="${CONFIG[repopath]}"
-
-	if [[ ! -d "$OUTPUT_PATH" ]]; then
-		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
-		exit 1
-	elif [[ "$OUTPUT_PATH" =~ ^"$HOME"$ ]]; then
-		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
-		exit 1
-	elif [[ ! -w "$OUTPUT_PATH" ]]; then
-		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
-		exit 1
-	fi
-
-	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
-	OUTPUT_PATH=${OUTPUT_PATH%/}
-	declare -r OUTPUT_PATH="$OUTPUT_PATH"
-
-	evaluate_files
-
-	echo "Repository $OUTPUT_PATH"
-
-	declare JOB=""
-	if [[ "${CONFIG[one]}" = "true" ]]; then
-		JOB="Backup"
-		fopus_backup "${FILES[@]}"
-	else
-		declare -i i=0
-		declare -ir N="${#FILES[@]}"
-		local file=""
-		for file in "${FILES[@]}"; do
-			((i += 1))
-			JOB="Backup $i of $N"
-			if ! fopus_backup "$file"; then
-				return 1
-			fi
-		done
-	fi
-
-	exit 0
 }
 
 evaluate_files()
@@ -335,6 +283,61 @@ hash_permission()
 
 	return 0
 }
+
+
+main()
+{
+	check_requirements
+
+	declare -a FILES=("$@")
+
+	if [[ -z "${FILES-}" ]]; then
+		>&2 echo "fopus: missing file operand"
+		echo "Try 'fopus --help' for more information."
+		exit 1
+	fi
+
+	OUTPUT_PATH="${CONFIG[repopath]}"
+
+	if [[ ! -d "$OUTPUT_PATH" ]]; then
+		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
+		exit 1
+	elif [[ "$OUTPUT_PATH" =~ ^"$HOME"$ ]]; then
+		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
+		exit 1
+	elif [[ ! -w "$OUTPUT_PATH" ]]; then
+		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
+		exit 1
+	fi
+
+	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
+	OUTPUT_PATH=${OUTPUT_PATH%/}
+	declare -r OUTPUT_PATH="$OUTPUT_PATH"
+
+	evaluate_files
+
+	echo "Repository $OUTPUT_PATH"
+
+	declare JOB=""
+	if [[ "${CONFIG[one]}" = "true" ]]; then
+		JOB="Backup"
+		fopus_backup "${FILES[@]}"
+	else
+		declare -i i=0
+		declare -ir N="${#FILES[@]}"
+		local file=""
+		for file in "${FILES[@]}"; do
+			((i += 1))
+			JOB="Backup $i of $N"
+			if ! fopus_backup "$file"; then
+				return 1
+			fi
+		done
+	fi
+
+	exit 0
+}
+
 
 declare -A CONFIG=(
 	[partsize]="1073741824"
