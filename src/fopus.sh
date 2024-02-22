@@ -67,7 +67,7 @@ sha256sum_func() {
 	elif command -v shasum &> /dev/null; then
 		sha256sum_tool="$(command -v shasum) -a 256 "
 	fi
-	export sha256sum_tool
+	declare -gr sha256sum_tool
 }
 
 sha1sum_func() {
@@ -76,7 +76,7 @@ sha1sum_func() {
 	elif command -v shasum &> /dev/null; then
 		sha1sum_tool="$(command -v shasum) "
 	fi
-	export sha1sum_tool
+	declare -gr sha1sum_tool
 }
 
 show_help()
@@ -356,7 +356,7 @@ main()
 		[seckey]=""
 	)
 
-	declare -a FILES
+	local FILES=()
 	DRY_RUN="false"
 
 	if ! digest_options "$@"; then
