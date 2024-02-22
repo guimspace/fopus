@@ -38,7 +38,7 @@ declare -r DATE
 
 check_requirements()
 {
-	local -r apps=(age minisign tar xz shasum realpath tr split numfmt stat basename find cat)
+	local -r apps=(tar xz realpath tr split numfmt stat basename find cat)
 
 	local app=""
 	for app in "${apps[@]}"; do
@@ -47,6 +47,22 @@ check_requirements()
 			exit 1
 		fi
 	done
+
+	if command -v age &> /dev/null; then
+		age_tool="$(command -v age)"
+	else
+		>&2 echo "fopus: age not found"
+		exit 1
+	fi
+	declare -gr age_tool
+
+	if command -v minisign &> /dev/null; then
+		minisign_tool="$(command -v minisign)"
+	else
+		>&2 echo "fopus: minisign not found"
+		exit 1
+	fi
+	declare -gr minisign_tool
 
 	if command -v sha1sum &> /dev/null; then
 		sha1sum_tool="$(command -v sha1sum)"
@@ -197,7 +213,7 @@ encrypt_file()
 	if [[ "$DRY_RUN" = "false" ]]; then
 		local params=()
 		params+=(--encrypt --passphrase)
-		if ! age "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
+		if ! "$age_tool" "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
 			return 1
 		fi
 	fi
@@ -247,7 +263,7 @@ sign_files()
 			params+=(-s "${CONFIG[seckey]}")
 		fi
 
-		if ! minisign "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS.txt"; then
+		if ! "$minisign_tool" "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS.txt"; then
 			return 1
 		fi
 	fi
