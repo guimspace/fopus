@@ -121,8 +121,6 @@ main()
 		exit 1
 	fi
 
-	declare -r DRY_RUN="$DRY_RUN"
-
 	OUTPUT_PATH="${CONFIG[repopath]}"
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
@@ -399,6 +397,9 @@ while getopts "hvng1sb:o:k:" opt; do
 			exit 2 ;;
     esac
 done
+
+declare -r DRY_RUN
+declare -r CONFIG
 
 shift $((OPTIND - 1))
 main "$@"
