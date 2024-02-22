@@ -35,16 +35,6 @@ declare -r VERSION="3.0.0"
 printf -v DATE "%(%Y-%m-%d)T" -1
 declare -r DATE
 
-DRY_RUN="false"
-
-declare -A CONFIG=(
-	[partsize]="1073741824"
-	[repopath]="$(pwd -P)"
-	[groupbyname]="false"
-	[one]="false"
-	[seckey]=""
-)
-
 check_requirements()
 {
 	declare -ar apps=(age minisign tar xz shasum realpath tr split numfmt stat basename find cat)
@@ -346,6 +336,16 @@ hash_permission()
 	return 0
 }
 
+declare -A CONFIG=(
+	[partsize]="1073741824"
+	[repopath]="$(pwd -P)"
+	[groupbyname]="false"
+	[one]="false"
+	[seckey]=""
+)
+
+DRY_RUN="false"
+
 s_opt="false"
 b_opt="false"
 while getopts "hvng1sb:o:k:" opt; do
@@ -397,12 +397,12 @@ while getopts "hvng1sb:o:k:" opt; do
 			exit 2 ;;
     esac
 done
-
 unset s_opt b_opt
+shift $((OPTIND - 1))
+
 declare -r DRY_RUN
 declare -r CONFIG
 
-shift $((OPTIND - 1))
 main "$@"
 
 exit 0
