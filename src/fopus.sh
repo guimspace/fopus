@@ -398,6 +398,7 @@ while getopts "hvng1sb:o:k:" opt; do
     esac
 done
 
+unset s_opt b_opt
 declare -r DRY_RUN
 declare -r CONFIG
 
