@@ -284,12 +284,89 @@ hash_permission()
 	return 0
 }
 
+digest_options()
+{
+	local s_opt="false"
+	local b_opt="false"
+
+	while getopts "hvng1sb:o:k:" opt; do
+		case "$opt" in
+			n) DRY_RUN="true" ;;
+
+			g) CONFIG[groupbyname]="true" ;;
+
+			1) CONFIG[one]="true" ;;
+
+			s)
+				if [[ "$b_opt" = "true" ]]; then
+					>&2 echo "fopus: -b can't be used with -s"
+					exit 2
+				fi
+				CONFIG[partsize]="-1"; s_opt="true" ;;
+
+			b)
+				if [[ "$s_opt" = "true" ]]; then
+					>&2 echo "fopus: -s can't be used with -b"
+					exit 2
+				fi
+				if ! split --bytes="$OPTARG" /dev/null; then
+					exit 1
+				fi
+				CONFIG[partsize]="$OPTARG"; b_opt="true" ;;
+
+			o)
+				if [[ ! -d "$OPTARG" ]]; then
+					>&2 echo "fopus: $OPTARG: No such directory"
+					exit 1
+				fi
+				CONFIG[repopath]="$OPTARG" ;;
+
+			k)
+				if [[ ! -f "$OPTARG" ]]; then
+					>&2 echo "fopus: $OPTARG: No such file"
+					exit 1
+				fi
+				CONFIG[seckey]=$(realpath "$OPTARG") ;;
+
+			v) echo "v${VERSION}"
+				exit 0 ;;
+
+			h) show_help
+				exit 0 ;;
+
+			?) show_help
+				exit 2 ;;
+		esac
+	done
+
+	shift $((OPTIND - 1))
+	FILES+=("$@")
+
+	return 0
+}
+
 
 main()
 {
-	check_requirements
+	declare -A CONFIG=(
+		[partsize]="1073741824"
+		[repopath]="$(pwd -P)"
+		[groupbyname]="false"
+		[one]="false"
+		[seckey]=""
+	)
 
-	declare -a FILES=("$@")
+	declare -a FILES
+	DRY_RUN="false"
+
+	if ! digest_options "$@"; then
+		exit 1
+	fi
+
+	declare -gr CONFIG
+	declare -gr DRY_RUN
+
+	check_requirements
 
 	if [[ -z "${FILES-}" ]]; then
 		>&2 echo "fopus: missing file operand"
@@ -338,73 +415,6 @@ main()
 	exit 0
 }
 
-
-declare -A CONFIG=(
-	[partsize]="1073741824"
-	[repopath]="$(pwd -P)"
-	[groupbyname]="false"
-	[one]="false"
-	[seckey]=""
-)
-
-DRY_RUN="false"
-
-s_opt="false"
-b_opt="false"
-while getopts "hvng1sb:o:k:" opt; do
-    case "$opt" in
-		n) DRY_RUN="true" ;;
-
-		g) CONFIG[groupbyname]="true" ;;
-
-		1) CONFIG[one]="true" ;;
-
-		s)
-			if [[ "$b_opt" = "true" ]]; then
-				>&2 echo "fopus: -b can't be used with -s"
-				exit 2
-			fi
-			CONFIG[partsize]="-1"; s_opt="true" ;;
-
-		b)
-			if [[ "$s_opt" = "true" ]]; then
-				>&2 echo "fopus: -s can't be used with -b"
-				exit 2
-			fi
-			if ! split --bytes="$OPTARG" /dev/null; then
-				exit 1
-			fi
-			CONFIG[partsize]="$OPTARG"; b_opt="true" ;;
-
-		o)
-			if [[ ! -d "$OPTARG" ]]; then
-				>&2 echo "fopus: $OPTARG: No such directory"
-				exit 1
-			fi
-			CONFIG[repopath]="$OPTARG" ;;
-
-		k)
-			if [[ ! -f "$OPTARG" ]]; then
-				>&2 echo "fopus: $OPTARG: No such file"
-				exit 1
-			fi
-			CONFIG[seckey]=$(realpath "$OPTARG") ;;
-
-		v) echo "v${VERSION}"
-			exit 0 ;;
-
-		h) show_help
-			exit 0 ;;
-
-        ?) show_help
-			exit 2 ;;
-    esac
-done
-unset s_opt b_opt
-shift $((OPTIND - 1))
-
-declare -r DRY_RUN
-declare -r CONFIG
 
 main "$@"
 
