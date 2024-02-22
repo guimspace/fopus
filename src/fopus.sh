@@ -38,9 +38,9 @@ declare -r DATE
 
 check_requirements()
 {
-	declare -ar apps=(age minisign tar xz shasum realpath tr split numfmt stat basename find cat)
-	local app=""
+	local -r apps=(age minisign tar xz shasum realpath tr split numfmt stat basename find cat)
 
+	local app=""
 	for app in "${apps[@]}"; do
 		if ! command -v "${app}" &> /dev/null; then
 			>&2 echo "fopus: ${app} not found"
@@ -67,6 +67,8 @@ check_requirements()
 		exit 1
 	fi
 	declare -gr sha256sum_tool
+
+	return 0
 }
 
 show_help()
@@ -349,14 +351,16 @@ main()
 	local FILES=()
 	DRY_RUN="false"
 
+	if ! check_requirements; then
+		exit 1
+	fi
+
 	if ! digest_options "$@"; then
 		exit 1
 	fi
 
 	declare -gr CONFIG
 	declare -gr DRY_RUN
-
-	check_requirements
 
 	if [[ -z "${FILES-}" ]]; then
 		>&2 echo "fopus: missing file operand"
