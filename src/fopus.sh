@@ -131,11 +131,10 @@ EOT
 
 evaluate_files()
 {
-	declare -i i
+	local SELECT=()
+	local file
 
-	for i in "${!FILES[@]}"; do
-		local file="${FILES[$i]}"
-
+	for file in "${FILES[@]}"; do
 		if [[ ! -e "$file" ]]; then
 			>&2 echo "fopus: $file: No such file or directory"
 			exit 1
@@ -144,8 +143,12 @@ evaluate_files()
 			exit 1
 		fi
 
-		FILES["$i"]=$(realpath "$file")
+		file=$(realpath "$file")
+		SELECT+=("$file")
 	done
+
+	FILES=()
+	FILES=("${SELECT[@]}")
 
 	return 0
 }
@@ -466,6 +469,13 @@ main()
 
 	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
+
+	for file in "${FILES[@]}"; do
+		if [[ "$OUTPUT_PATH" == "$file" ]]; then
+			>&2 echo "fopus: invalid output path"
+			exit 1
+		fi
+	done
 
 	trap cleanup SIGINT SIGTERM
 	echo "Repository $OUTPUT_PATH"
