@@ -194,7 +194,7 @@ fopus_backup()
 	fi
 
 	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
-		>&2 echo "fopus: cannot create backup: Backup exists"
+		>&2 echo "fopus: cannot create backup: directory is not empty"
 		return 0
 	fi
 
