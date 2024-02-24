@@ -334,9 +334,11 @@ digest_options()
 	local r_opt="false"
 	local R_opt="false"
 
-	while getopts "hvng1sb:o:k:t:r:R:" opt; do
+	while getopts "hvng1sb:o:k:t:r:R:l" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
+
+			l) IS_LABELED="true" ;;
 
 			g) CONFIG[groupbyname]="true" ;;
 
@@ -428,6 +430,7 @@ main()
 
 	local FILES=()
 	DRY_RUN="false"
+	IS_LABELED="false"
 
 	if ! check_requirements; then
 		exit 1
@@ -439,6 +442,7 @@ main()
 
 	declare -gr CONFIG
 	declare -gr DRY_RUN
+	declare -gr IS_LABELED
 
 	if ! evaluate_files; then
 		exit 1
