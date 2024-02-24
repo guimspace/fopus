@@ -465,7 +465,6 @@ main()
 	fi
 
 	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
-	OUTPUT_PATH=${OUTPUT_PATH%/}
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	trap cleanup SIGINT SIGTERM
