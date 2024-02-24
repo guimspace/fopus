@@ -158,6 +158,8 @@ fopus_backup()
 	local BACKUP_PATH=""
 	local BACKUP_DIR=""
 
+	local -r ARCHIVE_UUID=$(uuidgen -r)
+
 	local tmp=""
 
 	REPO_NAME=$(basename -- "${LIST_FILES[0]}")
@@ -225,6 +227,11 @@ fopus_backup()
 
 	# hash and file permission
 	if ! hash_permission; then
+		return 1
+	fi
+
+	# label
+	if ! label_archive; then
 		return 1
 	fi
 
@@ -322,6 +329,21 @@ hash_permission()
 		fi
 		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec chmod 600 {} \;)
 		(find "$BACKUP_PATH/$BACKUP_DIR/" -type d -exec chmod 700 {} \;)
+	fi
+
+	return 0
+}
+
+label_archive()
+{
+	if [[ "$DRY_RUN" == "false" ]] &&\
+	   [[ "$IS_LABELED" == "true" ]]; then
+		cat << EOL > "$BACKUP_PATH/$BACKUP_DIR/label.txt"
+# $ARCHIVE_UUID
+# $(date -u --iso-8601=seconds)
+#
+$(printf "# %s\n" "${LIST_FILES[@]}")
+EOL
 	fi
 
 	return 0
