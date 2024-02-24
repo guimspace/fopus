@@ -179,11 +179,6 @@ fopus_backup()
 
 	CLEANUP_DIR="$BACKUP_PATH/$BACKUP_DIR"
 
-	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
-		>&2 echo "fopus: cannot create backup: Backup exists"
-		exit 1
-	fi
-
 	BACKUP_FILE="$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.tar.xz"
 	local -r BACKUP_FILE="$BACKUP_FILE"
 
@@ -196,6 +191,11 @@ fopus_backup()
 			echo "       ${LIST_FILES[$i]}"
 			((i += 1))
 		done
+	fi
+
+	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
+		>&2 echo "fopus: cannot create backup: Backup exists"
+		return 0
 	fi
 
 	if [[ "$DRY_RUN" = "false" ]]; then
