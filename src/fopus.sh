@@ -159,6 +159,7 @@ fopus_backup()
 	local BACKUP_DIR=""
 
 	local -r ARCHIVE_UUID=$(uuidgen -r)
+	local ARCHIVE_SHA1SUM=""
 
 	local tmp=""
 
@@ -315,11 +316,18 @@ hash_permission()
 {
 	# hashes
 	if [[ "$DRY_RUN" = "false" ]]; then
-		(
-		cd "$BACKUP_PATH" || exit 1
-		find "$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "./SHA1SUMS.txt"
-		)
-		chmod 600 "$BACKUP_PATH/SHA1SUMS.txt"
+		if [[ "$IS_LABELED" == "false" ]]; then
+			(
+			cd "$BACKUP_PATH" || exit 1
+			find "$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "./SHA1SUMS.txt"
+			)
+			chmod 600 "$BACKUP_PATH/SHA1SUMS.txt"
+		else
+			ARCHIVE_SHA1SUM=$(
+			cd "$BACKUP_PATH/$BACKUP_DIR" || return 1
+			"$sha1sum_tool" "./"*
+			)
+		fi
 	fi
 
 	# file permission
@@ -343,6 +351,7 @@ label_archive()
 # $(date -u --iso-8601=seconds)
 #
 $(printf "# %s\n" "${LIST_FILES[@]}")
+$ARCHIVE_SHA1SUM
 EOL
 	fi
 
