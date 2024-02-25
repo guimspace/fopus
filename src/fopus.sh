@@ -162,6 +162,9 @@ fopus_backup()
 	local BACKUP_PATH=""
 	local BACKUP_DIR=""
 
+	local -r ARCHIVE_UUID=$(uuidgen -r)
+	local ARCHIVE_SHA1SUM=""
+
 	local tmp=""
 
 	REPO_NAME=$(basename -- "${LIST_FILES[0]}")
@@ -233,6 +236,11 @@ fopus_backup()
 
 	# hash and file permission
 	if ! hash_permission; then
+		return 1
+	fi
+
+	# label
+	if ! label_archive; then
 		return 1
 	fi
 
@@ -317,11 +325,18 @@ hash_permission()
 {
 	# hashes
 	if [[ "$DRY_RUN" = "false" ]]; then
-		(
-		cd "$BACKUP_PATH" || exit 1
-		find "$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "./SHA1SUMS.txt"
-		)
-		chmod 600 "$BACKUP_PATH/SHA1SUMS.txt"
+		if [[ "$IS_LABELED" == "false" ]]; then
+			(
+			cd "$BACKUP_PATH" || exit 1
+			find "$BACKUP_DIR/" -type f -exec "$sha1sum_tool" {} \; >> "./SHA1SUMS.txt"
+			)
+			chmod 600 "$BACKUP_PATH/SHA1SUMS.txt"
+		else
+			ARCHIVE_SHA1SUM=$(
+			cd "$BACKUP_PATH/$BACKUP_DIR" || return 1
+			"$sha1sum_tool" "./"*
+			)
+		fi
 	fi
 
 	# file permission
@@ -336,6 +351,23 @@ hash_permission()
 	return 0
 }
 
+label_archive()
+{
+	if [[ "$DRY_RUN" == "false" ]] &&\
+	   [[ "$IS_LABELED" == "true" ]]; then
+		cat << EOL > "$BACKUP_PATH/$BACKUP_DIR/label.txt"
+# $ARCHIVE_UUID
+# $(date -u --iso-8601=seconds)
+#
+$(printf "# %s\n" "${LIST_FILES[@]}")
+$ARCHIVE_SHA1SUM
+EOL
+		chmod 400 "$BACKUP_PATH/$BACKUP_DIR/label.txt"
+	fi
+
+	return 0
+}
+
 digest_options()
 {
 	local s_opt="false"
@@ -343,11 +375,13 @@ digest_options()
 	local r_opt="false"
 	local R_opt="false"
 
-	while getopts "hvng1sb:o:k:t:r:R:q" opt; do
+	while getopts "hvng1sb:o:k:t:r:R:ql" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
 			q) IS_QUIET="true" ;;
+
+			l) IS_LABELED="true" ;;
 
 			g) CONFIG[groupbyname]="true" ;;
 
@@ -440,6 +474,7 @@ main()
 	local FILES=()
 	DRY_RUN="false"
 	IS_QUIET="false"
+	IS_LABELED="false"
 
 	if ! check_requirements; then
 		exit 1
@@ -452,6 +487,7 @@ main()
 	declare -gr CONFIG
 	declare -gr DRY_RUN
 	declare -gr IS_QUIET
+	declare -gr IS_LABELED
 
 	if ! evaluate_files; then
 		exit 1
