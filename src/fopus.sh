@@ -353,6 +353,7 @@ label_archive()
 $(printf "# %s\n" "${LIST_FILES[@]}")
 $ARCHIVE_SHA1SUM
 EOL
+		chmod 400 "$BACKUP_PATH/$BACKUP_DIR/label.txt"
 	fi
 
 	return 0
