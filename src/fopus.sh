@@ -122,6 +122,7 @@ Options:
     -o OUTPUT  Backup in the directory at path OUTPUT.
     -k SECKEY  Minisign with SECKEY.
     -n         Don't perform any action.
+    -q         Don't be verbose.
 
 Examples:
     $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
@@ -186,14 +187,16 @@ fopus_backup()
 	local -r BACKUP_FILE="$BACKUP_FILE"
 
 	# show backup details
-	echo -e "${JOB} ${LIST_FILES[0]}"
-	if [[ "${CONFIG[one]}" = "true" ]]; then
-		declare -i i=1
-		N="${#LIST_FILES[@]}"
-		while [[ $i -lt $N ]]; do
-			echo "       ${LIST_FILES[$i]}"
-			((i += 1))
-		done
+	if [[ "$IS_QUIET" == "false" ]]; then
+		echo -e "${JOB} ${LIST_FILES[0]}"
+		if [[ "${CONFIG[one]}" = "true" ]]; then
+			declare -i i=1
+			N="${#LIST_FILES[@]}"
+			while [[ $i -lt $N ]]; do
+				echo "       ${LIST_FILES[$i]}"
+				((i += 1))
+			done
+		fi
 	fi
 
 	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
@@ -207,8 +210,10 @@ fopus_backup()
 
 	# compress
 	if [[ "$DRY_RUN" = "false" ]]; then
+		local params=()
+		[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
 		tar -cvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.txt" |\
-			xz --verbose --compress --threads=0 - > "$BACKUP_FILE"
+			xz "${params[@]}" --compress --threads=0 - > "$BACKUP_FILE"
 	fi
 
 	# encrypt
@@ -243,6 +248,7 @@ encrypt_file()
 		elif [[ -n "${CONFIG[agePATH]}" ]]; then
 			params+=(--recipients-file "${CONFIG[agePATH]}")
 		else
+			[[ "$IS_QUIET" == "true" ]] && echo "${REPO_NAME}.tar.xz"
 			params+=(--encrypt --passphrase)
 		fi
 
@@ -337,9 +343,11 @@ digest_options()
 	local r_opt="false"
 	local R_opt="false"
 
-	while getopts "hvng1sb:o:k:t:r:R:" opt; do
+	while getopts "hvng1sb:o:k:t:r:R:q" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
+
+			q) IS_QUIET="true" ;;
 
 			g) CONFIG[groupbyname]="true" ;;
 
@@ -431,6 +439,7 @@ main()
 
 	local FILES=()
 	DRY_RUN="false"
+	IS_QUIET="false"
 
 	if ! check_requirements; then
 		exit 1
@@ -442,6 +451,7 @@ main()
 
 	declare -gr CONFIG
 	declare -gr DRY_RUN
+	declare -gr IS_QUIET
 
 	if ! evaluate_files; then
 		exit 1
@@ -475,7 +485,7 @@ main()
 	done
 
 	trap cleanup SIGINT SIGTERM
-	echo "Repository $OUTPUT_PATH"
+	[[ "$IS_QUIET" == "false" ]] && echo "Repository $OUTPUT_PATH"
 
 	declare JOB=""
 	if [[ "${CONFIG[one]}" = "true" ]]; then
