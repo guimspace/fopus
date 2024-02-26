@@ -59,7 +59,7 @@ cleanup()
 
 check_requirements()
 {
-	local -r apps=(tar xz realpath tr split numfmt stat basename find cat)
+	local -r apps=(tar xz realpath tr split numfmt stat basename find cat uuidgen date)
 
 	local app=""
 	for app in "${apps[@]}"; do
