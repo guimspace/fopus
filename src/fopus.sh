@@ -326,12 +326,14 @@ hash_permission()
 	# hashes
 	if [[ "$DRY_RUN" = "false" ]]; then
 		if [[ "$IS_LABELED" == "false" ]]; then
-			(
-			cd "$BACKUP_PATH" || exit 1
-			if ! "$sha1sum_tool" "./$BACKUP_DIR/"* > "./SHA1SUMS.txt"; then
+			if ! (
+				cd "$BACKUP_PATH" || exit 1
+				if ! "$sha1sum_tool" "./$BACKUP_DIR/"* > "./SHA1SUMS.txt"; then
+					return 1
+				fi
+			); then
 				return 1
 			fi
-			)
 			chmod 600 "$BACKUP_PATH/SHA1SUMS.txt"
 		else
 			ARCHIVE_SHA1SUM=$(
