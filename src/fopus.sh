@@ -51,7 +51,7 @@ cleanup()
 	elif [[ "$target" =~ ^"/"$ ]]; then
 		:
 	else
-		rm -rf "$target"
+		rm -r "$target"
 	fi
 
 	kill -SIGINT $$
