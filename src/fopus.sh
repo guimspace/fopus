@@ -115,8 +115,8 @@ show_help()
 {
 	cat << EOT
 Usage:
-    fopus [-1sgnql] [-b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
-		[-r RECIPIENT] [-R PATH] FILE...
+    fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
+		[-r RECIPIENT | -R PATH] FILE...
 
 Options:
     -1            Put FILEs in one backup.
