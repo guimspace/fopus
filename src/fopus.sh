@@ -234,8 +234,13 @@ fopus_backup()
 		return 1
 	fi
 
-	# hash and file permission
-	if ! hash_permission; then
+	# hash files
+	if ! hash_files; then
+		return 1
+	fi
+
+	# file permission
+	if ! file_permission; then
 		return 1
 	fi
 
@@ -321,9 +326,8 @@ sign_files()
 	return 0
 }
 
-hash_permission()
+hash_files()
 {
-	# hashes
 	if [[ "$DRY_RUN" = "false" ]]; then
 		if [[ "$IS_LABELED" == "false" ]]; then
 			if ! (
@@ -343,7 +347,11 @@ hash_permission()
 		fi
 	fi
 
-	# file permission
+	return 0
+}
+
+file_permission()
+{
 	if [[ "$DRY_RUN" = "false" ]]; then
 		if ! chmod 700 "$BACKUP_PATH/$BACKUP_DIR/"; then
 			return 1
