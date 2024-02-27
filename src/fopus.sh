@@ -115,7 +115,7 @@ show_help()
 {
 	cat << EOT
 Usage:
-    fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
+    fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \\
 		[-r RECIPIENT | -R PATH] FILE...
 
 Options:
@@ -135,6 +135,7 @@ Options:
 Examples:
     $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
     $ fopus -1s Pictures/ Videos/
+    $ fopus -l -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
 EOT
 }
 
