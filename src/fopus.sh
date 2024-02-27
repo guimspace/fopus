@@ -48,7 +48,7 @@ cleanup()
 		:
 	elif [[ ! -d "$target" ]]; then
 		:
-	elif [[ "$target" =~ ^"/"$ ]]; then
+	elif [[ "$target" == "/" ]]; then
 		:
 	else
 		rm -r "$target"
