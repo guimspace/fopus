@@ -39,12 +39,15 @@ declare -g CLEANUP_DIR=""
 
 cleanup()
 {
-	trap - SIGINT SIGTERM
+	declare -ri RC="$?"
+	trap - SIGINT SIGTERM EXIT
 
 	declare -rg CLEANUP_DIR
 	local -r target=$(realpath "$CLEANUP_DIR")
 
-	if [[ ! -e "$target" ]]; then
+	if [[ "$RC" -eq 0 ]]; then
+		:
+	elif [[ ! -e "$target" ]]; then
 		:
 	elif [[ ! -d "$target" ]]; then
 		:
@@ -532,7 +535,7 @@ main()
 		fi
 	done
 
-	trap cleanup SIGINT SIGTERM
+	trap cleanup SIGINT SIGTERM EXIT
 	[[ "$IS_QUIET" == "false" ]] && echo "Repository $OUTPUT_PATH"
 
 	declare JOB=""
@@ -551,6 +554,7 @@ main()
 			fi
 		done
 	fi
+	trap - EXIT
 
 	exit 0
 }
