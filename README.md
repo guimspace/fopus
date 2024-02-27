@@ -11,9 +11,9 @@
 
 **fopus** is a command-line tool for Linux. It is a one-liner command to **archive**, **compress**, **encrypt**, **split**, **hash** and **sign** files. It aims consistency in the process of backup.
 
-Backup archive is encrypted by [**age**](https://github.com/FiloSottile/age) with a passphrase. An age identity key is not required.
+Backup archive is encrypted by [**age**](https://github.com/FiloSottile/age) with a passphrase or to a recipient.
 
-Large backups are split in pieces of 1G.
+Large backups are split in pieces of 1G by default.
 
 Hashes are signed by [**minisign**](https://github.com/jedisct1/minisign). A minisign secret key is required.
 
@@ -36,12 +36,12 @@ split -b SIZE FILE.tar.xz.age FILE.tar.xz.age_
 
 - **Hash:** Files are hashed with SHA-256.
 ```
-sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] list_FILE.txt > SHA256SUMS
+sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > SHA256SUMS.txt
 ```
 
 - **Sign:** The hashes are signed with `minisign`.
 ```
-minisign -Sm SHA256SUMS
+minisign -Sm SHA256SUMS.txt
 ```
 
 - **Permissions:** Permission of files are set to 600, and 700 for directories.
@@ -61,7 +61,9 @@ A directory `./backup_yyyy-mm-dd/` and:
    - `Photos.tar.xz.age` the encrypted archive
    - `Photos.tar.xz.age_aa`, `Photos.tar.xz.age_ab`, ... the pieces of the encrypted archive
    - `Photos.txt` a list of files processed in compression (plaintext)
- - `SHA1SUMS` hash of files in `Photos-15e2ef83315/` to ensure that the data has not changed due to accidental corruption.
+   - `SHA256SUMS.txt` hash of the files
+   - `SHA256SUMS.txt.minisign` signature of the hashes
+ - `SHA1SUMS.txt` hash of files in `Photos-15e2ef83315/` to ensure that the data has not changed due to accidental corruption.
 
 The directory `backup_yyyy-mm-dd` have file permission set to `700`. Regular files in `backup_yyyy-mm-dd/` have file permission set to `600`; for directories, `700`.
 
@@ -92,15 +94,15 @@ fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
 -1            Put FILEs in one backup.
 -s            Don't split backup in parts.
 -b SIZE       Split backup pieces of SIZE. Default is 1G.
--g            Group backups by file/date instead of date/name.
+-g            Group backups by file/date. Default is date/name.
 -o OUTPUT     Backup in the directory at path OUTPUT.
 -k SECKEY     Minisign with SECKEY.
 -n            Don't perform any action.
--q            Don't be verbose.
+-q            Quieter mode.
 -l            Create a label for the archive.
 -t COMMENT    Minisign add a one-line trusted COMMENT.
 -r RECIPIENT  Age encrypt to the specified RECIPIENT.
--R PATH       Age encrypt to recipient listed at PATH.
+-R PATH       Age encrypt to recipients listed at PATH.
 ```
 
 ### Examples
