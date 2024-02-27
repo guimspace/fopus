@@ -21,7 +21,7 @@ Hashes are signed by [**minisign**](https://github.com/jedisct1/minisign). A min
 
 - **Archive & compress:** The file is archived and compressed in `.tar.xz` format.
 ```
-tar -cvpf - -- FILE 2> list_FILE.txt | xz --threads=0 -z - > FILE.tar.xz
+tar -cvpf - -- FILE 2> FILE.txt | xz --threads=0 -z - > FILE.tar.xz
 ```
 
 - **Encrypt:** With `age`, the compressed file is encrypted in `.age` format.
@@ -49,17 +49,18 @@ minisign -Sm SHA256SUMS
 ### Example
 
 ```
+$ cd ~/Images
 $ fopus Photos/
 ```
 
 **Output:**
 
-A directory `./Backups/backup_yyyy-mm-dd/` and:
+A directory `./backup_yyyy-mm-dd/` and:
  - `Photos-15e2ef83315/` where `15e2ef83315` is the first eleven digits of SHA-1 of `/home/username/Images/Photos`
-   - `Photos.tar.xz` the compressed archive
+   - `Photos.tar.xz` the compressed archive (plaintext)
    - `Photos.tar.xz.age` the encrypted archive
    - `Photos.tar.xz.age_aa`, `Photos.tar.xz.age_ab`, ... the pieces of the encrypted archive
-   - `list_Photos.txt` a list of files processed in compression
+   - `Photos.txt` a list of files processed in compression (plaintext)
  - `SHA1SUMS` hash of files in `Photos-15e2ef83315/` to ensure that the data has not changed due to accidental corruption.
 
 The directory `backup_yyyy-mm-dd` have file permission set to `700`. Regular files in `backup_yyyy-mm-dd/` have file permission set to `600`; for directories, `700`.
@@ -80,16 +81,26 @@ sudo chmod a+rx /usr/local/bin/fopus
 
 # Usage
 
-**Syntax:** `fopus [-1sgn] [-b SIZE] [-o OUTPUT] [-k SECKEY] FILE...`
-
+**Syntax:**
 ```
--1		Put FILEs in one backup.
--s		Don't split backup in parts.
--b SIZE		Split backup pieces of SIZE. Default is 1G.
--g		Group backups by file/date instead of date/name.
--o OUTPUT	Backup in the directory at path OUTPUT.
--k SECKEY	Minisign with SECKEY.
--n		Don't perform any action.
+fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
+          [-r RECIPIENT | -R PATH] FILE...
+```
+
+**Options:**
+```
+-1            Put FILEs in one backup.
+-s            Don't split backup in parts.
+-b SIZE       Split backup pieces of SIZE. Default is 1G.
+-g            Group backups by file/date instead of date/name.
+-o OUTPUT     Backup in the directory at path OUTPUT.
+-k SECKEY     Minisign with SECKEY.
+-n            Don't perform any action.
+-q            Don't be verbose.
+-l            Create a label for the archive.
+-t COMMENT    Minisign add a one-line trusted COMMENT.
+-r RECIPIENT  Age encrypt to the specified RECIPIENT.
+-R PATH       Age encrypt to recipient listed at PATH.
 ```
 
 ### Examples
@@ -97,6 +108,7 @@ sudo chmod a+rx /usr/local/bin/fopus
 ```
 $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
 $ fopus -1s Pictures/ Videos/
+$ fopus -l -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
 ```
 
 # Contribute code and ideas
