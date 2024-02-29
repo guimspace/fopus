@@ -43,7 +43,7 @@ cleanup()
 	trap - SIGINT SIGTERM EXIT
 
 	declare -rg CLEANUP_DIR
-	local -r target=$(realpath "$CLEANUP_DIR")
+	local -r target=$(realpath -e "$CLEANUP_DIR")
 
 	if [[ "$RC" -eq 0 ]]; then
 		:
@@ -153,7 +153,7 @@ evaluate_files()
 			exit 1
 		fi
 
-		file=$(realpath "$file")
+		file=$(realpath -e "$file")
 		SELECT+=("$file")
 	done
 
@@ -440,7 +440,7 @@ digest_options()
 					>&2 echo "fopus: $OPTARG: No such file"
 					exit 1
 				fi
-				CONFIG[seckey]=$(realpath "$OPTARG") ;;
+				CONFIG[seckey]=$(realpath -e "$OPTARG") ;;
 
 			r)
 				if [[ "$R_opt" = "true" ]]; then
@@ -460,7 +460,7 @@ digest_options()
 				if ! "$age_tool" --recipients-file "$OPTARG" "$0" > /dev/null ; then
 					exit 2
 				fi
-				CONFIG[agePATH]=$(realpath "$OPTARG"); R_opt="true" ;;
+				CONFIG[agePATH]=$(realpath -e "$OPTARG"); R_opt="true" ;;
 
 			v) echo "v${VERSION}"
 				exit 0 ;;
@@ -532,7 +532,7 @@ main()
 		exit 1
 	fi
 
-	OUTPUT_PATH=$(realpath "$OUTPUT_PATH")
+	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	for file in "${FILES[@]}"; do
