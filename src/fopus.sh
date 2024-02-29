@@ -298,8 +298,9 @@ split_file()
 		LIMIT_SIZE=$(echo "${CONFIG[partsize]}" | numfmt --from=iec)
 
 		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
-			# split
-			if ! split --verbose --bytes="${CONFIG[partsize]}" \
+			local params=()
+			[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
+			if ! split "${params[@]}" --bytes="${CONFIG[partsize]}" \
 				"$BACKUP_FILE.age" "$BACKUP_FILE.age_"; then
 					return 1
 			fi
