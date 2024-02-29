@@ -484,7 +484,7 @@ digest_options()
 main()
 {
 	declare -A CONFIG=(
-		[partsize]="1073741824"
+		[partsize]="2147483648"
 		[repopath]="$(pwd -P)"
 		[groupbyname]="false"
 		[one]="false"
