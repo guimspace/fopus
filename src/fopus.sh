@@ -27,6 +27,7 @@
 set -euo pipefail
 
 if [[ "$UID" -lt 1000 ]]; then
+	>&2 echo "fopus: permission denied"
 	exit 1
 fi
 
@@ -126,7 +127,7 @@ Options:
     -o OUTPUT     Backup in the directory at path OUTPUT.
     -k SECKEY     Minisign with SECKEY.
     -n            Don't perform any action.
-    -q            Don't be verbose.
+    -q            Quieter mode.
     -l            Create a label for the archive.
     -t COMMENT    Minisign add a one-line trusted COMMENT.
     -r RECIPIENT  Age encrypt to the specified RECIPIENT.
@@ -518,7 +519,7 @@ main()
 
 	if [[ -z "${FILES-}" ]]; then
 		>&2 echo "fopus: missing file operand"
-		echo "Try 'fopus --help' for more information."
+		echo "Try 'fopus -h' for more information."
 		exit 1
 	fi
 
