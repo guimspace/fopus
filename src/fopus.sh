@@ -536,7 +536,7 @@ main()
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	for file in "${FILES[@]}"; do
-		if [[ "$OUTPUT_PATH" == "$file" ]]; then
+		if [[ "$OUTPUT_PATH" == "$file/"* ]]; then
 			>&2 echo "fopus: invalid output path"
 			exit 1
 		fi
