@@ -297,7 +297,7 @@ encrypt_file()
 
 split_file()
 {
-	if [[ "${CONFIG[partsize]}" == "-1" ]]; then
+	if [[ "${CONFIG[partsize]}" -le 0 ]]; then
 		return 0
 	fi
 
@@ -405,12 +405,10 @@ EOL
 
 digest_options()
 {
-	local s_opt="false"
-	local b_opt="false"
 	local r_opt="false"
 	local R_opt="false"
 
-	while getopts "hvng1sb:o:k:t:r:R:ql9" opt; do
+	while getopts "hvng1b:o:k:t:r:R:ql9" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
@@ -426,22 +424,15 @@ digest_options()
 
 			t) CONFIG[trusted]="$OPTARG" ;;
 
-			s)
-				if [[ "$b_opt" == "true" ]]; then
-					>&2 echo "fopus: -b can't be used with -s"
-					exit 2
-				fi
-				CONFIG[partsize]="-1"; s_opt="true" ;;
-
 			b)
-				if [[ "$s_opt" == "true" ]]; then
-					>&2 echo "fopus: -s can't be used with -b"
-					exit 2
-				fi
-				if ! split --bytes="$OPTARG" /dev/null; then
+				if [[ "$OPTARG" =~ ^[-+]?[0-9]+$ ]]; then
+					if [[ "$OPTARG" -le 0 ]]; then
+						CONFIG[partsize]=0
+					fi
+				elif ! split --bytes="$OPTARG" /dev/null; then
 					exit 1
 				fi
-				CONFIG[partsize]="$OPTARG"; b_opt="true" ;;
+				CONFIG[partsize]="$OPTARG" ;;
 
 			o)
 				if [[ ! -d "$OPTARG" ]]; then
