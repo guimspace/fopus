@@ -104,14 +104,14 @@ check_requirements()
 	declare -gr sha1sum_tool
 
 	if command -v sha256sum &> /dev/null; then
-		sha256sum_tool="$(command -v sha256sum)"
+		checksum_tool="$(command -v sha256sum)"
 	elif command -v shasum &> /dev/null; then
-		sha256sum_tool="$(command -v shasum) -a 256 "
+		checksum_tool="$(command -v shasum) -a 256 "
 	else
 		>&2 echo "fopus: sha256sum not found"
 		exit 1
 	fi
-	declare -gr sha256sum_tool
+	declare -gr checksum_tool
 
 	return 0
 }
@@ -327,7 +327,7 @@ sign_files()
 		# hash
 		(
 		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
-		if ! "$sha256sum_tool" "./"* > "./SHA256SUMS.txt"; then
+		if ! "$checksum_tool" "./"* > "./CHECKSUMS.txt"; then
 			return 1
 		fi
 		)
@@ -341,7 +341,7 @@ sign_files()
 			params+=(-s "${CONFIG[seckey]}")
 		fi
 
-		if ! "$minisign_tool" "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS.txt"; then
+		if ! "$minisign_tool" "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/CHECKSUMS.txt"; then
 			return 1
 		fi
 	fi
