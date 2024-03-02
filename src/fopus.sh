@@ -297,7 +297,7 @@ encrypt_file()
 
 split_file()
 {
-	if [[ "${CONFIG[partsize]}" -le 0 ]]; then
+	if [[ "$SPLIT_BYTES" -le 0 ]]; then
 		return 0
 	fi
 
@@ -306,12 +306,12 @@ split_file()
 
 	if [[ "$DRY_RUN" == "false" ]]; then
 		FILE_SIZE=$(stat -c %s "$BACKUP_FILE.age")
-		LIMIT_SIZE=$(echo "${CONFIG[partsize]}" | numfmt --from=iec)
+		LIMIT_SIZE=$(echo "$SPLIT_BYTES" | numfmt --from=iec)
 
 		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
 			local params=()
 			[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
-			if ! split "${params[@]}" --bytes="${CONFIG[partsize]}" \
+			if ! split "${params[@]}" --bytes="$SPLIT_BYTES" \
 				"$BACKUP_FILE.age" "$BACKUP_FILE.age_"; then
 					return 1
 			fi
@@ -425,14 +425,15 @@ digest_options()
 			t) CONFIG[trusted]="$OPTARG" ;;
 
 			b)
-				if [[ "$OPTARG" =~ ^[-+]?[0-9]+$ ]]; then
-					if [[ "$OPTARG" -le 0 ]]; then
-						CONFIG[partsize]=0
+				SPLIT_BYTES="$OPTARG"
+				if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]]; then
+					if [[ "$SPLIT_BYTES" -le 0 ]]; then
+						SPLIT_BYTES=0
 					fi
-				elif ! split --bytes="$OPTARG" /dev/null; then
+				elif ! split --bytes="$SPLIT_BYTES" /dev/null; then
 					exit 1
 				fi
-				CONFIG[partsize]="$OPTARG" ;;
+				;;
 
 			o)
 				if [[ ! -d "$OPTARG" ]]; then
@@ -489,7 +490,6 @@ digest_options()
 main()
 {
 	declare -A CONFIG=(
-		[partsize]="2147483648"
 		[repopath]="$(pwd -P)"
 		[groupbyname]="false"
 		[one]="false"
@@ -504,6 +504,7 @@ main()
 	IS_QUIET="false"
 	IS_LABELED="false"
 	IS_XZ_PRESET_NINE="false"
+	SPLIT_BYTES=2147483648
 
 	if ! check_requirements; then
 		exit 1
@@ -518,6 +519,7 @@ main()
 	declare -gr IS_QUIET
 	declare -gr IS_LABELED
 	declare -gr IS_XZ_PRESET_NINE
+	declare -gr SPLIT_BYTES
 
 	if ! evaluate_files; then
 		exit 1
