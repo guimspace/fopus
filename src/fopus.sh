@@ -226,6 +226,7 @@ fopus_backup()
 	if [[ "$DRY_RUN" = "false" ]]; then
 		local params=()
 		[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
+		[[ "$IS_XZ_PRESET_NINE" == "true" ]] && params+=(-9)
 		tar -cvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.txt" |\
 			xz "${params[@]}" --compress --threads=0 - > "$BACKUP_FILE"
 	fi
@@ -399,13 +400,15 @@ digest_options()
 	local r_opt="false"
 	local R_opt="false"
 
-	while getopts "hvng1sb:o:k:t:r:R:ql" opt; do
+	while getopts "hvng1sb:o:k:t:r:R:ql9" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
 			q) IS_QUIET="true" ;;
 
 			l) IS_LABELED="true" ;;
+
+			9) IS_XZ_PRESET_NINE="true" ;;
 
 			g) CONFIG[groupbyname]="true" ;;
 
@@ -499,6 +502,7 @@ main()
 	DRY_RUN="false"
 	IS_QUIET="false"
 	IS_LABELED="false"
+	IS_XZ_PRESET_NINE="false"
 
 	if ! check_requirements; then
 		exit 1
@@ -512,6 +516,7 @@ main()
 	declare -gr DRY_RUN
 	declare -gr IS_QUIET
 	declare -gr IS_LABELED
+	declare -gr IS_XZ_PRESET_NINE
 
 	if ! evaluate_files; then
 		exit 1
