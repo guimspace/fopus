@@ -122,13 +122,13 @@ Usage:
 Options:
     -1            Put FILEs in one backup.
     -s            Don't split backup in parts.
-    -b SIZE       Split backup pieces of SIZE. Default is 1G.
+    -b SIZE       Split backup pieces of SIZE. Default is 2G.
     -g            Group backups by file/date instead of date/name.
     -o OUTPUT     Backup in the directory at path OUTPUT.
     -k SECKEY     Minisign with SECKEY.
     -n            Don't perform any action.
     -q            Quieter mode.
-    -l            Create a label for the archive.
+    -l            Create a label for the backup.
     -t COMMENT    Minisign add a one-line trusted COMMENT.
     -r RECIPIENT  Age encrypt to the specified RECIPIENT.
     -R PATH       Age encrypt to recipients listed at PATH.
