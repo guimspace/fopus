@@ -103,12 +103,16 @@ check_requirements()
 	fi
 	declare -gr sha1sum_tool
 
-	if command -v sha256sum &> /dev/null; then
+	if command -v b3sum &> /dev/null; then
+		checksum_tool="$(command -v b3sum)"
+	elif command -v b2sum &> /dev/null; then
+		checksum_tool="$(command -v b2sum)"
+	elif command -v sha256sum &> /dev/null; then
 		checksum_tool="$(command -v sha256sum)"
 	elif command -v shasum &> /dev/null; then
 		checksum_tool="$(command -v shasum) -a 256 "
 	else
-		>&2 echo "fopus: sha256sum not found"
+		>&2 echo "fopus: hash functions not found"
 		exit 1
 	fi
 	declare -gr checksum_tool
