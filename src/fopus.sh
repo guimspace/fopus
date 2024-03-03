@@ -341,8 +341,8 @@ sign_files()
 		if [[ -n "${CONFIG[trusted]}" ]]; then
 			params+=(-t "${CONFIG[trusted]}")
 		fi
-		if [[ -n "${CONFIG[seckey]}" ]]; then
-			params+=(-s "${CONFIG[seckey]}")
+		if [[ -n "$MINISIGN_KEY_PATH" ]]; then
+			params+=(-s "$MINISIGN_KEY_PATH")
 		fi
 
 		if ! "$minisign_tool" "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/CHECKSUMS.txt"; then
@@ -450,7 +450,7 @@ digest_options()
 					>&2 echo "fopus: $OPTARG: No such file"
 					exit 1
 				fi
-				CONFIG[seckey]=$(realpath -e "$OPTARG") ;;
+				MINISIGN_KEY_PATH=$(realpath -e "$OPTARG") ;;
 
 			r)
 				if [[ "$R_opt" == "true" ]]; then
@@ -496,7 +496,6 @@ main()
 		[repopath]="$(pwd -P)"
 		[groupbyname]="false"
 		[one]="false"
-		[seckey]=""
 		[trusted]=""
 		[ageRECIPIENT]=""
 		[agePATH]=""
@@ -508,6 +507,7 @@ main()
 	IS_LABELED="false"
 	IS_XZ_PRESET_NINE="false"
 	SPLIT_BYTES=2147483648
+	MINISIGN_KEY_PATH=""
 
 	if ! check_requirements; then
 		exit 1
@@ -523,6 +523,7 @@ main()
 	declare -gr IS_LABELED
 	declare -gr IS_XZ_PRESET_NINE
 	declare -gr SPLIT_BYTES
+	declare -gr MINISIGN_KEY_PATH
 
 	if ! evaluate_files; then
 		exit 1
