@@ -412,7 +412,7 @@ digest_options()
 	local r_opt="false"
 	local R_opt="false"
 
-	while getopts "hvng1b:o:k:t:r:R:ql9" opt; do
+	while getopts "hvng1b:o:s:t:r:R:ql9" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
@@ -445,7 +445,7 @@ digest_options()
 				fi
 				CONFIG[repopath]="$OPTARG" ;;
 
-			k)
+			s)
 				if [[ ! -f "$OPTARG" ]]; then
 					>&2 echo "fopus: $OPTARG: No such file"
 					exit 1
