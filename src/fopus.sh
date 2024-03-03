@@ -103,15 +103,19 @@ check_requirements()
 	fi
 	declare -gr sha1sum_tool
 
-	if command -v sha256sum &> /dev/null; then
-		sha256sum_tool="$(command -v sha256sum)"
+	if command -v b3sum &> /dev/null; then
+		checksum_tool="$(command -v b3sum)"
+	elif command -v b2sum &> /dev/null; then
+		checksum_tool="$(command -v b2sum)"
+	elif command -v sha256sum &> /dev/null; then
+		checksum_tool="$(command -v sha256sum)"
 	elif command -v shasum &> /dev/null; then
-		sha256sum_tool="$(command -v shasum) -a 256 "
+		checksum_tool="$(command -v shasum) -a 256 "
 	else
-		>&2 echo "fopus: sha256sum not found"
+		>&2 echo "fopus: hash functions not found"
 		exit 1
 	fi
-	declare -gr sha256sum_tool
+	declare -gr checksum_tool
 
 	return 0
 }
@@ -297,7 +301,7 @@ encrypt_file()
 
 split_file()
 {
-	if [[ "${CONFIG[partsize]}" == "-1" ]]; then
+	if [[ "$SPLIT_BYTES" -le 0 ]]; then
 		return 0
 	fi
 
@@ -306,12 +310,12 @@ split_file()
 
 	if [[ "$DRY_RUN" == "false" ]]; then
 		FILE_SIZE=$(stat -c %s "$BACKUP_FILE.age")
-		LIMIT_SIZE=$(echo "${CONFIG[partsize]}" | numfmt --from=iec)
+		LIMIT_SIZE=$(echo "$SPLIT_BYTES" | numfmt --from=iec)
 
 		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
 			local params=()
 			[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
-			if ! split "${params[@]}" --bytes="${CONFIG[partsize]}" \
+			if ! split "${params[@]}" --bytes="$SPLIT_BYTES" \
 				"$BACKUP_FILE.age" "$BACKUP_FILE.age_"; then
 					return 1
 			fi
@@ -327,7 +331,7 @@ sign_files()
 		# hash
 		(
 		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
-		if ! "$sha256sum_tool" "./"* > "./SHA256SUMS.txt"; then
+		if ! "$checksum_tool" "./"* > "./CHECKSUMS.txt"; then
 			return 1
 		fi
 		)
@@ -341,7 +345,7 @@ sign_files()
 			params+=(-s "${CONFIG[seckey]}")
 		fi
 
-		if ! "$minisign_tool" "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/SHA256SUMS.txt"; then
+		if ! "$minisign_tool" "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/CHECKSUMS.txt"; then
 			return 1
 		fi
 	fi
@@ -405,12 +409,10 @@ EOL
 
 digest_options()
 {
-	local s_opt="false"
-	local b_opt="false"
 	local r_opt="false"
 	local R_opt="false"
 
-	while getopts "hvng1sb:o:k:t:r:R:ql9" opt; do
+	while getopts "hvng1b:o:k:t:r:R:ql9" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
@@ -426,22 +428,15 @@ digest_options()
 
 			t) CONFIG[trusted]="$OPTARG" ;;
 
-			s)
-				if [[ "$b_opt" == "true" ]]; then
-					>&2 echo "fopus: -b can't be used with -s"
-					exit 2
-				fi
-				CONFIG[partsize]="-1"; s_opt="true" ;;
-
 			b)
-				if [[ "$s_opt" == "true" ]]; then
-					>&2 echo "fopus: -s can't be used with -b"
-					exit 2
-				fi
-				if ! split --bytes="$OPTARG" /dev/null; then
+				SPLIT_BYTES="$OPTARG"
+				if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]] &&\
+				   [[ "$SPLIT_BYTES" -le 0 ]]; then
+					SPLIT_BYTES=0
+				elif ! split --bytes="$SPLIT_BYTES" /dev/null; then
 					exit 1
 				fi
-				CONFIG[partsize]="$OPTARG"; b_opt="true" ;;
+				;;
 
 			o)
 				if [[ ! -d "$OPTARG" ]]; then
@@ -498,7 +493,6 @@ digest_options()
 main()
 {
 	declare -A CONFIG=(
-		[partsize]="2147483648"
 		[repopath]="$(pwd -P)"
 		[groupbyname]="false"
 		[one]="false"
@@ -513,6 +507,7 @@ main()
 	IS_QUIET="false"
 	IS_LABELED="false"
 	IS_XZ_PRESET_NINE="false"
+	SPLIT_BYTES=2147483648
 
 	if ! check_requirements; then
 		exit 1
@@ -527,6 +522,7 @@ main()
 	declare -gr IS_QUIET
 	declare -gr IS_LABELED
 	declare -gr IS_XZ_PRESET_NINE
+	declare -gr SPLIT_BYTES
 
 	if ! evaluate_files; then
 		exit 1
