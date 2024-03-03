@@ -426,10 +426,9 @@ digest_options()
 
 			b)
 				SPLIT_BYTES="$OPTARG"
-				if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]]; then
-					if [[ "$SPLIT_BYTES" -le 0 ]]; then
-						SPLIT_BYTES=0
-					fi
+				if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]] &&\
+				   [[ "$SPLIT_BYTES" -le 0 ]]; then
+					SPLIT_BYTES=0
 				elif ! split --bytes="$SPLIT_BYTES" /dev/null; then
 					exit 1
 				fi
