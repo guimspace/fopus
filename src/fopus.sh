@@ -236,7 +236,7 @@ fopus_backup()
 	if [[ "$DRY_RUN" == "false" ]]; then
 		local params=()
 		[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
-		tar -cvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.txt" |\
+		tar -cvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.list.txt" |\
 			xz "${params[@]}" --compress --threads=0 - > "$BACKUP_FILE"
 	fi
 
