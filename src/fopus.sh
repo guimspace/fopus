@@ -44,22 +44,25 @@ cleanup()
 	trap - SIGINT SIGTERM EXIT
 
 	declare -rg CLEANUP_DIR
-	local -r target=$(realpath -e "$CLEANUP_DIR")
 
 	if [[ "$RC" -eq 0 ]]; then
 		:
-	elif [[ ! -e "$target" ]]; then
-		:
-	elif [[ ! -O "$target" ]]; then
-		:
-	elif [[ ! -d "$target" ]]; then
-		:
-	elif [[ -n "${target%/*}" ]]; then
-		:
-	elif [[ "$target" == "/" ]]; then
+	elif [[ ! -e "$CLEANUP_DIR" ]]; then
 		:
 	else
-		rm -r "$target"
+		local -r target=$(realpath -e "$CLEANUP_DIR")
+
+		if [[ ! -O "$target" ]]; then
+			:
+		elif [[ ! -d "$target" ]]; then
+			:
+		elif [[ -z "${target%/*}" ]]; then
+			:
+		elif [[ "$target" == "/" ]]; then
+			:
+		else
+			rm -r "$target"
+		fi
 	fi
 
 	kill -SIGINT $$
@@ -537,12 +540,8 @@ main()
 	fi
 
 	OUTPUT_PATH="${CONFIG[repopath]}"
-	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
 
-	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
-		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
-		exit 1
-	elif [[ ! -d "$OUTPUT_PATH" ]]; then
+	if [[ ! -d "$OUTPUT_PATH" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
 		exit 1
 	elif [[ ! -w "$OUTPUT_PATH" ]]; then
@@ -550,7 +549,13 @@ main()
 		exit 1
 	fi
 
+	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
+
+	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
+		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
+		exit 1
+	fi
 
 	for file in "${FILES[@]}"; do
 		if [[ "$OUTPUT_PATH" == "$file/"* ]]; then
