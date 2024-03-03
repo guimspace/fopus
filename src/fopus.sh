@@ -52,6 +52,8 @@ cleanup()
 		:
 	elif [[ ! -d "$target" ]]; then
 		:
+	elif [[ -n "${target%/*}" ]]; then
+		:
 	elif [[ "$target" == "/" ]]; then
 		:
 	else
@@ -531,8 +533,12 @@ main()
 	fi
 
 	OUTPUT_PATH="${CONFIG[repopath]}"
+	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
 
-	if [[ ! -d "$OUTPUT_PATH" ]]; then
+	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
+		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
+		exit 1
+	elif [[ ! -d "$OUTPUT_PATH" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
 		exit 1
 	elif [[ ! -w "$OUTPUT_PATH" ]]; then
@@ -540,7 +546,6 @@ main()
 		exit 1
 	fi
 
-	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	for file in "${FILES[@]}"; do
