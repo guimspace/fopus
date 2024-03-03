@@ -50,6 +50,8 @@ cleanup()
 		:
 	elif [[ ! -e "$target" ]]; then
 		:
+	elif [[ ! -O "$target" ]]; then
+		:
 	elif [[ ! -d "$target" ]]; then
 		:
 	elif [[ -n "${target%/*}" ]]; then
