@@ -50,7 +50,11 @@ cleanup()
 		:
 	elif [[ ! -e "$target" ]]; then
 		:
+	elif [[ ! -O "$target" ]]; then
+		:
 	elif [[ ! -d "$target" ]]; then
+		:
+	elif [[ -n "${target%/*}" ]]; then
 		:
 	elif [[ "$target" == "/" ]]; then
 		:
@@ -121,15 +125,21 @@ Usage:
 
 Options:
     -1            Put FILEs in one backup.
-    -s            Don't split backup in parts.
-    -b SIZE       Split backup pieces of SIZE. Default is 1G.
     -g            Group backups by file/date instead of date/name.
     -o OUTPUT     Backup in the directory at path OUTPUT.
-    -k SECKEY     Minisign with SECKEY.
     -n            Don't perform any action.
     -q            Quieter mode.
-    -l            Create a label for the archive.
+    -l            Create a label for the backup.
+
+Split options:
+    -s            Don't split backup in parts.
+    -b SIZE       Split backup pieces of SIZE. Default is 2G.
+
+Minisign options:
+    -k SECKEY     Minisign with SECKEY.
     -t COMMENT    Minisign add a one-line trusted COMMENT.
+
+Age options:
     -r RECIPIENT  Age encrypt to the specified RECIPIENT.
     -R PATH       Age encrypt to recipients listed at PATH.
 
@@ -184,7 +194,7 @@ fopus_backup()
 	tmp=$(echo "${LIST_FILES[0]}" | "$sha1sum_tool")
 	tmp="$REPO_NAME-${tmp:0:11}"
 
-	if [[ "${CONFIG[groupbyname]}" = "true" ]]; then
+	if [[ "${CONFIG[groupbyname]}" == "true" ]]; then
 		BACKUP_PATH="$OUTPUT_PATH/$tmp"
 		BACKUP_DIR="backup_$DATE"
 	else
@@ -203,7 +213,7 @@ fopus_backup()
 	# show backup details
 	if [[ "$IS_QUIET" == "false" ]]; then
 		echo -e "${JOB} ${LIST_FILES[0]}"
-		if [[ "${CONFIG[one]}" = "true" ]]; then
+		if [[ "${CONFIG[one]}" == "true" ]]; then
 			declare -i i=1
 			N="${#LIST_FILES[@]}"
 			while [[ $i -lt $N ]]; do
@@ -218,16 +228,16 @@ fopus_backup()
 		return 0
 	fi
 
-	if [[ "$DRY_RUN" = "false" ]]; then
+	if [[ "$DRY_RUN" == "false" ]]; then
 		mkdir -p "$BACKUP_PATH/$BACKUP_DIR" || exit 1
 	fi
 
 	# compress
-	if [[ "$DRY_RUN" = "false" ]]; then
+	if [[ "$DRY_RUN" == "false" ]]; then
 		local params=()
 		[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
 		[[ "$IS_XZ_PRESET_NINE" == "true" ]] && params+=(-9)
-		tar -cvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.txt" |\
+		tar -cvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.list.txt" |\
 			xz "${params[@]}" --compress --threads=0 - > "$BACKUP_FILE"
 	fi
 
@@ -266,7 +276,7 @@ fopus_backup()
 
 encrypt_file()
 {
-	if [[ "$DRY_RUN" = "false" ]]; then
+	if [[ "$DRY_RUN" == "false" ]]; then
 		local params=()
 		if [[ -n "${CONFIG[ageRECIPIENT]}" ]]; then
 			params+=(--recipient "${CONFIG[ageRECIPIENT]}")
@@ -287,14 +297,14 @@ encrypt_file()
 
 split_file()
 {
-	if [[ "${CONFIG[partsize]}" = "-1" ]]; then
+	if [[ "${CONFIG[partsize]}" == "-1" ]]; then
 		return 0
 	fi
 
 	local FILE_SIZE=""
 	local LIMIT_SIZE=""
 
-	if [[ "$DRY_RUN" = "false" ]]; then
+	if [[ "$DRY_RUN" == "false" ]]; then
 		FILE_SIZE=$(stat -c %s "$BACKUP_FILE.age")
 		LIMIT_SIZE=$(echo "${CONFIG[partsize]}" | numfmt --from=iec)
 
@@ -313,7 +323,7 @@ split_file()
 
 sign_files()
 {
-	if [[ "$DRY_RUN" = "false" ]]; then
+	if [[ "$DRY_RUN" == "false" ]]; then
 		# hash
 		(
 		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
@@ -341,7 +351,7 @@ sign_files()
 
 hash_files()
 {
-	if [[ "$DRY_RUN" = "false" ]]; then
+	if [[ "$DRY_RUN" == "false" ]]; then
 		if [[ "$IS_LABELED" == "false" ]]; then
 			if ! (
 				cd "$BACKUP_PATH" || exit 1
@@ -365,7 +375,7 @@ hash_files()
 
 file_permission()
 {
-	if [[ "$DRY_RUN" = "false" ]]; then
+	if [[ "$DRY_RUN" == "false" ]]; then
 		if ! chmod 700 "$BACKUP_PATH/$BACKUP_DIR/"; then
 			return 1
 		fi
@@ -417,14 +427,14 @@ digest_options()
 			t) CONFIG[trusted]="$OPTARG" ;;
 
 			s)
-				if [[ "$b_opt" = "true" ]]; then
+				if [[ "$b_opt" == "true" ]]; then
 					>&2 echo "fopus: -b can't be used with -s"
 					exit 2
 				fi
 				CONFIG[partsize]="-1"; s_opt="true" ;;
 
 			b)
-				if [[ "$s_opt" = "true" ]]; then
+				if [[ "$s_opt" == "true" ]]; then
 					>&2 echo "fopus: -s can't be used with -b"
 					exit 2
 				fi
@@ -448,7 +458,7 @@ digest_options()
 				CONFIG[seckey]=$(realpath -e "$OPTARG") ;;
 
 			r)
-				if [[ "$R_opt" = "true" ]]; then
+				if [[ "$R_opt" == "true" ]]; then
 					>&2 echo "fopus: duplicate specification of age recipient"
 					exit 1
 				fi
@@ -458,7 +468,7 @@ digest_options()
 				CONFIG[ageRECIPIENT]="$OPTARG"; r_opt="true" ;;
 
 			R)
-				if [[ "$r_opt" = "true" ]]; then
+				if [[ "$r_opt" == "true" ]]; then
 					>&2 echo "fopus: duplicate specification of age recipient"
 					exit 1
 				fi
@@ -530,8 +540,12 @@ main()
 	fi
 
 	OUTPUT_PATH="${CONFIG[repopath]}"
+	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
 
-	if [[ ! -d "$OUTPUT_PATH" ]]; then
+	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
+		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
+		exit 1
+	elif [[ ! -d "$OUTPUT_PATH" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
 		exit 1
 	elif [[ ! -w "$OUTPUT_PATH" ]]; then
@@ -539,7 +553,6 @@ main()
 		exit 1
 	fi
 
-	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
 	declare -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	for file in "${FILES[@]}"; do
@@ -553,7 +566,7 @@ main()
 	[[ "$IS_QUIET" == "false" ]] && echo "Repository $OUTPUT_PATH"
 
 	declare JOB=""
-	if [[ "${CONFIG[one]}" = "true" ]]; then
+	if [[ "${CONFIG[one]}" == "true" ]]; then
 		JOB="Backup"
 		fopus_backup "${FILES[@]}"
 	else
