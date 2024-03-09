@@ -285,11 +285,16 @@ encrypt_file()
 {
 	if [[ "$DRY_RUN" == "false" ]]; then
 		local params=()
+
 		if [[ -n "$AGE_RECIPIENT_STRING" ]]; then
 			params+=(--recipient "$AGE_RECIPIENT_STRING")
-		elif [[ -n "$AGE_RECIPIENT_PATH" ]]; then
+		fi
+
+		if [[ -n "$AGE_RECIPIENT_PATH" ]]; then
 			params+=(--recipients-file "$AGE_RECIPIENT_PATH")
-		else
+		fi
+
+		if [[ -z "${params[@]}" ]]; then
 			[[ "$IS_QUIET" == "true" ]] && echo "${REPO_NAME}.tar.xz"
 			params+=(--encrypt --passphrase)
 		fi
@@ -412,9 +417,6 @@ EOL
 
 digest_options()
 {
-	local r_opt="false"
-	local R_opt="false"
-
 	while getopts "hvng1b:o:s:t:r:R:ql9" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
@@ -456,24 +458,16 @@ digest_options()
 				MINISIGN_KEY_PATH=$(realpath -e "$OPTARG") ;;
 
 			r)
-				if [[ "$R_opt" == "true" ]]; then
-					>&2 echo "fopus: duplicate specification of age recipient"
-					exit 1
-				fi
 				if ! "$age_tool" --recipient "$OPTARG" "$0" > /dev/null ; then
 					exit 2
 				fi
-				AGE_RECIPIENT_STRING="$OPTARG"; r_opt="true" ;;
+				AGE_RECIPIENT_STRING="$OPTARG" ;;
 
 			R)
-				if [[ "$r_opt" == "true" ]]; then
-					>&2 echo "fopus: duplicate specification of age recipient"
-					exit 1
-				fi
 				if ! "$age_tool" --recipients-file "$OPTARG" "$0" > /dev/null ; then
 					exit 2
 				fi
-				AGE_RECIPIENT_PATH=$(realpath -e "$OPTARG"); R_opt="true" ;;
+				AGE_RECIPIENT_PATH=$(realpath -e "$OPTARG") ;;
 
 			v) echo "v${VERSION}"
 				exit 0 ;;
