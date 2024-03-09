@@ -201,7 +201,7 @@ fopus_backup()
 	tmp=$(echo "${LIST_FILES[0]}" | "$sha1sum_tool")
 	tmp="$REPO_NAME-${tmp:0:11}"
 
-	if [[ "${CONFIG[groupbyname]}" == "true" ]]; then
+	if [[ "$IS_GROUP_INVERT" == "true" ]]; then
 		BACKUP_PATH="$OUTPUT_PATH/$tmp"
 		BACKUP_DIR="backup_$DATE"
 	else
@@ -220,7 +220,7 @@ fopus_backup()
 	# show backup details
 	if [[ "$IS_QUIET" == "false" ]]; then
 		echo -e "${JOB} ${LIST_FILES[0]}"
-		if [[ "${CONFIG[one]}" == "true" ]]; then
+		if [[ "$IS_SINGLETON" == "true" ]]; then
 			declare -i i=1
 			N="${#LIST_FILES[@]}"
 			while [[ $i -lt $N ]]; do
@@ -285,10 +285,10 @@ encrypt_file()
 {
 	if [[ "$DRY_RUN" == "false" ]]; then
 		local params=()
-		if [[ -n "${CONFIG[ageRECIPIENT]}" ]]; then
-			params+=(--recipient "${CONFIG[ageRECIPIENT]}")
-		elif [[ -n "${CONFIG[agePATH]}" ]]; then
-			params+=(--recipients-file "${CONFIG[agePATH]}")
+		if [[ -n "$AGE_RECIPIENT_STRING" ]]; then
+			params+=(--recipient "$AGE_RECIPIENT_STRING")
+		elif [[ -n "$AGE_RECIPIENT_PATH" ]]; then
+			params+=(--recipients-file "$AGE_RECIPIENT_PATH")
 		else
 			[[ "$IS_QUIET" == "true" ]] && echo "${REPO_NAME}.tar.xz"
 			params+=(--encrypt --passphrase)
@@ -341,8 +341,8 @@ sign_files()
 
 		#sign
 		local params=()
-		if [[ -n "${CONFIG[trusted]}" ]]; then
-			params+=(-t "${CONFIG[trusted]}")
+		if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]]; then
+			params+=(-t "$MINISIGN_TRUSTED_COMMENT")
 		fi
 		if [[ -n "$MINISIGN_KEY_PATH" ]]; then
 			params+=(-s "$MINISIGN_KEY_PATH")
@@ -425,11 +425,11 @@ digest_options()
 
 			9) IS_XZ_PRESET_NINE="true" ;;
 
-			g) CONFIG[groupbyname]="true" ;;
+			g) IS_GROUP_INVERT="true" ;;
 
-			1) CONFIG[one]="true" ;;
+			1) IS_SINGLETON="true" ;;
 
-			t) CONFIG[trusted]="$OPTARG" ;;
+			t) MINISIGN_TRUSTED_COMMENT="$OPTARG" ;;
 
 			b)
 				SPLIT_BYTES="$OPTARG"
@@ -446,7 +446,7 @@ digest_options()
 					>&2 echo "fopus: $OPTARG: No such directory"
 					exit 1
 				fi
-				CONFIG[repopath]="$OPTARG" ;;
+				REPOSITORY_PATH="$OPTARG" ;;
 
 			s)
 				if [[ ! -f "$OPTARG" ]]; then
@@ -463,7 +463,7 @@ digest_options()
 				if ! "$age_tool" --recipient "$OPTARG" "$0" > /dev/null ; then
 					exit 2
 				fi
-				CONFIG[ageRECIPIENT]="$OPTARG"; r_opt="true" ;;
+				AGE_RECIPIENT_STRING="$OPTARG"; r_opt="true" ;;
 
 			R)
 				if [[ "$r_opt" == "true" ]]; then
@@ -473,7 +473,7 @@ digest_options()
 				if ! "$age_tool" --recipients-file "$OPTARG" "$0" > /dev/null ; then
 					exit 2
 				fi
-				CONFIG[agePATH]=$(realpath -e "$OPTARG"); R_opt="true" ;;
+				AGE_RECIPIENT_PATH=$(realpath -e "$OPTARG"); R_opt="true" ;;
 
 			v) echo "v${VERSION}"
 				exit 0 ;;
@@ -495,21 +495,19 @@ digest_options()
 
 main()
 {
-	declare -A CONFIG=(
-		[repopath]="$(pwd -P)"
-		[groupbyname]="false"
-		[one]="false"
-		[trusted]=""
-		[ageRECIPIENT]=""
-		[agePATH]=""
-	)
-
 	local FILES=()
+
+	REPOSITORY_PATH="$(pwd -P)"
+	IS_GROUP_INVERT="false"
+	IS_SINGLETON="false"
 	DRY_RUN="false"
 	IS_QUIET="false"
 	IS_LABELED="false"
 	IS_XZ_PRESET_NINE="false"
 	SPLIT_BYTES=2147483648
+	AGE_RECIPIENT_STRING=""
+	AGE_RECIPIENT_PATH=""
+	MINISIGN_TRUSTED_COMMENT=""
 	MINISIGN_KEY_PATH=""
 
 	if ! check_requirements; then
@@ -520,12 +518,17 @@ main()
 		exit 1
 	fi
 
-	declare -gr CONFIG
+	declare -gr REPOSITORY_PATH
+	declare -gr IS_GROUP_INVERT
+	declare -gr IS_SINGLETON
 	declare -gr DRY_RUN
 	declare -gr IS_QUIET
 	declare -gr IS_LABELED
 	declare -gr IS_XZ_PRESET_NINE
 	declare -gr SPLIT_BYTES
+	declare -gr AGE_RECIPIENT_STRING
+	declare -gr AGE_RECIPIENT_PATH
+	declare -gr MINISIGN_TRUSTED_COMMENT
 	declare -gr MINISIGN_KEY_PATH
 
 	if ! evaluate_files; then
@@ -539,7 +542,7 @@ main()
 		exit 1
 	fi
 
-	OUTPUT_PATH="${CONFIG[repopath]}"
+	OUTPUT_PATH="$REPOSITORY_PATH"
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
@@ -568,7 +571,7 @@ main()
 	[[ "$IS_QUIET" == "false" ]] && echo "Repository $OUTPUT_PATH"
 
 	declare JOB=""
-	if [[ "${CONFIG[one]}" == "true" ]]; then
+	if [[ "$IS_SINGLETON" == "true" ]]; then
 		JOB="Backup"
 		fopus_backup "${FILES[@]}"
 	else
