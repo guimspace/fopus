@@ -127,23 +127,21 @@ show_help()
 {
 	cat << EOT
 Usage:
-    fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \\
+    fopus [-1gnql] [-b SIZE] [-o OUTPUT] [-s SECKEY] [-t COMMENT] \\
 		[-r RECIPIENT | -R PATH] FILE...
 
 Options:
     -1            Put FILEs in one backup.
     -g            Group backups by file/date instead of date/name.
-    -o OUTPUT     Backup in the directory at path OUTPUT.
+    -o OUTPUT     Put the backup in path OUTPUT.
     -n            Don't perform any action.
     -q            Quieter mode.
     -l            Create a label for the backup.
-
-Split options:
-    -s            Don't split backup in parts.
     -b SIZE       Split backup pieces of SIZE. Default is 2G.
+                  Specify 0 to not split.
 
 Minisign options:
-    -k SECKEY     Minisign with SECKEY.
+    -s SECKEY     Minisign with SECKEY.
     -t COMMENT    Minisign add a one-line trusted COMMENT.
 
 Age options:
@@ -152,7 +150,7 @@ Age options:
 
 Examples:
     $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
-    $ fopus -1s Pictures/ Videos/
+    $ fopus -1 -b 0 Pictures/ Videos/
     $ fopus -l -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
 EOT
 }
