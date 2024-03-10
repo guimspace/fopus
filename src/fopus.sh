@@ -294,7 +294,7 @@ encrypt_file()
 			params+=(--recipients-file "$AGE_RECIPIENT_PATH")
 		fi
 
-		if [[ -z "${params[@]}" ]]; then
+		if [[ "${#params[@]}" -eq 0 ]]; then
 			[[ "$IS_QUIET" == "true" ]] && echo "${REPO_NAME}.tar.xz"
 			params+=(--encrypt --passphrase)
 		fi
