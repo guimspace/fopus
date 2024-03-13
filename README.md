@@ -13,7 +13,7 @@
 
 Backup archive is encrypted by [**age**](https://github.com/FiloSottile/age) with a passphrase or to a recipient.
 
-Large backups are split in pieces of 1G by default.
+Large backups are split in pieces of 2G by default.
 
 Hashes are signed by [**minisign**](https://github.com/jedisct1/minisign). A minisign secret key is required.
 
@@ -27,6 +27,8 @@ tar -cvpf - -- FILE 2> FILE.txt | xz --threads=0 -z - > FILE.tar.xz
 - **Encrypt:** With `age`, the compressed file is encrypted in `.age` format.
 ```
 age --encrypt --passphrase FILE.tar.xz > FILE.tar.xz.age
+age --recipient RECIPIENT FILE.tar.xz > FILE.tar.xz.age
+age --recipients-file PATH FILE.tar.xz > FILE.tar.xz.age
 ```
 
 - **Split:** If the encrypted file is larger than `SIZE` bytes, it is split and put `SIZE` bytes per output file.
@@ -34,14 +36,16 @@ age --encrypt --passphrase FILE.tar.xz > FILE.tar.xz.age
 split -b SIZE FILE.tar.xz.age FILE.tar.xz.age_
 ```
 
-- **Hash:** Files are hashed with SHA-256.
+- **Hash:** Files are hashed with BLAKE3, BLAKE2, or SHA-256.
 ```
-sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > SHA256SUMS.txt
+b3sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKSUMS.txt
+b2sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKSUMS.txt
+sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKSUMS.txt
 ```
 
 - **Sign:** The hashes are signed with `minisign`.
 ```
-minisign -Sm SHA256SUMS.txt
+minisign [-s KEY] [-t COMMENT] -Sm CHECKSUMS.txt
 ```
 
 - **Permissions:** Permission of files are set to 600, and 700 for directories.
@@ -61,9 +65,10 @@ A directory `./backup_yyyy-mm-dd/` and:
    - `Photos.tar.xz.age` the encrypted archive
    - `Photos.tar.xz.age_aa`, `Photos.tar.xz.age_ab`, ... the pieces of the encrypted archive
    - `Photos.txt` a list of files processed in compression (plaintext)
-   - `SHA256SUMS.txt` hash of the files
-   - `SHA256SUMS.txt.minisign` signature of the hashes
- - `SHA1SUMS.txt` hash of files in `Photos-15e2ef83315/` to ensure that the data has not changed due to accidental corruption.
+   - `label.txt` a label with a random UUID, timestamp and a checksum if label option is selected
+   - `CHECKSUMS.txt` hash of the files
+   - `CHECKSUMS.txt.minisign` signature of the hashes
+ - `SHA1SUMS.txt` hash of files in `Photos-15e2ef83315/` to ensure that the data has not changed due to accidental corruption - if label option is not select.
 
 The directory `backup_yyyy-mm-dd` have file permission set to `700`. Regular files in `backup_yyyy-mm-dd/` have file permission set to `600`; for directories, `700`.
 
