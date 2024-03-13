@@ -97,14 +97,14 @@ fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
 **Options:**
 ```
 -1            Put FILEs in one backup.
--s            Don't split backup in parts.
--b SIZE       Split backup pieces of SIZE. Default is 1G.
--g            Group backups by file/date. Default is date/name.
--o OUTPUT     Backup in the directory at path OUTPUT.
--k SECKEY     Minisign with SECKEY.
+-g            Group backups by file/date instead of date/name.
+-o OUTPUT     Put the backup in path OUTPUT.
 -n            Don't perform any action.
 -q            Quieter mode.
--l            Create a label for the archive.
+-l            Create a label for the backup.
+-b SIZE       Split backup pieces of SIZE. Default is 2G.
+              Specify 0 to not split.
+-s SECKEY     Minisign with SECKEY.
 -t COMMENT    Minisign add a one-line trusted COMMENT.
 -r RECIPIENT  Age encrypt to the specified RECIPIENT.
 -R PATH       Age encrypt to recipients listed at PATH.
@@ -114,7 +114,7 @@ fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
 
 ```
 $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
-$ fopus -1s Pictures/ Videos/
+$ fopus -1 -b 0 Pictures/ Videos/
 $ fopus -l -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
 ```
 
