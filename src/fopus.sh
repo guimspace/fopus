@@ -38,6 +38,8 @@ declare -r DATE
 
 declare -g CLEANUP_DIR=""
 
+export PATH='/usr/local/bin:/usr/bin'
+
 cleanup()
 {
 	declare -ri RC="$?"
