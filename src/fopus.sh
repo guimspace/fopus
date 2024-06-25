@@ -244,7 +244,7 @@ fopus_backup()
 		local params=()
 		[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
 		[[ "$IS_XZ_PRESET_NINE" == "true" ]] && params+=(-9)
-		tar -cvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.list.txt" |\
+		tar -cvvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.list.txt" |\
 			xz "${params[@]}" --compress --threads=0 - > "$BACKUP_FILE"
 	fi
 
