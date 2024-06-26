@@ -21,7 +21,7 @@ Hashes are signed by [**minisign**](https://github.com/jedisct1/minisign). A min
 
 - **Archive & compress:** The file is archived and compressed in `.tar.xz` format.
 ```
-tar -cvpf - -- FILE 2> FILE.txt | xz --threads=0 -z - > FILE.tar.xz
+tar -cvvpf - -- FILE 2> FILE.txt | xz --threads=0 -z - > FILE.tar.xz
 ```
 
 - **Encrypt:** With `age`, the compressed file is encrypted in `.age` format.
