@@ -286,13 +286,8 @@ encrypt_file()
 	if [[ "$DRY_RUN" == "false" ]]; then
 		local params=()
 
-		if [[ -n "$AGE_RECIPIENT_STRING" ]]; then
-			params+=(--recipient "$AGE_RECIPIENT_STRING")
-		fi
-
-		if [[ -n "$AGE_RECIPIENT_PATH" ]]; then
-			params+=(--recipients-file "$AGE_RECIPIENT_PATH")
-		fi
+		params+=("${AGE_RECIPIENT_STRING[@]}")
+		params+=("${AGE_RECIPIENT_PATH[@]}")
 
 		if [[ "${#params[@]}" -eq 0 ]]; then
 			[[ "$IS_QUIET" == "true" ]] && echo "${REPO_NAME}.tar.xz"
@@ -461,13 +456,14 @@ digest_options()
 				if ! "$age_tool" --recipient "$OPTARG" "$0" > /dev/null ; then
 					exit 2
 				fi
-				AGE_RECIPIENT_STRING="$OPTARG" ;;
+				AGE_RECIPIENT_STRING+=(--recipient "$OPTARG") ;;
 
 			R)
 				if ! "$age_tool" --recipients-file "$OPTARG" "$0" > /dev/null ; then
 					exit 2
 				fi
-				AGE_RECIPIENT_PATH=$(realpath -e "$OPTARG") ;;
+				local _tmp=$(realpath -e "$OPTARG")
+				AGE_RECIPIENT_PATH+=(--recipients-file "$_tmp") ;;
 
 			v) echo "v${VERSION}"
 				exit 0 ;;
@@ -499,8 +495,8 @@ main()
 	IS_LABELED="false"
 	IS_XZ_PRESET_NINE="false"
 	SPLIT_BYTES=2147483648
-	AGE_RECIPIENT_STRING=""
-	AGE_RECIPIENT_PATH=""
+	AGE_RECIPIENT_STRING=()
+	AGE_RECIPIENT_PATH=()
 	MINISIGN_TRUSTED_COMMENT=""
 	MINISIGN_KEY_PATH=""
 
