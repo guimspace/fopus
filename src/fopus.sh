@@ -331,6 +331,10 @@ split_file()
 sign_files()
 {
 	if [[ "$DRY_RUN" == "false" ]]; then
+		if [[ -z "$MINISIGN_KEY_PATH" ]]; then
+			return 0
+		fi
+
 		# hash
 		(
 		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
