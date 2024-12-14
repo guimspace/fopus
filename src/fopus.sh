@@ -37,6 +37,7 @@ printf -v DATE "%(%Y-%m-%d)T" -1
 declare -r DATE
 
 declare -g CLEANUP_DIR=""
+declare -g IS_ONGOING=0
 
 export PATH='/usr/local/bin:/usr/bin'
 
@@ -46,7 +47,7 @@ cleanup()
 
 	declare -rg CLEANUP_DIR
 
-	if [[ "$RC" -eq 0 ]]; then
+	if [[ "$RC" -eq 0 ]] && [[ "$IS_ONGOING" -eq 0 ]]; then
 		:
 	elif [[ ! -e "$CLEANUP_DIR" ]]; then
 		:
@@ -182,6 +183,8 @@ evaluate_files()
 
 fopus_backup()
 {
+	IS_ONGOING=1
+
 	local -r LIST_FILES=("$@")
 
 	local BACKUP_FILE=""
@@ -277,6 +280,7 @@ fopus_backup()
 		return 1
 	fi
 
+	IS_ONGOING=0
 	return 0
 }
 
