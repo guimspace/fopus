@@ -43,7 +43,6 @@ export PATH='/usr/local/bin:/usr/bin'
 cleanup()
 {
 	declare -ri RC="$?"
-	trap - SIGINT SIGTERM EXIT
 
 	declare -rg CLEANUP_DIR
 
@@ -67,7 +66,7 @@ cleanup()
 		fi
 	fi
 
-	kill -SIGINT $$
+	exit "$RC"
 }
 
 check_requirements()
@@ -580,7 +579,6 @@ main()
 			fi
 		done
 	fi
-	trap - EXIT
 
 	exit 0
 }
