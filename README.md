@@ -97,6 +97,7 @@ fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
 **Options:**
 ```
 -1            Put FILEs in one backup.
+-2            Use standard SHA-256 for checksums.
 -g            Group backups by file/date instead of date/name.
 -o OUTPUT     Put the backup in path OUTPUT.
 -n            Don't perform any action.
