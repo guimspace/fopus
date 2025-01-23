@@ -45,7 +45,7 @@ sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKS
 
 - **Sign:** The hashes are signed with `minisign`.
 ```
-minisign [-s KEY] [-t COMMENT] -Sm CHECKSUMS.txt
+minisign -s KEY [-t COMMENT] -Sm CHECKSUMS.txt
 ```
 
 - **Permissions:** Permission of files are set to 600, and 700 for directories.
