@@ -368,9 +368,15 @@ sign_files()
 
 		#sign
 		local params=()
-		if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]]; then
+		if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]] &&\
+			[[ "$IS_LABELED" == "true" ]]; then
+			params+=(-t "${ARCHIVE_UUID}:${MINISIGN_TRUSTED_COMMENT}")
+		elif [[ -n "$MINISIGN_TRUSTED_COMMENT" ]]; then
 			params+=(-t "$MINISIGN_TRUSTED_COMMENT")
+		elif [[ "$IS_LABELED" == "true" ]]; then
+			params+=(-t "$ARCHIVE_UUID")
 		fi
+
 		if [[ -n "$MINISIGN_KEY_PATH" ]]; then
 			params+=(-s "$MINISIGN_KEY_PATH")
 		fi
