@@ -67,6 +67,7 @@ cleanup()
 		fi
 	fi
 
+	trap - EXIT
 	exit "$RC"
 }
 
@@ -588,6 +589,7 @@ main()
 		done
 	fi
 
+	trap - EXIT
 	exit 0
 }
 
