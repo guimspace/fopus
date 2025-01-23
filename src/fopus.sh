@@ -469,72 +469,46 @@ get_options()
 
 digest_options()
 {
-	while getopts "hvng1b:o:s:t:r:R:ql9" opt; do
-		case "$opt" in
-			n) DRY_RUN="true" ;;
+	local LIST=()
 
-			q) IS_QUIET="true" ;;
+	if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]] &&\
+		[[ "$SPLIT_BYTES" -le 0 ]]; then
+		SPLIT_BYTES=0
+	elif ! split --bytes="$SPLIT_BYTES" /dev/null; then
+		exit 1
+	fi
 
-			l) IS_LABELED="true" ;;
+	if [[ ! -d "$REPOSITORY_PATH" ]]; then
+		>&2 echo "fopus: $REPOSITORY_PATH: No such directory"
+		exit 1
+	fi
 
-			9) IS_XZ_PRESET_NINE="true" ;;
+	if [[ -n "$MINISIGN_KEY_PATH" ]]; then
+		if [[ ! -f "$MINISIGN_KEY_PATH" ]]; then
+			>&2 echo "fopus: $MINISIGN_KEY_PATH: No such file"
+			exit 1
+		fi
+		MINISIGN_KEY_PATH=$(realpath -e "$MINISIGN_KEY_PATH")
+	fi
 
-			g) IS_GROUP_INVERT="true" ;;
-
-			1) IS_SINGLETON="true" ;;
-
-			t) MINISIGN_TRUSTED_COMMENT="$OPTARG" ;;
-
-			b)
-				SPLIT_BYTES="$OPTARG"
-				if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]] &&\
-				   [[ "$SPLIT_BYTES" -le 0 ]]; then
-					SPLIT_BYTES=0
-				elif ! split --bytes="$SPLIT_BYTES" /dev/null; then
-					exit 1
-				fi
-				;;
-
-			o)
-				if [[ ! -d "$OPTARG" ]]; then
-					>&2 echo "fopus: $OPTARG: No such directory"
-					exit 1
-				fi
-				REPOSITORY_PATH="$OPTARG" ;;
-
-			s)
-				if [[ ! -f "$OPTARG" ]]; then
-					>&2 echo "fopus: $OPTARG: No such file"
-					exit 1
-				fi
-				MINISIGN_KEY_PATH=$(realpath -e "$OPTARG") ;;
-
-			r)
-				if ! "$age_tool" --recipient "$OPTARG" "$0" > /dev/null ; then
-					exit 2
-				fi
-				AGE_RECIPIENT_STRING+=(--recipient "$OPTARG") ;;
-
-			R)
-				if ! "$age_tool" --recipients-file "$OPTARG" "$0" > /dev/null ; then
-					exit 2
-				fi
-				local _tmp=$(realpath -e "$OPTARG")
-				AGE_RECIPIENT_PATH+=(--recipients-file "$_tmp") ;;
-
-			v) echo "v${VERSION}"
-				exit 0 ;;
-
-			h) show_help
-				exit 0 ;;
-
-			?) show_help
-				exit 2 ;;
-		esac
+	LIST=()
+	for RECIPIENT in "${AGE_RECIPIENT_STRING[@]}"; do
+		if ! "$age_tool" --recipient "$RECIPIENT" "$0" > /dev/null ; then
+			exit 2
+		fi
+		LIST+=(--recipient "$RECIPIENT")
 	done
+	AGE_RECIPIENT_STRING=("${LIST[@]}")
 
-	shift $((OPTIND - 1))
-	FILES+=("$@")
+	LIST=()
+	for RECIPIENT in "${AGE_RECIPIENT_PATH[@]}"; do
+		if ! "$age_tool" --recipients-file "$RECIPIENT" "$0" > /dev/null ; then
+			exit 2
+		fi
+		local _tmp=$(realpath -e "$RECIPIENT")
+		LIST+=(--recipients-file "$_tmp")
+	done
+	AGE_RECIPIENT_PATH=("${LIST[@]}")
 
 	return 0
 }
@@ -565,7 +539,7 @@ main()
 		exit 1
 	fi
 
-	if ! digest_options "$@"; then
+	if ! digest_options; then
 		exit 1
 	fi
 
