@@ -109,6 +109,16 @@ check_requirements()
 	fi
 	declare -gr sha1sum_tool
 
+	if command -v sha256sum &> /dev/null; then
+		sha256sum_tool="$(command -v sha256sum)"
+	elif command -v shasum &> /dev/null; then
+		sha256sum_tool="$(command -v shasum) -a 256"
+	else
+		>&2 echo "fopus: sha256sum not found"
+		exit 1
+	fi
+	declare -gr sha256sum_tool
+
 	if command -v b3sum &> /dev/null; then
 		checksum_tool="$(command -v b3sum)"
 	elif command -v b2sum &> /dev/null; then
@@ -135,6 +145,7 @@ Usage:
 
 Options:
     -1            Put FILEs in one backup.
+    -2            Use standard SHA-256 for checksums.
     -g            Group backups by file/date instead of date/name.
     -o OUTPUT     Put the backup in path OUTPUT.
     -n            Don't perform any action.
@@ -344,8 +355,14 @@ sign_files()
 		# hash
 		(
 		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
-		if ! "$checksum_tool" "./"* > "./CHECKSUMS.txt"; then
-			return 1
+		if [[ "$IS_SHA256" == "true" ]]; then
+			if ! "$sha256sum_tool" "./"* > "./CHECKSUMS.txt"; then
+				return 1
+			fi
+		else
+			if ! "$checksum_tool" "./"* > "./CHECKSUMS.txt"; then
+				return 1
+			fi
 		fi
 		)
 
@@ -424,7 +441,7 @@ EOL
 
 get_options()
 {
-	while getopts "hvng1b:o:s:t:r:R:ql9" opt; do
+	while getopts "hvng12b:o:s:t:r:R:ql9" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
@@ -437,6 +454,8 @@ get_options()
 			g) IS_GROUP_INVERT="true" ;;
 
 			1) IS_SINGLETON="true" ;;
+
+			2) IS_SHA256="true" ;;
 
 			t) MINISIGN_TRUSTED_COMMENT="$OPTARG" ;;
 
@@ -521,6 +540,7 @@ main()
 	REPOSITORY_PATH="$(pwd -P)"
 	IS_GROUP_INVERT="false"
 	IS_SINGLETON="false"
+	IS_SHA256="false"
 	DRY_RUN="false"
 	IS_QUIET="false"
 	IS_LABELED="false"
@@ -546,6 +566,7 @@ main()
 	declare -gr REPOSITORY_PATH
 	declare -gr IS_GROUP_INVERT
 	declare -gr IS_SINGLETON
+	declare -gr IS_SHA256
 	declare -gr DRY_RUN
 	declare -gr IS_QUIET
 	declare -gr IS_LABELED
