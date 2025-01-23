@@ -297,9 +297,11 @@ encrypt_file()
 			params+=(--encrypt --passphrase)
 		fi
 
+		trap - SIGINT
 		if ! "$age_tool" "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
 			return 1
 		fi
+		trap cleanup SIGINT
 	fi
 
 	return 0
@@ -355,9 +357,11 @@ sign_files()
 			params+=(-s "$MINISIGN_KEY_PATH")
 		fi
 
+		trap - SIGINT
 		if ! "$minisign_tool" "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/CHECKSUMS.txt"; then
 			return 1
 		fi
+		trap cleanup SIGINT
 	fi
 
 	return 0
