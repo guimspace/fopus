@@ -31,7 +31,7 @@ if [[ "$UID" -lt 1000 ]]; then
 	exit 1
 fi
 
-declare -r VERSION="4.1.2"
+declare -r VERSION="4.2.0-rc"
 
 printf -v DATE "%(%Y-%m-%d)T" -1
 declare -r DATE
