@@ -235,7 +235,7 @@ fopus_backup()
 
 	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
 		>&2 echo "fopus: cannot create backup: directory is not empty"
-		return 0
+		return 1
 	fi
 
 	if [[ "$DRY_RUN" == "false" ]]; then
