@@ -422,6 +422,51 @@ EOL
 	return 0
 }
 
+get_options()
+{
+	while getopts "hvng1b:o:s:t:r:R:ql9" opt; do
+		case "$opt" in
+			n) DRY_RUN="true" ;;
+
+			q) IS_QUIET="true" ;;
+
+			l) IS_LABELED="true" ;;
+
+			9) IS_XZ_PRESET_NINE="true" ;;
+
+			g) IS_GROUP_INVERT="true" ;;
+
+			1) IS_SINGLETON="true" ;;
+
+			t) MINISIGN_TRUSTED_COMMENT="$OPTARG" ;;
+
+			b) SPLIT_BYTES="$OPTARG" ;;
+
+			o) REPOSITORY_PATH="$OPTARG" ;;
+
+			s) MINISIGN_KEY_PATH="$OPTARG" ;;
+
+			r) AGE_RECIPIENT_STRING+=("$OPTARG") ;;
+
+			R) AGE_RECIPIENT_PATH+=("$OPTARG") ;;
+
+			v) echo "v${VERSION}"
+				exit 0 ;;
+
+			h) show_help
+				exit 0 ;;
+
+			?) show_help
+				exit 2 ;;
+		esac
+	done
+
+	shift $((OPTIND - 1))
+	FILES+=("$@")
+
+	return 0
+}
+
 digest_options()
 {
 	while getopts "hvng1b:o:s:t:r:R:ql9" opt; do
@@ -511,6 +556,10 @@ main()
 	AGE_RECIPIENT_PATH=()
 	MINISIGN_TRUSTED_COMMENT=""
 	MINISIGN_KEY_PATH=""
+
+	if ! get_options "$@"; then
+		exit 1
+	fi
 
 	if ! check_requirements; then
 		exit 1
