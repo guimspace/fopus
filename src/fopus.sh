@@ -242,6 +242,8 @@ fopus_backup()
 				((i += 1))
 			done
 		fi
+	else
+		echo "$BACKUP_PATH/$BACKUP_DIR"
 	fi
 
 	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
