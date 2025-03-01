@@ -41,6 +41,12 @@ declare -g IS_ONGOING=0
 
 export PATH='/usr/local/bin:/usr/bin'
 
+declare age_tool
+declare minisign_tool
+declare sha1sum_tool
+declare sha256sum_tool
+declare checksum_tool
+
 cleanup()
 {
 	declare -ri RC="$?"
