@@ -33,12 +33,6 @@ fi
 
 declare -r VERSION="4.2.0-rc"
 
-printf -v DATE "%(%Y-%m-%d)T" -1
-declare -r DATE
-
-declare -g CLEANUP_DIR=""
-declare -g IS_ONGOING=0
-
 export PATH='/usr/local/bin:/usr/bin'
 
 declare age_tool
@@ -50,8 +44,7 @@ declare checksum_tool
 cleanup()
 {
 	declare -ri RC="$?"
-
-	declare -rg CLEANUP_DIR
+	local -r CLEANUP_DIR="$CLEANUP_DIR"
 
 	if [[ "$RC" -eq 0 ]] && [[ "$IS_ONGOING" -eq 0 ]]; then
 		:
@@ -547,21 +540,27 @@ digest_options()
 
 main()
 {
+	printf -v DATE "%(%Y-%m-%d)T" -1
+	local -r DATE="$DATE"
+
+	local CLEANUP_DIR=""
+	local IS_ONGOING=0
+
 	local FILES=()
 
-	REPOSITORY_PATH="$(pwd -P)"
-	IS_GROUP_INVERT="false"
-	IS_SINGLETON="false"
-	IS_SHA256="false"
-	DRY_RUN="false"
-	IS_QUIET="false"
-	IS_LABELED="false"
-	IS_XZ_PRESET_NINE="false"
-	SPLIT_BYTES=2147483648
-	AGE_RECIPIENT_STRING=()
-	AGE_RECIPIENT_PATH=()
-	MINISIGN_TRUSTED_COMMENT=""
-	MINISIGN_KEY_PATH=""
+	local REPOSITORY_PATH="$(pwd -P)"
+	local IS_GROUP_INVERT="false"
+	local IS_SINGLETON="false"
+	local IS_SHA256="false"
+	local DRY_RUN="false"
+	local IS_QUIET="false"
+	local IS_LABELED="false"
+	local IS_XZ_PRESET_NINE="false"
+	local SPLIT_BYTES=2147483648
+	local AGE_RECIPIENT_STRING=()
+	local AGE_RECIPIENT_PATH=()
+	local MINISIGN_TRUSTED_COMMENT=""
+	local MINISIGN_KEY_PATH=""
 
 	if ! get_options "$@"; then
 		exit 1
@@ -575,19 +574,19 @@ main()
 		exit 1
 	fi
 
-	declare -gr REPOSITORY_PATH
-	declare -gr IS_GROUP_INVERT
-	declare -gr IS_SINGLETON
-	declare -gr IS_SHA256
-	declare -gr DRY_RUN
-	declare -gr IS_QUIET
-	declare -gr IS_LABELED
-	declare -gr IS_XZ_PRESET_NINE
-	declare -gr SPLIT_BYTES
-	declare -gr AGE_RECIPIENT_STRING
-	declare -gr AGE_RECIPIENT_PATH
-	declare -gr MINISIGN_TRUSTED_COMMENT
-	declare -gr MINISIGN_KEY_PATH
+	local -r REPOSITORY_PATH
+	local -r IS_GROUP_INVERT
+	local -r IS_SINGLETON
+	local -r IS_SHA256
+	local -r DRY_RUN
+	local -r IS_QUIET
+	local -r IS_LABELED
+	local -r IS_XZ_PRESET_NINE
+	local -r SPLIT_BYTES
+	local -r AGE_RECIPIENT_STRING
+	local -r AGE_RECIPIENT_PATH
+	local -r MINISIGN_TRUSTED_COMMENT
+	local -r MINISIGN_KEY_PATH
 
 	if ! evaluate_files; then
 		exit 1
@@ -611,7 +610,7 @@ main()
 	fi
 
 	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
-	declare -r OUTPUT_PATH="$OUTPUT_PATH"
+	local -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
@@ -628,7 +627,7 @@ main()
 	trap cleanup SIGINT SIGTERM EXIT
 	[[ "$IS_QUIET" == "false" ]] && echo "Repository $OUTPUT_PATH"
 
-	declare JOB=""
+	local JOB=""
 	if [[ "$IS_SINGLETON" == "true" ]]; then
 		JOB="Backup"
 		fopus_backup "${FILES[@]}"
