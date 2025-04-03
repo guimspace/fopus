@@ -312,12 +312,14 @@ encrypt_file()
 
 		params+=("${AGE_RECIPIENT_STRING[@]}")
 		params+=("${AGE_RECIPIENT_PATH[@]}")
-		params+=(--encrypt "${AGE_IDENTITY_PATH[@]}")
+		params+=("${AGE_IDENTITY_PATH[@]}")
 
 		if [[ "${#params[@]}" -eq 0 ]]; then
 			[[ "$IS_QUIET" == "false" ]] && echo "${REPO_NAME}.tar.xz"
-			params+=(--encrypt --passphrase)
+			params+=(--passphrase)
 		fi
+
+		params+=(--encrypt)
 
 		trap - SIGINT
 		if ! "$age_tool" "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
