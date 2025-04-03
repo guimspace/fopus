@@ -162,6 +162,7 @@ Minisign options:
 Age options:
     -r RECIPIENT  Age encrypt to the specified RECIPIENT.
     -R PATH       Age encrypt to recipients listed at PATH.
+    -i PATH       Age encrypt to identity file at PATH.
 
 Examples:
     $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
@@ -311,6 +312,7 @@ encrypt_file()
 
 		params+=("${AGE_RECIPIENT_STRING[@]}")
 		params+=("${AGE_RECIPIENT_PATH[@]}")
+		params+=(--encrypt "${AGE_IDENTITY_PATH[@]}")
 
 		if [[ "${#params[@]}" -eq 0 ]]; then
 			[[ "$IS_QUIET" == "false" ]] && echo "${REPO_NAME}.tar.xz"
@@ -455,7 +457,7 @@ EOL
 
 get_options()
 {
-	while getopts "hvng12b:o:s:t:r:R:ql9" opt; do
+	while getopts "hvng12b:o:s:t:r:R:i:ql9" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
@@ -482,6 +484,8 @@ get_options()
 			r) AGE_RECIPIENT_STRING+=("$OPTARG") ;;
 
 			R) AGE_RECIPIENT_PATH+=("$OPTARG") ;;
+
+			i) AGE_IDENTITY_PATH+=("$OPTARG") ;;
 
 			v) echo "v${VERSION}"
 				exit 0 ;;
@@ -544,6 +548,16 @@ digest_options()
 	done
 	AGE_RECIPIENT_PATH=("${LIST[@]}")
 
+    LIST=()
+	for IDENTITY in "${AGE_IDENTITY_PATH[@]}"; do
+		if ! "$age_tool" --encrypt --identity "$IDENTITY" "$0" > /dev/null ; then
+			exit 2
+		fi
+		local _tmp=$(realpath -e "$IDENTITY")
+		LIST+=(--identity "$_tmp")
+	done
+	AGE_IDENTITY_PATH=("${LIST[@]}")
+
 	return 0
 }
 
@@ -569,6 +583,7 @@ main()
 	local SPLIT_BYTES=2147483648
 	local AGE_RECIPIENT_STRING=()
 	local AGE_RECIPIENT_PATH=()
+	local AGE_IDENTITY_PATH=()
 	local MINISIGN_TRUSTED_COMMENT=""
 	local MINISIGN_KEY_PATH=""
 
@@ -597,6 +612,7 @@ main()
 	local -r SPLIT_BYTES
 	local -r AGE_RECIPIENT_STRING
 	local -r AGE_RECIPIENT_PATH
+	local -r AGE_IDENTITY_PATH
 	local -r MINISIGN_TRUSTED_COMMENT
 	local -r MINISIGN_KEY_PATH
 
