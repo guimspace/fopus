@@ -171,6 +171,11 @@ Examples:
 EOT
 }
 
+test_is_dryrun()
+{
+	test "$DRY_RUN" == "true"
+}
+
 evaluate_files()
 {
 	local SELECT=()
@@ -258,12 +263,12 @@ fopus_backup()
 		return 1
 	fi
 
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		mkdir -p "$BACKUP_PATH/$BACKUP_DIR" || exit 1
 	fi
 
 	# compress
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		local params=()
 		[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
 		[[ "$IS_XZ_PRESET_NINE" == "true" ]] && params+=(-9)
@@ -307,7 +312,7 @@ fopus_backup()
 
 encrypt_file()
 {
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		local params=()
 
 		params+=("${AGE_RECIPIENT_STRING[@]}")
@@ -340,7 +345,7 @@ split_file()
 	local FILE_SIZE=""
 	local LIMIT_SIZE=""
 
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		FILE_SIZE=$(stat -c %s "$BACKUP_FILE.age")
 		LIMIT_SIZE=$(echo "$SPLIT_BYTES" | numfmt --from=iec)
 
@@ -359,7 +364,7 @@ split_file()
 
 sign_files()
 {
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		if [[ -z "$MINISIGN_KEY_PATH" ]]; then
 			return 0
 		fi
@@ -405,7 +410,7 @@ sign_files()
 
 hash_files()
 {
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		if [[ "$IS_LABELED" == "false" ]]; then
 			if ! (
 				cd "$BACKUP_PATH" || exit 1
@@ -429,7 +434,7 @@ hash_files()
 
 file_permission()
 {
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		if ! chmod 700 "$BACKUP_PATH/$BACKUP_DIR/"; then
 			return 1
 		fi
@@ -442,7 +447,7 @@ file_permission()
 
 label_archive()
 {
-	if [[ "$DRY_RUN" == "false" ]] &&\
+	if ! test_is_dryrun &&\
 	   [[ "$IS_LABELED" == "true" ]]; then
 		cat << EOL > "$BACKUP_PATH/$BACKUP_DIR/label.txt"
 # $ARCHIVE_UUID
