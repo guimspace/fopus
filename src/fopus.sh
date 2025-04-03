@@ -51,7 +51,9 @@ cleanup()
 	elif [[ ! -e "$CLEANUP_DIR" ]]; then
 		:
 	else
-		local -r target=$(realpath -e "$CLEANUP_DIR")
+		local target
+		target=$(realpath -e "$CLEANUP_DIR")
+		local -r target
 
 		if [[ ! -O "$target" ]]; then
 			:
@@ -196,13 +198,18 @@ fopus_backup()
 {
 	IS_ONGOING=1
 
-	local -r LIST_FILES=("$@")
+	local LIST_FILES
+	LIST_FILES=("$@")
+	local -r LIST_FILES
 
 	local BACKUP_FILE=""
 	local BACKUP_PATH=""
 	local BACKUP_DIR=""
 
-	local -r ARCHIVE_UUID=$(uuidgen -r)
+	local ARCHIVE_UUID
+	ARCHIVE_UUID=$(uuidgen -r)
+	local -r ARCHIVE_UUID
+
 	local ARCHIVE_SHA1SUM=""
 
 	local tmp=""
@@ -531,7 +538,8 @@ digest_options()
 		if ! "$age_tool" --recipients-file "$RECIPIENT" "$0" > /dev/null ; then
 			exit 2
 		fi
-		local _tmp=$(realpath -e "$RECIPIENT")
+		local _tmp
+		_tmp=$(realpath -e "$RECIPIENT")
 		LIST+=(--recipients-file "$_tmp")
 	done
 	AGE_RECIPIENT_PATH=("${LIST[@]}")
@@ -550,7 +558,7 @@ main()
 
 	local FILES=()
 
-	local REPOSITORY_PATH="$(pwd -P)"
+	local REPOSITORY_PATH
 	local IS_GROUP_INVERT="false"
 	local IS_SINGLETON="false"
 	local IS_SHA256="false"
@@ -563,6 +571,8 @@ main()
 	local AGE_RECIPIENT_PATH=()
 	local MINISIGN_TRUSTED_COMMENT=""
 	local MINISIGN_KEY_PATH=""
+
+	REPOSITORY_PATH="$(pwd -P)"
 
 	if ! get_options "$@"; then
 		exit 1
