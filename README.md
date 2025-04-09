@@ -15,7 +15,7 @@ Backup archive is encrypted by [**age**](https://github.com/FiloSottile/age) wit
 
 Large backups are split in pieces of 2G by default.
 
-Hashes are signed by [**minisign**](https://github.com/jedisct1/minisign). A minisign secret key is required.
+Hashes are signed by [**minisign**](https://github.com/jedisct1/minisign).
 
 ### Process summary
 
@@ -27,8 +27,9 @@ tar -cvvpf - -- FILE 2> FILE.txt | xz --threads=0 -z - > FILE.tar.xz
 - **Encrypt:** With `age`, the compressed file is encrypted in `.age` format.
 ```
 age --encrypt --passphrase FILE.tar.xz > FILE.tar.xz.age
-age --recipient RECIPIENT FILE.tar.xz > FILE.tar.xz.age
-age --recipients-file PATH FILE.tar.xz > FILE.tar.xz.age
+age --encrypt --recipient RECIPIENT FILE.tar.xz > FILE.tar.xz.age
+age --encrypt --recipients-file PATH FILE.tar.xz > FILE.tar.xz.age
+age --encrypt --identity PATH FILE.tar.xz > FILE.tar.xz.age
 ```
 
 - **Split:** If the encrypted file is larger than `SIZE` bytes, it is split and put `SIZE` bytes per output file.
@@ -43,7 +44,7 @@ b2sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKSUMS.
 sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKSUMS.txt
 ```
 
-- **Sign:** The hashes are signed with `minisign`.
+- **Sign:** The hashes are signed with `minisign` when a secret key is provided.
 ```
 minisign -s KEY [-t COMMENT] -Sm CHECKSUMS.txt
 ```
@@ -64,7 +65,7 @@ A directory `./backup_yyyy-mm-dd/` and:
    - `Photos.tar.xz` the compressed archive (plaintext)
    - `Photos.tar.xz.age` the encrypted archive
    - `Photos.tar.xz.age_aa`, `Photos.tar.xz.age_ab`, ... the pieces of the encrypted archive
-   - `Photos.txt` a list of files processed in compression (plaintext)
+   - `Photos.list.txt` a list of files processed in compression (plaintext)
    - `label.txt` a label with a random UUID, timestamp and a checksum if label option is selected
    - `CHECKSUMS.txt` hash of the files
    - `CHECKSUMS.txt.minisign` signature of the hashes
@@ -90,8 +91,9 @@ sudo chmod a+rx /usr/local/bin/fopus
 
 **Syntax:**
 ```
-fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
-          [-r RECIPIENT | -R PATH] FILE...
+fopus [-1gnql] [-b SIZE] [-o OUTPUT] \
+    [-s SECKEY] [-t COMMENT] \
+    [-r RECIPIENT] [-R PATH] [-i PATH] FILE...
 ```
 
 **Options:**
@@ -105,18 +107,22 @@ fopus [-1gnql] [-s | -b SIZE] [-o OUTPUT] [-k SECKEY] [-t COMMENT] \
 -l            Create a label for the backup.
 -b SIZE       Split backup pieces of SIZE. Default is 2G.
               Specify 0 to not split.
+
 -s SECKEY     Minisign with SECKEY.
 -t COMMENT    Minisign add a one-line trusted COMMENT.
+
 -r RECIPIENT  Age encrypt to the specified RECIPIENT.
 -R PATH       Age encrypt to recipients listed at PATH.
+-i PATH       Age encrypt to identity file at PATH.
 ```
 
 ### Examples
 
 ```
 $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
-$ fopus -1 -b 0 Pictures/ Videos/
-$ fopus -l -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
+$ fopus -1 -b 0 -r age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p Pictures/ Videos/
+$ fopus -l -s ~/.minisign/minisign.key -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
+$ fopus -2lq -i ~/.age/backup.key Memes/
 ```
 
 # Contribute code and ideas
