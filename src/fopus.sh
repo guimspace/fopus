@@ -31,7 +31,7 @@ if [[ "$UID" -lt 1000 ]]; then
 	exit 1
 fi
 
-declare -r VERSION="4.2.0-rc3"
+declare -r VERSION="4.2.0"
 
 export PATH='/usr/local/bin:/usr/bin'
 
