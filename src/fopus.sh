@@ -141,8 +141,9 @@ show_help()
 {
 	cat << EOT
 Usage:
-    fopus [-1gnql] [-b SIZE] [-o OUTPUT] [-s SECKEY] [-t COMMENT] \\
-		[-r RECIPIENT | -R PATH] FILE...
+    fopus [-1gnql] [-b SIZE] [-o OUTPUT] \\
+        [-s SECKEY] [-t COMMENT] \\
+        [-r RECIPIENT] [-R PATH] [-i PATH] FILE...
 
 Options:
     -1            Put FILEs in one backup.
@@ -166,8 +167,9 @@ Age options:
 
 Examples:
     $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
-    $ fopus -1 -b 0 Pictures/ Videos/
-    $ fopus -l -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
+    $ fopus -1 -b 0 -r age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p Pictures/ Videos/
+    $ fopus -l -s ~/.minisign/minisign.key -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
+    $ fopus -2lq -i ~/.age/backup.key Memes/
 EOT
 }
 
