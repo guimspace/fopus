@@ -31,28 +31,29 @@ if [[ "$UID" -lt 1000 ]]; then
 	exit 1
 fi
 
-declare -r VERSION="4.1.3"
-
-printf -v DATE "%(%Y-%m-%d)T" -1
-declare -r DATE
-
-declare -g CLEANUP_DIR=""
-declare -g IS_ONGOING=0
+declare -r VERSION="4.2.0-rc3"
 
 export PATH='/usr/local/bin:/usr/bin'
+
+declare age_tool
+declare minisign_tool
+declare sha1sum_tool
+declare sha256sum_tool
+declare checksum_tool
 
 cleanup()
 {
 	declare -ri RC="$?"
-
-	declare -rg CLEANUP_DIR
+	local -r CLEANUP_DIR="$CLEANUP_DIR"
 
 	if [[ "$RC" -eq 0 ]] && [[ "$IS_ONGOING" -eq 0 ]]; then
 		:
 	elif [[ ! -e "$CLEANUP_DIR" ]]; then
 		:
 	else
-		local -r target=$(realpath -e "$CLEANUP_DIR")
+		local target
+		target=$(realpath -e "$CLEANUP_DIR")
+		local -r target
 
 		if [[ ! -O "$target" ]]; then
 			:
@@ -109,6 +110,16 @@ check_requirements()
 	fi
 	declare -gr sha1sum_tool
 
+	if command -v sha256sum &> /dev/null; then
+		sha256sum_tool="$(command -v sha256sum)"
+	elif command -v shasum &> /dev/null; then
+		sha256sum_tool="$(command -v shasum) -a 256"
+	else
+		>&2 echo "fopus: sha256sum not found"
+		exit 1
+	fi
+	declare -gr sha256sum_tool
+
 	if command -v b3sum &> /dev/null; then
 		checksum_tool="$(command -v b3sum)"
 	elif command -v b2sum &> /dev/null; then
@@ -135,6 +146,7 @@ Usage:
 
 Options:
     -1            Put FILEs in one backup.
+    -2            Use standard SHA-256 for checksums.
     -g            Group backups by file/date instead of date/name.
     -o OUTPUT     Put the backup in path OUTPUT.
     -n            Don't perform any action.
@@ -150,12 +162,18 @@ Minisign options:
 Age options:
     -r RECIPIENT  Age encrypt to the specified RECIPIENT.
     -R PATH       Age encrypt to recipients listed at PATH.
+    -i PATH       Age encrypt to identity file at PATH.
 
 Examples:
     $ fopus -o ~/Backups -b 1G Documents/ lorem-ipsum.txt
     $ fopus -1 -b 0 Pictures/ Videos/
     $ fopus -l -t "Trusted lorem ipsum" -R ~/.age/projects.pub Projects/
 EOT
+}
+
+test_is_dryrun()
+{
+	test "$DRY_RUN" == "true"
 }
 
 evaluate_files()
@@ -186,13 +204,18 @@ fopus_backup()
 {
 	IS_ONGOING=1
 
-	local -r LIST_FILES=("$@")
+	local LIST_FILES
+	LIST_FILES=("$@")
+	local -r LIST_FILES
 
 	local BACKUP_FILE=""
 	local BACKUP_PATH=""
 	local BACKUP_DIR=""
 
-	local -r ARCHIVE_UUID=$(uuidgen -r)
+	local ARCHIVE_UUID
+	ARCHIVE_UUID=$(uuidgen -r)
+	local -r ARCHIVE_UUID
+
 	local ARCHIVE_SHA1SUM=""
 
 	local tmp=""
@@ -240,12 +263,12 @@ fopus_backup()
 		return 1
 	fi
 
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		mkdir -p "$BACKUP_PATH/$BACKUP_DIR" || exit 1
 	fi
 
 	# compress
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		local params=()
 		[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
 		[[ "$IS_XZ_PRESET_NINE" == "true" ]] && params+=(-9)
@@ -289,16 +312,19 @@ fopus_backup()
 
 encrypt_file()
 {
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		local params=()
 
 		params+=("${AGE_RECIPIENT_STRING[@]}")
 		params+=("${AGE_RECIPIENT_PATH[@]}")
+		params+=("${AGE_IDENTITY_PATH[@]}")
 
 		if [[ "${#params[@]}" -eq 0 ]]; then
 			[[ "$IS_QUIET" == "false" ]] && echo "${REPO_NAME}.tar.xz"
-			params+=(--encrypt --passphrase)
+			params+=(--passphrase)
 		fi
+
+		params+=(--encrypt)
 
 		trap - SIGINT
 		if ! "$age_tool" "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
@@ -319,7 +345,7 @@ split_file()
 	local FILE_SIZE=""
 	local LIMIT_SIZE=""
 
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		FILE_SIZE=$(stat -c %s "$BACKUP_FILE.age")
 		LIMIT_SIZE=$(echo "$SPLIT_BYTES" | numfmt --from=iec)
 
@@ -338,7 +364,7 @@ split_file()
 
 sign_files()
 {
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		if [[ -z "$MINISIGN_KEY_PATH" ]]; then
 			return 0
 		fi
@@ -346,16 +372,28 @@ sign_files()
 		# hash
 		(
 		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
-		if ! "$checksum_tool" "./"* > "./CHECKSUMS.txt"; then
-			return 1
+		if [[ "$IS_SHA256" == "true" ]]; then
+			if ! "$sha256sum_tool" "./"* > "./CHECKSUMS.txt"; then
+				return 1
+			fi
+		else
+			if ! "$checksum_tool" "./"* > "./CHECKSUMS.txt"; then
+				return 1
+			fi
 		fi
 		)
 
 		#sign
 		local params=()
-		if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]]; then
+		if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]] &&\
+			[[ "$IS_LABELED" == "true" ]]; then
+			params+=(-t "${ARCHIVE_UUID}:${MINISIGN_TRUSTED_COMMENT}")
+		elif [[ -n "$MINISIGN_TRUSTED_COMMENT" ]]; then
 			params+=(-t "$MINISIGN_TRUSTED_COMMENT")
+		elif [[ "$IS_LABELED" == "true" ]]; then
+			params+=(-t "$ARCHIVE_UUID")
 		fi
+
 		if [[ -n "$MINISIGN_KEY_PATH" ]]; then
 			params+=(-s "$MINISIGN_KEY_PATH")
 		fi
@@ -372,7 +410,7 @@ sign_files()
 
 hash_files()
 {
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		if [[ "$IS_LABELED" == "false" ]]; then
 			if ! (
 				cd "$BACKUP_PATH" || exit 1
@@ -396,7 +434,7 @@ hash_files()
 
 file_permission()
 {
-	if [[ "$DRY_RUN" == "false" ]]; then
+	if ! test_is_dryrun; then
 		if ! chmod 700 "$BACKUP_PATH/$BACKUP_DIR/"; then
 			return 1
 		fi
@@ -409,7 +447,7 @@ file_permission()
 
 label_archive()
 {
-	if [[ "$DRY_RUN" == "false" ]] &&\
+	if ! test_is_dryrun &&\
 	   [[ "$IS_LABELED" == "true" ]]; then
 		cat << EOL > "$BACKUP_PATH/$BACKUP_DIR/label.txt"
 # $ARCHIVE_UUID
@@ -424,9 +462,9 @@ EOL
 	return 0
 }
 
-digest_options()
+get_options()
 {
-	while getopts "hvng1b:o:s:t:r:R:ql9" opt; do
+	while getopts "hvng12b:o:s:t:r:R:i:ql9" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
@@ -440,44 +478,21 @@ digest_options()
 
 			1) IS_SINGLETON="true" ;;
 
+			2) IS_SHA256="true" ;;
+
 			t) MINISIGN_TRUSTED_COMMENT="$OPTARG" ;;
 
-			b)
-				SPLIT_BYTES="$OPTARG"
-				if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]] &&\
-				   [[ "$SPLIT_BYTES" -le 0 ]]; then
-					SPLIT_BYTES=0
-				elif ! split --bytes="$SPLIT_BYTES" /dev/null; then
-					exit 1
-				fi
-				;;
+			b) SPLIT_BYTES="$OPTARG" ;;
 
-			o)
-				if [[ ! -d "$OPTARG" ]]; then
-					>&2 echo "fopus: $OPTARG: No such directory"
-					exit 1
-				fi
-				REPOSITORY_PATH="$OPTARG" ;;
+			o) REPOSITORY_PATH="$OPTARG" ;;
 
-			s)
-				if [[ ! -f "$OPTARG" ]]; then
-					>&2 echo "fopus: $OPTARG: No such file"
-					exit 1
-				fi
-				MINISIGN_KEY_PATH=$(realpath -e "$OPTARG") ;;
+			s) MINISIGN_KEY_PATH="$OPTARG" ;;
 
-			r)
-				if ! "$age_tool" --recipient "$OPTARG" "$0" > /dev/null ; then
-					exit 2
-				fi
-				AGE_RECIPIENT_STRING+=(--recipient "$OPTARG") ;;
+			r) AGE_RECIPIENT_STRING+=("$OPTARG") ;;
 
-			R)
-				if ! "$age_tool" --recipients-file "$OPTARG" "$0" > /dev/null ; then
-					exit 2
-				fi
-				local _tmp=$(realpath -e "$OPTARG")
-				AGE_RECIPIENT_PATH+=(--recipients-file "$_tmp") ;;
+			R) AGE_RECIPIENT_PATH+=("$OPTARG") ;;
+
+			i) AGE_IDENTITY_PATH+=("$OPTARG") ;;
 
 			v) echo "v${VERSION}"
 				exit 0 ;;
@@ -496,44 +511,117 @@ digest_options()
 	return 0
 }
 
+digest_options()
+{
+	local LIST=()
+
+	if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]] &&\
+		[[ "$SPLIT_BYTES" -le 0 ]]; then
+		SPLIT_BYTES=0
+	elif ! split --bytes="$SPLIT_BYTES" /dev/null; then
+		exit 1
+	fi
+
+	if [[ ! -d "$REPOSITORY_PATH" ]]; then
+		>&2 echo "fopus: $REPOSITORY_PATH: No such directory"
+		exit 1
+	fi
+
+	if [[ -n "$MINISIGN_KEY_PATH" ]]; then
+		if [[ ! -f "$MINISIGN_KEY_PATH" ]]; then
+			>&2 echo "fopus: $MINISIGN_KEY_PATH: No such file"
+			exit 1
+		fi
+		MINISIGN_KEY_PATH=$(realpath -e "$MINISIGN_KEY_PATH")
+	fi
+
+	LIST=()
+	for RECIPIENT in "${AGE_RECIPIENT_STRING[@]}"; do
+		if ! "$age_tool" --recipient "$RECIPIENT" "$0" > /dev/null ; then
+			exit 2
+		fi
+		LIST+=(--recipient "$RECIPIENT")
+	done
+	AGE_RECIPIENT_STRING=("${LIST[@]}")
+
+	LIST=()
+	for RECIPIENT in "${AGE_RECIPIENT_PATH[@]}"; do
+		if ! "$age_tool" --recipients-file "$RECIPIENT" "$0" > /dev/null ; then
+			exit 2
+		fi
+		local _tmp
+		_tmp=$(realpath -e "$RECIPIENT")
+		LIST+=(--recipients-file "$_tmp")
+	done
+	AGE_RECIPIENT_PATH=("${LIST[@]}")
+
+    LIST=()
+	for IDENTITY in "${AGE_IDENTITY_PATH[@]}"; do
+		if ! "$age_tool" --encrypt --identity "$IDENTITY" "$0" > /dev/null ; then
+			exit 2
+		fi
+		local _tmp=$(realpath -e "$IDENTITY")
+		LIST+=(--identity "$_tmp")
+	done
+	AGE_IDENTITY_PATH=("${LIST[@]}")
+
+	return 0
+}
+
 
 main()
 {
+	printf -v DATE "%(%Y-%m-%d)T" -1
+	local -r DATE="$DATE"
+
+	local CLEANUP_DIR=""
+	local IS_ONGOING=0
+
 	local FILES=()
 
+	local REPOSITORY_PATH
+	local IS_GROUP_INVERT="false"
+	local IS_SINGLETON="false"
+	local IS_SHA256="false"
+	local DRY_RUN="false"
+	local IS_QUIET="false"
+	local IS_LABELED="false"
+	local IS_XZ_PRESET_NINE="false"
+	local SPLIT_BYTES=2147483648
+	local AGE_RECIPIENT_STRING=()
+	local AGE_RECIPIENT_PATH=()
+	local AGE_IDENTITY_PATH=()
+	local MINISIGN_TRUSTED_COMMENT=""
+	local MINISIGN_KEY_PATH=""
+
 	REPOSITORY_PATH="$(pwd -P)"
-	IS_GROUP_INVERT="false"
-	IS_SINGLETON="false"
-	DRY_RUN="false"
-	IS_QUIET="false"
-	IS_LABELED="false"
-	IS_XZ_PRESET_NINE="false"
-	SPLIT_BYTES=2147483648
-	AGE_RECIPIENT_STRING=()
-	AGE_RECIPIENT_PATH=()
-	MINISIGN_TRUSTED_COMMENT=""
-	MINISIGN_KEY_PATH=""
+
+	if ! get_options "$@"; then
+		exit 1
+	fi
 
 	if ! check_requirements; then
 		exit 1
 	fi
 
-	if ! digest_options "$@"; then
+	if ! digest_options; then
 		exit 1
 	fi
 
-	declare -gr REPOSITORY_PATH
-	declare -gr IS_GROUP_INVERT
-	declare -gr IS_SINGLETON
-	declare -gr DRY_RUN
-	declare -gr IS_QUIET
-	declare -gr IS_LABELED
-	declare -gr IS_XZ_PRESET_NINE
-	declare -gr SPLIT_BYTES
-	declare -gr AGE_RECIPIENT_STRING
-	declare -gr AGE_RECIPIENT_PATH
-	declare -gr MINISIGN_TRUSTED_COMMENT
-	declare -gr MINISIGN_KEY_PATH
+	local -r REPOSITORY_PATH
+	local -r IS_GROUP_INVERT
+	local -r IS_SINGLETON
+	local -r IS_SHA256
+	local -r DRY_RUN
+	local -r IS_QUIET
+	local -r IS_LABELED
+	local -r IS_XZ_PRESET_NINE
+	local -r SPLIT_BYTES
+	local -r AGE_RECIPIENT_STRING
+	local -r AGE_RECIPIENT_PATH
+	local -r AGE_IDENTITY_PATH
+	local -r MINISIGN_TRUSTED_COMMENT
+	local -r MINISIGN_KEY_PATH
 
 	if ! evaluate_files; then
 		exit 1
@@ -557,7 +645,7 @@ main()
 	fi
 
 	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
-	declare -r OUTPUT_PATH="$OUTPUT_PATH"
+	local -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
 		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
@@ -574,7 +662,7 @@ main()
 	trap cleanup SIGINT SIGTERM EXIT
 	[[ "$IS_QUIET" == "false" ]] && echo "Repository $OUTPUT_PATH"
 
-	declare JOB=""
+	local JOB=""
 	if [[ "$IS_SINGLETON" == "true" ]]; then
 		JOB="Backup"
 		fopus_backup "${FILES[@]}"
