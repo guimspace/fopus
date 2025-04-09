@@ -482,11 +482,11 @@ get_options()
 
 			2) IS_SHA256="true" ;;
 
-			t) MINISIGN_TRUSTED_COMMENT="$OPTARG" ;;
-
 			b) SPLIT_BYTES="$OPTARG" ;;
 
 			o) REPOSITORY_PATH="$OPTARG" ;;
+
+			t) MINISIGN_TRUSTED_COMMENT="$OPTARG" ;;
 
 			s) MINISIGN_KEY_PATH="$OPTARG" ;;
 
@@ -535,6 +535,12 @@ digest_options()
 			exit 1
 		fi
 		MINISIGN_KEY_PATH=$(realpath -e "$MINISIGN_KEY_PATH")
+	fi
+
+	if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]] &&\
+		[[ -z "$MINISIGN_KEY_PATH" ]]; then
+			>&2 printf "fopus: A trusted comment requires a minisign key\n"
+			exit 1
 	fi
 
 	LIST=()
