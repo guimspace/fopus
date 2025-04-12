@@ -32,16 +32,16 @@ age --encrypt --recipients-file PATH FILE.tar.xz > FILE.tar.xz.age
 age --encrypt --identity PATH FILE.tar.xz > FILE.tar.xz.age
 ```
 
-- **Split:** If the encrypted file is larger than `SIZE` bytes, it is split and put `SIZE` bytes per output file.
+- **Split:** If the encrypted file is larger than `SIZE` bytes, then it is split and put `SIZE` bytes per output file.
 ```
 split -b SIZE FILE.tar.xz.age FILE.tar.xz.age_
 ```
 
-- **Hash:** Files are hashed with BLAKE3, BLAKE2, or SHA-256.
+- **Checksum:** Files are hashed with BLAKE3, BLAKE2, or SHA-256.
 ```
-b3sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKSUMS.txt
-b2sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKSUMS.txt
-sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.txt > CHECKSUMS.txt
+b3sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.list.txt > CHECKSUMS.txt
+b2sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.list.txt > CHECKSUMS.txt
+sha256sum FILE.tar.xz FILE.tar.xz.age [FILE.tar.xz.age_aa ...] FILE.list.txt > CHECKSUMS.txt
 ```
 
 - **Sign:** The hashes are signed with `minisign` when a secret key is provided.
@@ -50,6 +50,8 @@ minisign -s KEY [-t COMMENT] -Sm CHECKSUMS.txt
 ```
 
 - **Permissions:** Permission of files are set to 600, and 700 for directories.
+
+- **Label:** A text file label is created with a random UUID, a timestamp, the absoluate pathname of `FILE`, and the SHA-1 hashes of the output.
 
 ### Example
 
@@ -66,9 +68,9 @@ A directory `./backup_yyyy-mm-dd/` and:
    - `Photos.tar.xz.age` the encrypted archive
    - `Photos.tar.xz.age_aa`, `Photos.tar.xz.age_ab`, ... the pieces of the encrypted archive
    - `Photos.list.txt` a list of files processed in compression (plaintext)
-   - `label.txt` a label with a random UUID, timestamp and a checksum if label option is selected
-   - `CHECKSUMS.txt` hash of the files
-   - `CHECKSUMS.txt.minisign` signature of the hashes
+   - `label.txt` a label with a random UUID, a timestamp, an absoluate pathname, and SHA-1
+   - `CHECKSUMS.txt` checksums of the files
+   - `CHECKSUMS.txt.minisign` signature of the checksums
  - `SHA1SUMS.txt` hash of files in `Photos-15e2ef83315/` to ensure that the data has not changed due to accidental corruption - if label option is not select.
 
 The directory `backup_yyyy-mm-dd` have file permission set to `700`. Regular files in `backup_yyyy-mm-dd/` have file permission set to `600`; for directories, `700`.
