@@ -215,9 +215,11 @@ fopus_backup()
 	local BACKUP_PATH=""
 	local BACKUP_DIR=""
 
-	local ARCHIVE_UUID
-	ARCHIVE_UUID=$(uuidgen -r)
-	local -r ARCHIVE_UUID
+	if [[ "$IS_SINGLE_UUID" == "false" ]]; then
+		local ARCHIVE_UUID
+		ARCHIVE_UUID=$(uuidgen -r)
+		local -r ARCHIVE_UUID
+	fi
 
 	local ARCHIVE_SHA1SUM=""
 
@@ -675,6 +677,12 @@ main()
 	done
 
 	trap cleanup SIGINT SIGTERM EXIT
+
+	local ARCHIVE_UUID
+	if [[ "$IS_SINGLE_UUID" == "true" ]]; then
+		ARCHIVE_UUID=$(uuidgen -r)
+		local -r ARCHIVE_UUID
+	fi
 
 	local JOB=""
 	if [[ "$IS_SINGLETON" == "true" ]]; then
