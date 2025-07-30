@@ -141,7 +141,7 @@ show_help()
 {
 	cat << EOT
 Usage:
-    fopus [-1gnql] [-b SIZE] [-o OUTPUT] \\
+    fopus [-1gnqlu] [-b SIZE] [-o OUTPUT] \\
         [-s SECKEY] [-t COMMENT] \\
         [-r RECIPIENT] [-R PATH] [-i PATH] FILE...
 
@@ -153,6 +153,7 @@ Options:
     -n            Don't perform any action.
     -q            Quieter mode.
     -l            Create a label for the backup.
+    -u            Use a single UUID for the backup.
     -b SIZE       Split backup pieces of SIZE. Default is 2G.
                   Specify 0 to not split.
 
@@ -468,7 +469,7 @@ EOL
 
 get_options()
 {
-	while getopts "hvng12b:o:s:t:r:R:i:ql9" opt; do
+	while getopts "hvng12b:o:s:t:r:R:i:ql9u" opt; do
 		case "$opt" in
 			n) DRY_RUN="true" ;;
 
@@ -491,6 +492,8 @@ get_options()
 			t) MINISIGN_TRUSTED_COMMENT="$OPTARG" ;;
 
 			s) MINISIGN_KEY_PATH="$OPTARG" ;;
+
+			u) IS_SINGLE_UUID="true" ;;
 
 			r) AGE_RECIPIENT_STRING+=("$OPTARG") ;;
 
@@ -592,6 +595,7 @@ main()
 	local REPOSITORY_PATH
 	local IS_GROUP_INVERT="false"
 	local IS_SINGLETON="false"
+	local IS_SINGLE_UUID="false"
 	local IS_SHA256="false"
 	local DRY_RUN="false"
 	local IS_QUIET="false"
@@ -621,6 +625,7 @@ main()
 	local -r REPOSITORY_PATH
 	local -r IS_GROUP_INVERT
 	local -r IS_SINGLETON
+	local -r IS_SINGLE_UUID
 	local -r IS_SHA256
 	local -r DRY_RUN
 	local -r IS_QUIET
