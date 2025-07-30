@@ -256,6 +256,7 @@ fopus_backup()
 				((i += 1))
 			done
 		fi
+		printf "Repository $BACKUP_PATH/$BACKUP_DIR\n"
 	else
 		echo "$BACKUP_PATH/$BACKUP_DIR"
 	fi
@@ -668,7 +669,6 @@ main()
 	done
 
 	trap cleanup SIGINT SIGTERM EXIT
-	[[ "$IS_QUIET" == "false" ]] && echo "Repository $OUTPUT_PATH"
 
 	local JOB=""
 	if [[ "$IS_SINGLETON" == "true" ]]; then
