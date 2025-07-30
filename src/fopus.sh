@@ -257,8 +257,9 @@ fopus_backup()
 			done
 		fi
 		printf "Repository $BACKUP_PATH/$BACKUP_DIR\n"
+		printf "UUID $ARCHIVE_UUID\n"
 	else
-		echo "$BACKUP_PATH/$BACKUP_DIR"
+		printf "$BACKUP_PATH/$BACKUP_DIR\t$ARCHIVE_UUID\n"
 	fi
 
 	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
