@@ -259,10 +259,10 @@ fopus_backup()
 				((i += 1))
 			done
 		fi
-		printf "Repository $BACKUP_PATH/$BACKUP_DIR\n"
-		printf "UUID $ARCHIVE_UUID\n"
+		printf "Repository %s/%s\n" "$BACKUP_PATH" "$BACKUP_DIR"
+		printf "UUID %s\n" "$ARCHIVE_UUID"
 	else
-		printf "$BACKUP_PATH/$BACKUP_DIR\t$ARCHIVE_UUID\n"
+		printf "%s/%s\t%s\n" "$BACKUP_PATH" "$BACKUP_DIR" "$ARCHIVE_UUID"
 	fi
 
 	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
