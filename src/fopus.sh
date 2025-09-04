@@ -353,13 +353,13 @@ split_file()
 	local LIMIT_SIZE=""
 
 	if ! test_is_dryrun; then
-		FILE_SIZE=$(stat -c %s "$BACKUP_FILE.age")
+		FILE_SIZE=$(wc -c < "$BACKUP_FILE.age")
 		LIMIT_SIZE=$(echo "$SPLIT_BYTES" | numfmt --from=iec)
 
 		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
 			local params=()
 			[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
-			if ! split "${params[@]}" --bytes="$SPLIT_BYTES" \
+			if ! split "${params[@]}" -b "$SPLIT_BYTES" \
 				"$BACKUP_FILE.age" "$BACKUP_FILE.age_"; then
 					return 1
 			fi
@@ -458,7 +458,7 @@ label_archive()
 	   [[ "$IS_LABELED" == "true" ]]; then
 		cat << EOL > "$BACKUP_PATH/$BACKUP_DIR/label.txt"
 # $ARCHIVE_UUID
-# $(date -u --iso-8601=seconds)
+# $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 #
 $(printf "# %s\n" "${LIST_FILES[@]}")
 $ARCHIVE_SHA1SUM
