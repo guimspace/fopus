@@ -570,7 +570,8 @@ digest_options()
 		if ! "$age_tool" --encrypt --identity "$IDENTITY" "$0" > /dev/null ; then
 			exit 2
 		fi
-		local _tmp=$(realpath -e "$IDENTITY")
+		local _tmp
+		_tmp=$(realpath -e "$IDENTITY")
 		LIST+=(--identity "${_tmp}")
 	done
 	AGE_IDENTITY_PATH=("${LIST[@]}")
