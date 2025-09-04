@@ -186,15 +186,15 @@ evaluate_files()
 
 	for file in "${FILES[@]}"; do
 		if [[ ! -e "$file" ]]; then
-			>&2 echo "fopus: $file: No such file or directory"
+			>&2 echo "fopus: ${file}: No such file or directory"
 			exit 1
 		elif [[ ! -r "$file" ]]; then
-			>&2 echo "fopus: $file: Permission denied"
+			>&2 echo "fopus: ${file}: Permission denied"
 			exit 1
 		fi
 
 		file=$(realpath -e "$file")
-		SELECT+=("$file")
+		SELECT+=("${file}")
 	done
 
 	FILES=()
@@ -230,22 +230,22 @@ fopus_backup()
 	REPO_NAME="${REPO_NAME#"${REPO_NAME%%[^.]*}"}"
 
 	tmp=$(echo "${LIST_FILES[0]}" | "$sha1sum_tool")
-	tmp="$REPO_NAME-${tmp:0:11}"
+	tmp="${REPO_NAME}-${tmp:0:11}"
 
 	if [[ "$IS_GROUP_INVERT" == "true" ]]; then
-		BACKUP_PATH="$OUTPUT_PATH/$tmp"
-		BACKUP_DIR="backup_$DATE"
+		BACKUP_PATH="${OUTPUT_PATH}/${tmp}"
+		BACKUP_DIR="backup_${DATE}"
 	else
-		BACKUP_PATH="$OUTPUT_PATH/backup_$DATE"
+		BACKUP_PATH="${OUTPUT_PATH}/backup_${DATE}"
 		BACKUP_DIR="$tmp"
 	fi
 
 	local -r BACKUP_PATH="$BACKUP_PATH"
 	local -r BACKUP_DIR="$BACKUP_DIR"
 
-	CLEANUP_DIR="$BACKUP_PATH/$BACKUP_DIR"
+	CLEANUP_DIR="${BACKUP_PATH}/${BACKUP_DIR}"
 
-	BACKUP_FILE="$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.tar.xz"
+	BACKUP_FILE="${BACKUP_PATH}/${BACKUP_DIR}/${REPO_NAME}.tar.xz"
 	local -r BACKUP_FILE="$BACKUP_FILE"
 
 	# show backup details
@@ -265,13 +265,13 @@ fopus_backup()
 		printf "%s/%s\t%s\n" "$BACKUP_PATH" "$BACKUP_DIR" "$ARCHIVE_UUID"
 	fi
 
-	if [[ -e "$BACKUP_PATH/$BACKUP_DIR" ]]; then
+	if [[ -e "${BACKUP_PATH}/${BACKUP_DIR}" ]]; then
 		>&2 echo "fopus: cannot create backup: directory is not empty"
 		return 1
 	fi
 
 	if ! test_is_dryrun; then
-		mkdir -p "$BACKUP_PATH/$BACKUP_DIR" || exit 1
+		mkdir -p "${BACKUP_PATH}/${BACKUP_DIR}" || exit 1
 	fi
 
 	# compress
@@ -279,7 +279,7 @@ fopus_backup()
 		local params=()
 		[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
 		[[ "$IS_XZ_PRESET_NINE" == "true" ]] && params+=(-9)
-		tar -cvvpf - -- "${LIST_FILES[@]}" 2> "$BACKUP_PATH/$BACKUP_DIR/${REPO_NAME}.list.txt" |\
+		tar -cvvpf - -- "${LIST_FILES[@]}" 2> "${BACKUP_PATH}/${BACKUP_DIR}/${REPO_NAME}.list.txt" |\
 			xz "${params[@]}" --compress --threads=0 - > "$BACKUP_FILE"
 	fi
 
@@ -353,14 +353,14 @@ split_file()
 	local LIMIT_SIZE=""
 
 	if ! test_is_dryrun; then
-		FILE_SIZE=$(wc -c < "$BACKUP_FILE.age")
+		FILE_SIZE=$(wc -c < "${BACKUP_FILE}.age")
 		LIMIT_SIZE=$(echo "$SPLIT_BYTES" | numfmt --from=iec)
 
 		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
 			local params=()
 			[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
 			if ! split "${params[@]}" -b "$SPLIT_BYTES" \
-				"$BACKUP_FILE.age" "$BACKUP_FILE.age_"; then
+				"${BACKUP_FILE}.age" "${BACKUP_FILE}.age_"; then
 					return 1
 			fi
 		fi
@@ -378,7 +378,7 @@ sign_files()
 
 		# hash
 		(
-		cd "$BACKUP_PATH/$BACKUP_DIR" || exit 1
+		cd "${BACKUP_PATH}/${BACKUP_DIR}" || exit 1
 		if [[ "$IS_SHA256" == "true" ]]; then
 			if ! "$sha256sum_tool" "./"* > "./CHECKSUMS.txt"; then
 				return 1
@@ -406,7 +406,7 @@ sign_files()
 		fi
 
 		trap - SIGINT
-		if ! "$minisign_tool" "${params[@]}" -Sm "$BACKUP_PATH/$BACKUP_DIR/CHECKSUMS.txt"; then
+		if ! "$minisign_tool" "${params[@]}" -Sm "${BACKUP_PATH}/${BACKUP_DIR}/CHECKSUMS.txt"; then
 			return 1
 		fi
 		trap cleanup SIGINT
@@ -421,16 +421,16 @@ hash_files()
 		if [[ "$IS_LABELED" == "false" ]]; then
 			if ! (
 				cd "$BACKUP_PATH" || exit 1
-				if ! "$sha1sum_tool" "./$BACKUP_DIR/"* > "./SHA1SUMS.txt"; then
+				if ! "$sha1sum_tool" "./${BACKUP_DIR}/"* > "./SHA1SUMS.txt"; then
 					return 1
 				fi
 			); then
 				return 1
 			fi
-			chmod 600 "$BACKUP_PATH/SHA1SUMS.txt"
+			chmod 600 "${BACKUP_PATH}/SHA1SUMS.txt"
 		else
 			ARCHIVE_SHA1SUM=$(
-			cd "$BACKUP_PATH/$BACKUP_DIR" || return 1
+			cd "${BACKUP_PATH}/${BACKUP_DIR}" || return 1
 			"$sha1sum_tool" "./"*
 			)
 		fi
@@ -442,11 +442,11 @@ hash_files()
 file_permission()
 {
 	if ! test_is_dryrun; then
-		if ! chmod 700 "$BACKUP_PATH/$BACKUP_DIR/"; then
+		if ! chmod 700 "${BACKUP_PATH}/${BACKUP_DIR}/"; then
 			return 1
 		fi
-		(find "$BACKUP_PATH/$BACKUP_DIR/" -type f -exec chmod 600 {} \;)
-		(find "$BACKUP_PATH/$BACKUP_DIR/" -type d -exec chmod 700 {} \;)
+		(find "${BACKUP_PATH}/${BACKUP_DIR}/" -type f -exec chmod 600 {} \;)
+		(find "${BACKUP_PATH}/${BACKUP_DIR}/" -type d -exec chmod 700 {} \;)
 	fi
 
 	return 0
@@ -456,14 +456,14 @@ label_archive()
 {
 	if ! test_is_dryrun &&\
 	   [[ "$IS_LABELED" == "true" ]]; then
-		cat << EOL > "$BACKUP_PATH/$BACKUP_DIR/label.txt"
-# $ARCHIVE_UUID
+		cat << EOL > "${BACKUP_PATH}/${BACKUP_DIR}/label.txt"
+# ${ARCHIVE_UUID}
 # $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 #
 $(printf "# %s\n" "${LIST_FILES[@]}")
-$ARCHIVE_SHA1SUM
+${ARCHIVE_SHA1SUM}
 EOL
-		chmod 400 "$BACKUP_PATH/$BACKUP_DIR/label.txt"
+		chmod 400 "${BACKUP_PATH}/${BACKUP_DIR}/label.txt"
 	fi
 
 	return 0
@@ -532,13 +532,13 @@ digest_options()
 	fi
 
 	if [[ ! -d "$REPOSITORY_PATH" ]]; then
-		>&2 echo "fopus: $REPOSITORY_PATH: No such directory"
+		>&2 echo "fopus: ${REPOSITORY_PATH}: No such directory"
 		exit 1
 	fi
 
 	if [[ -n "$MINISIGN_KEY_PATH" ]]; then
 		if [[ ! -f "$MINISIGN_KEY_PATH" ]]; then
-			>&2 echo "fopus: $MINISIGN_KEY_PATH: No such file"
+			>&2 echo "fopus: ${MINISIGN_KEY_PATH}: No such file"
 			exit 1
 		fi
 		MINISIGN_KEY_PATH=$(realpath -e "$MINISIGN_KEY_PATH")
@@ -566,7 +566,7 @@ digest_options()
 		fi
 		local _tmp
 		_tmp=$(realpath -e "$RECIPIENT")
-		LIST+=(--recipients-file "$_tmp")
+		LIST+=(--recipients-file "${_tmp}")
 	done
 	AGE_RECIPIENT_PATH=("${LIST[@]}")
 
@@ -576,7 +576,7 @@ digest_options()
 			exit 2
 		fi
 		local _tmp=$(realpath -e "$IDENTITY")
-		LIST+=(--identity "$_tmp")
+		LIST+=(--identity "${_tmp}")
 	done
 	AGE_IDENTITY_PATH=("${LIST[@]}")
 
@@ -654,10 +654,10 @@ main()
 	OUTPUT_PATH="$REPOSITORY_PATH"
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
-		>&2 echo "fopus: $OUTPUT_PATH: No such directory"
+		>&2 echo "fopus: ${OUTPUT_PATH}: No such directory"
 		exit 1
 	elif [[ ! -w "$OUTPUT_PATH" ]]; then
-		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
+		>&2 echo "fopus: ${OUTPUT_PATH}: Permission denied"
 		exit 1
 	fi
 
@@ -665,12 +665,12 @@ main()
 	local -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
-		>&2 echo "fopus: $OUTPUT_PATH: Permission denied"
+		>&2 echo "fopus: ${OUTPUT_PATH}: Permission denied"
 		exit 1
 	fi
 
 	for file in "${FILES[@]}"; do
-		if [[ "$OUTPUT_PATH" == "$file/"* ]]; then
+		if [[ "$OUTPUT_PATH" == "${file}/"* ]]; then
 			>&2 echo "fopus: invalid output path"
 			exit 1
 		fi
@@ -694,7 +694,7 @@ main()
 		local file=""
 		for file in "${FILES[@]}"; do
 			((i += 1))
-			JOB="Backup $i of $N"
+			JOB="Backup ${i} of ${N}"
 			if ! fopus_backup "$file"; then
 				return 1
 			fi
