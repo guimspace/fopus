@@ -221,8 +221,6 @@ fopus_backup()
 		local -r ARCHIVE_UUID
 	fi
 
-	local ARCHIVE_SHA1SUM=""
-
 	local tmp=""
 
 	REPO_NAME=$(basename -- "${LIST_FILES[0]}")
@@ -428,11 +426,6 @@ hash_files()
 				return 1
 			fi
 			chmod 600 "${BACKUP_PATH}/SHA1SUMS.txt"
-		else
-			ARCHIVE_SHA1SUM=$(
-			cd "${BACKUP_PATH}/${BACKUP_DIR}" || return 1
-			"$sha1sum_tool" "./"*
-			)
 		fi
 	fi
 
@@ -461,8 +454,10 @@ label_archive()
 # $(date -u +'%Y-%m-%dT%H:%M:%SZ')
 #
 $(printf "# %s\n" "${LIST_FILES[@]}")
-${ARCHIVE_SHA1SUM}
 EOL
+
+		(cd "${BACKUP_PATH}/${BACKUP_DIR}" && find ./ -maxdepth 1 -type f -exec "$sha1sum_tool" {} +) >> \
+			"${BACKUP_PATH}/${BACKUP_DIR}/label.txt"
 		chmod 400 "${BACKUP_PATH}/${BACKUP_DIR}/label.txt"
 	fi
 
