@@ -316,7 +316,7 @@ encrypt_file()
 		params+=(--encrypt)
 
 		trap - SIGINT
-		"$age_tool" "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"
+		"$age_tool" "${params[@]}" --output "${BACKUP_FILE}.age" "$BACKUP_FILE"
 		trap cleanup SIGINT
 	fi
 
