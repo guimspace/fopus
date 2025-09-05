@@ -283,35 +283,17 @@ fopus_backup()
 			xz "${params[@]}" --compress --threads=0 - > "$BACKUP_FILE"
 	fi
 
-	# encrypt
-	if ! encrypt_file; then
-		return 1
-	fi
+	encrypt_file || exit 1
 
-	# split
-	if ! split_file; then
-		return 1
-	fi
+	split_file || exit 1
 
-	# sign
-	if ! sign_files; then
-		return 1
-	fi
+	sign_files || exit 1
 
-	# hash files
-	if ! hash_files; then
-		return 1
-	fi
+	hash_files || exit 1
 
-	# file permission
-	if ! file_permission; then
-		return 1
-	fi
+	file_permission || exit 1
 
-	# label
-	if ! label_archive; then
-		return 1
-	fi
+	label_archive || exit 1
 
 	IS_ONGOING=0
 	return 0
@@ -685,7 +667,7 @@ main()
 	local JOB=""
 	if [[ "$IS_SINGLETON" == "true" ]]; then
 		JOB="Backup"
-		fopus_backup "${FILES[@]}"
+		fopus_backup "${FILES[@]}" || exit 1
 	else
 		declare -i i=0
 		declare -ir N="${#FILES[@]}"
@@ -693,9 +675,7 @@ main()
 		for file in "${FILES[@]}"; do
 			((i += 1))
 			JOB="Backup ${i} of ${N}"
-			if ! fopus_backup "$file"; then
-				return 1
-			fi
+			fopus_backup "$file" || exit 1
 		done
 	fi
 
