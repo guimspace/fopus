@@ -263,13 +263,15 @@ fopus_backup()
 		printf "%s/%s\t%s\n" "$BACKUP_PATH" "$BACKUP_DIR" "$ARCHIVE_UUID"
 	fi
 
-	if [[ -e "${BACKUP_PATH}/${BACKUP_DIR}" ]]; then
-		>&2 echo "fopus: cannot create backup: directory is not empty"
-		return 1
-	fi
-
 	if ! test_is_dryrun; then
-		mkdir -p "${BACKUP_PATH}/${BACKUP_DIR}" || exit 1
+		mkdir -p "${BACKUP_PATH}"
+		if ! mkdir "${BACKUP_PATH}/${BACKUP_DIR}"; then
+			>&2 echo "fopus: cannot create backup: directory already exists"
+			return 1
+		fi
+	elif [[ -e "${BACKUP_PATH}/${BACKUP_DIR}" ]]; then
+		>&2 echo "fopus: cannot create backup: directory already exists"
+		return 1
 	fi
 
 	# compress
