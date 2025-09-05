@@ -316,9 +316,7 @@ encrypt_file()
 		params+=(--encrypt)
 
 		trap - SIGINT
-		if ! "$age_tool" "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"; then
-			return 1
-		fi
+		"$age_tool" "${params[@]}" "$BACKUP_FILE" > "${BACKUP_FILE}.age"
 		trap cleanup SIGINT
 	fi
 
@@ -341,10 +339,7 @@ split_file()
 		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
 			local params=()
 			[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
-			if ! split "${params[@]}" -b "$SPLIT_BYTES" \
-				"${BACKUP_FILE}.age" "${BACKUP_FILE}.age_"; then
-					return 1
-			fi
+			split "${params[@]}" -b "$SPLIT_BYTES" "${BACKUP_FILE}.age" "${BACKUP_FILE}.age_"
 		fi
 	fi
 
@@ -360,16 +355,12 @@ sign_files()
 
 		# hash
 		(
-		cd "${BACKUP_PATH}/${BACKUP_DIR}" || exit 1
-		if [[ "$IS_SHA256" == "true" ]]; then
-			if ! "$sha256sum_tool" "./"* > "./CHECKSUMS.txt"; then
-				return 1
+			cd "${BACKUP_PATH}/${BACKUP_DIR}" || exit 1
+			if [[ "$IS_SHA256" == "true" ]]; then
+				"$sha256sum_tool" "./"* > "./CHECKSUMS.txt"
+			else
+				"$checksum_tool" "./"* > "./CHECKSUMS.txt"
 			fi
-		else
-			if ! "$checksum_tool" "./"* > "./CHECKSUMS.txt"; then
-				return 1
-			fi
-		fi
 		)
 
 		#sign
@@ -388,9 +379,7 @@ sign_files()
 		fi
 
 		trap - SIGINT
-		if ! "$minisign_tool" "${params[@]}" -Sm "${BACKUP_PATH}/${BACKUP_DIR}/CHECKSUMS.txt"; then
-			return 1
-		fi
+		"$minisign_tool" "${params[@]}" -Sm "${BACKUP_PATH}/${BACKUP_DIR}/CHECKSUMS.txt"
 		trap cleanup SIGINT
 	fi
 
@@ -401,14 +390,10 @@ hash_files()
 {
 	if ! test_is_dryrun; then
 		if [[ "$IS_LABELED" == "false" ]]; then
-			if ! (
+			(
 				cd "$BACKUP_PATH" || exit 1
-				if ! "$sha1sum_tool" "./${BACKUP_DIR}/"* > "./SHA1SUMS.txt"; then
-					return 1
-				fi
-			); then
-				return 1
-			fi
+				"$sha1sum_tool" "./${BACKUP_DIR}/"* > "./SHA1SUMS.txt"
+			)
 			chmod 600 "${BACKUP_PATH}/SHA1SUMS.txt"
 		fi
 	fi
@@ -419,9 +404,7 @@ hash_files()
 file_permission()
 {
 	if ! test_is_dryrun; then
-		if ! chmod 700 "${BACKUP_PATH}/${BACKUP_DIR}/"; then
-			return 1
-		fi
+		chmod 700 "${BACKUP_PATH}/${BACKUP_DIR}/"
 		(find "${BACKUP_PATH}/${BACKUP_DIR}/" -type f -exec chmod 600 {} \;)
 		(find "${BACKUP_PATH}/${BACKUP_DIR}/" -type d -exec chmod 700 {} \;)
 	fi
