@@ -329,7 +329,8 @@ split_file()
 {
 	local FILE_SIZE=""
 
-	if ! test_is_dryrun; then
+	if ! test_is_dryrun &&\
+		test "$SPLIT_BYTES" != "0"; then
 		FILE_SIZE=$(wc -c < "${BACKUP_FILE}.age")
 
 		if [[ "$FILE_SIZE" -gt "$SPLIT_BYTES" ]]; then
@@ -482,8 +483,9 @@ digest_options()
 {
 	local LIST=()
 
-	if ! split -b "$SPLIT_BYTES" /dev/null; then
-		exit 1
+	if ! numfmt --from=iec "$SPLIT_BYTES" &> /dev/null; then
+		>&2 printf "fopus: Invalid split size\n"
+		exit 2
 	fi
 
 	SPLIT_BYTES=$(numfmt --from=iec "$SPLIT_BYTES")
