@@ -486,10 +486,7 @@ digest_options()
 {
 	local LIST=()
 
-	if [[ "$SPLIT_BYTES" =~ ^[-+]?[0-9]+$ ]] &&\
-		[[ "$SPLIT_BYTES" -le 0 ]]; then
-		SPLIT_BYTES=0
-	elif ! split --bytes="$SPLIT_BYTES" /dev/null; then
+	if ! split -b "$SPLIT_BYTES" /dev/null; then
 		exit 1
 	fi
 
