@@ -215,7 +215,7 @@ fopus_backup()
 	local BACKUP_PATH=""
 	local BACKUP_DIR=""
 
-	if [[ "$IS_SINGLE_UUID" == "false" ]]; then
+	if [[ "$IS_LABELED" == "true" && "$IS_SINGLE_UUID" == "false" ]]; then
 		local ARCHIVE_UUID
 		ARCHIVE_UUID=$(uuidgen -r)
 		local -r ARCHIVE_UUID
@@ -258,9 +258,11 @@ fopus_backup()
 			done
 		fi
 		printf "Repository %s/%s\n" "$BACKUP_PATH" "$BACKUP_DIR"
-		printf "UUID %s\n" "$ARCHIVE_UUID"
+		[[ "$IS_LABELED" == "true" ]] && printf "UUID %s\n" "$ARCHIVE_UUID"
 	else
-		printf "%s/%s\t%s\n" "$BACKUP_PATH" "$BACKUP_DIR" "$ARCHIVE_UUID"
+		printf "%s/%s" "$BACKUP_PATH" "$BACKUP_DIR"
+		[[ "$IS_LABELED" == "true" ]] && printf "\t%s" "$ARCHIVE_UUID"
+		printf "\n"
 	fi
 
 	if ! test_is_dryrun; then
@@ -635,7 +637,7 @@ main()
 	trap cleanup SIGINT SIGTERM EXIT
 
 	local ARCHIVE_UUID
-	if [[ "$IS_SINGLE_UUID" == "true" ]]; then
+	if [[ "$IS_LABELED" == "true" && "$IS_SINGLE_UUID" == "true" ]]; then
 		ARCHIVE_UUID=$(uuidgen -r)
 		local -r ARCHIVE_UUID
 	fi
