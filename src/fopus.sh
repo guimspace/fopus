@@ -325,18 +325,12 @@ encrypt_file()
 
 split_file()
 {
-	if [[ "$SPLIT_BYTES" -le 0 ]]; then
-		return 0
-	fi
-
 	local FILE_SIZE=""
-	local LIMIT_SIZE=""
 
 	if ! test_is_dryrun; then
 		FILE_SIZE=$(wc -c < "${BACKUP_FILE}.age")
-		LIMIT_SIZE=$(echo "$SPLIT_BYTES" | numfmt --from=iec)
 
-		if [[ "$FILE_SIZE" -gt "$LIMIT_SIZE" ]]; then
+		if [[ "$FILE_SIZE" -gt "$SPLIT_BYTES" ]]; then
 			local params=()
 			[[ "$IS_QUIET" == "false" ]] && params+=(--verbose)
 			split "${params[@]}" -b "$SPLIT_BYTES" "${BACKUP_FILE}.age" "${BACKUP_FILE}.age_"
@@ -489,6 +483,8 @@ digest_options()
 	if ! split -b "$SPLIT_BYTES" /dev/null; then
 		exit 1
 	fi
+
+	SPLIT_BYTES=$(numfmt --from=iec "$SPLIT_BYTES")
 
 	if [[ ! -d "$REPOSITORY_PATH" ]]; then
 		>&2 echo "fopus: ${REPOSITORY_PATH}: No such directory"
