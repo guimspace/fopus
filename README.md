@@ -1,6 +1,6 @@
 # fopus
 
-[![License](https://img.shields.io/github/license/guimspace/fopus.sh)](https://github.com/guimspace/fopus.sh/blob/master/LICENSE) [![Version](https://img.shields.io/github/release-pre/guimspace/fopus.sh.svg)](https://github.com/guimspace/fopus.sh/releases)
+[![License](https://img.shields.io/github/license/guimspace/fopus.sh)](https://github.com/guimspace/fopus.sh/blob/master/LICENSE) [![Version](https://img.shields.io/github/release/guimspace/fopus.sh.svg)](https://github.com/guimspace/fopus.sh/releases)
 
 **Notice** _fopus_ is NOT suitable for professional application as it is not meant to be the most efficient, correct or secure.
 
