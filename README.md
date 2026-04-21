@@ -1,6 +1,6 @@
 # fopus
 
-[![License](https://img.shields.io/github/license/guimspace/fopus)](https://github.com/guimspace/fopus/blob/master/LICENSE) [![Version](https://img.shields.io/github/release-pre/guimspace/fopus.svg)](https://github.com/guimspace/fopus/releases)
+[![License](https://img.shields.io/github/license/guimspace/fopus.sh)](https://github.com/guimspace/fopus.sh/blob/master/LICENSE) [![Version](https://img.shields.io/github/release-pre/guimspace/fopus.sh.svg)](https://github.com/guimspace/fopus.sh/releases)
 
 **Notice** _fopus_ is NOT suitable for professional application as it is not meant to be the most efficient, correct or secure.
 
@@ -84,7 +84,7 @@ The directory `backup_yyyy-mm-dd` have file permission set to `700`. Regular fil
 # Install
 
 ```
-sudo curl -L https://github.com/guimspace/fopus/releases/latest/download/fopus.sh -o /usr/local/bin/fopus
+sudo curl -L https://github.com/guimspace/fopus.sh/releases/latest/download/fopus.sh -o /usr/local/bin/fopus
 sudo chmod a+rx /usr/local/bin/fopus
 ```
 

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2019-2024 Guilherme Tadashi Maeoka
 # fopus: command-line tool to archive, compress, encrypt and split.
-# <https://github.com/guimspace/fopus>
+# <https://github.com/guimspace/fopus.sh>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
