@@ -84,7 +84,7 @@ The directory `backup_yyyy-mm-dd` have file permission set to `700`. Regular fil
 # Install
 
 ```
-sudo curl -L https://github.com/guimspace/fopus.sh/releases/latest/download/fopus.sh -o /usr/local/bin/fopus
+sudo curl -fsSL https://github.com/guimspace/fopus.sh/releases/latest/download/fopus.sh -o /usr/local/bin/fopus
 sudo chmod a+rx /usr/local/bin/fopus
 ```
 
