@@ -27,7 +27,7 @@
 set -euo pipefail
 
 if [[ "$UID" -lt 1000 ]]; then
-	>&2 echo "fopus: permission denied"
+	echo "fopus: permission denied" >&2
 	exit 1
 fi
 
@@ -79,7 +79,7 @@ check_requirements()
 	local app=""
 	for app in "${apps[@]}"; do
 		if ! command -v "${app}" &> /dev/null; then
-			>&2 echo "fopus: ${app} not found"
+			echo "fopus: ${app} not found" >&2
 			exit 1
 		fi
 	done
@@ -87,7 +87,7 @@ check_requirements()
 	if command -v age &> /dev/null; then
 		age_tool="$(command -v age)"
 	else
-		>&2 echo "fopus: age not found"
+		echo "fopus: age not found" >&2
 		exit 1
 	fi
 	declare -gr age_tool
@@ -95,7 +95,7 @@ check_requirements()
 	if command -v minisign &> /dev/null; then
 		minisign_tool="$(command -v minisign)"
 	else
-		>&2 echo "fopus: minisign not found"
+		echo "fopus: minisign not found" >&2
 		exit 1
 	fi
 	declare -gr minisign_tool
@@ -105,7 +105,7 @@ check_requirements()
 	elif command -v shasum &> /dev/null; then
 		sha1sum_tool="$(command -v shasum) "
 	else
-		>&2 echo "fopus: sha1sum not found"
+		echo "fopus: sha1sum not found" >&2
 		exit 1
 	fi
 	declare -gr sha1sum_tool
@@ -115,7 +115,7 @@ check_requirements()
 	elif command -v shasum &> /dev/null; then
 		sha256sum_tool="$(command -v shasum) -a 256"
 	else
-		>&2 echo "fopus: sha256sum not found"
+		echo "fopus: sha256sum not found" >&2
 		exit 1
 	fi
 	declare -gr sha256sum_tool
@@ -129,7 +129,7 @@ check_requirements()
 	elif command -v shasum &> /dev/null; then
 		checksum_tool="$(command -v shasum) -a 256 "
 	else
-		>&2 echo "fopus: hash functions not found"
+		echo "fopus: hash functions not found" >&2
 		exit 1
 	fi
 	declare -gr checksum_tool
@@ -186,10 +186,10 @@ evaluate_files()
 
 	for file in "${FILES[@]}"; do
 		if [[ ! -e "$file" ]]; then
-			>&2 echo "fopus: ${file}: No such file or directory"
+			echo "fopus: ${file}: No such file or directory" >&2
 			exit 1
 		elif [[ ! -r "$file" ]]; then
-			>&2 echo "fopus: ${file}: Permission denied"
+			echo "fopus: ${file}: Permission denied" >&2
 			exit 1
 		fi
 
@@ -268,11 +268,11 @@ fopus_backup()
 	if ! test_is_dryrun; then
 		mkdir -p "${BACKUP_PATH}"
 		if ! mkdir "${BACKUP_PATH}/${BACKUP_DIR}"; then
-			>&2 echo "fopus: cannot create backup: directory already exists"
+			echo "fopus: cannot create backup: directory already exists" >&2
 			return 1
 		fi
 	elif [[ -e "${BACKUP_PATH}/${BACKUP_DIR}" ]]; then
-		>&2 echo "fopus: cannot create backup: directory already exists"
+		echo "fopus: cannot create backup: directory already exists" >&2
 		return 1
 	fi
 
@@ -484,20 +484,20 @@ digest_options()
 	local LIST=()
 
 	if ! numfmt --from=iec "$SPLIT_BYTES" &> /dev/null; then
-		>&2 printf "fopus: Invalid split size\n"
+		printf "fopus: Invalid split size\n" >&2
 		exit 2
 	fi
 
 	SPLIT_BYTES=$(numfmt --from=iec "$SPLIT_BYTES")
 
 	if [[ ! -d "$REPOSITORY_PATH" ]]; then
-		>&2 echo "fopus: ${REPOSITORY_PATH}: No such directory"
+		echo "fopus: ${REPOSITORY_PATH}: No such directory" >&2
 		exit 1
 	fi
 
 	if [[ -n "$MINISIGN_KEY_PATH" ]]; then
 		if [[ ! -f "$MINISIGN_KEY_PATH" ]]; then
-			>&2 echo "fopus: ${MINISIGN_KEY_PATH}: No such file"
+			echo "fopus: ${MINISIGN_KEY_PATH}: No such file" >&2
 			exit 1
 		fi
 		MINISIGN_KEY_PATH=$(realpath -e -- "$MINISIGN_KEY_PATH")
@@ -505,7 +505,7 @@ digest_options()
 
 	if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]] &&\
 		[[ -z "$MINISIGN_KEY_PATH" ]]; then
-			>&2 printf "fopus: A trusted comment requires a minisign key\n"
+			printf "fopus: A trusted comment requires a minisign key\n" >&2
 			exit 1
 	fi
 
@@ -606,7 +606,7 @@ main()
 	local -r FILES
 
 	if [[ -z "${FILES-}" ]]; then
-		>&2 echo "fopus: missing file operand"
+		echo "fopus: missing file operand" >&2
 		echo "Try 'fopus -h' for more information."
 		exit 1
 	fi
@@ -614,10 +614,10 @@ main()
 	OUTPUT_PATH="$REPOSITORY_PATH"
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
-		>&2 echo "fopus: ${OUTPUT_PATH}: No such directory"
+		echo "fopus: ${OUTPUT_PATH}: No such directory" >&2
 		exit 1
 	elif [[ ! -w "$OUTPUT_PATH" ]]; then
-		>&2 echo "fopus: ${OUTPUT_PATH}: Permission denied"
+		echo "fopus: ${OUTPUT_PATH}: Permission denied" >&2
 		exit 1
 	fi
 
@@ -625,13 +625,13 @@ main()
 	local -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
-		>&2 echo "fopus: ${OUTPUT_PATH}: Permission denied"
+		echo "fopus: ${OUTPUT_PATH}: Permission denied" >&2
 		exit 1
 	fi
 
 	for file in "${FILES[@]}"; do
 		if [[ "$OUTPUT_PATH" == "${file}/"* ]]; then
-			>&2 echo "fopus: invalid output path"
+			echo "fopus: invalid output path" >&2
 			exit 1
 		fi
 	done
