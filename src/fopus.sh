@@ -52,7 +52,7 @@ cleanup()
 		:
 	else
 		local target
-		target=$(realpath -e "$CLEANUP_DIR")
+		target=$(realpath -e -- "$CLEANUP_DIR")
 		local -r target
 
 		if [[ ! -O "$target" ]]; then
@@ -193,7 +193,7 @@ evaluate_files()
 			exit 1
 		fi
 
-		file=$(realpath -e "$file")
+		file=$(realpath -e -- "$file")
 		SELECT+=("${file}")
 	done
 
@@ -500,7 +500,7 @@ digest_options()
 			>&2 echo "fopus: ${MINISIGN_KEY_PATH}: No such file"
 			exit 1
 		fi
-		MINISIGN_KEY_PATH=$(realpath -e "$MINISIGN_KEY_PATH")
+		MINISIGN_KEY_PATH=$(realpath -e -- "$MINISIGN_KEY_PATH")
 	fi
 
 	if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]] &&\
@@ -524,7 +524,7 @@ digest_options()
 			exit 2
 		fi
 		local _tmp
-		_tmp=$(realpath -e "$RECIPIENT")
+		_tmp=$(realpath -e -- "$RECIPIENT")
 		LIST+=(--recipients-file "${_tmp}")
 	done
 	AGE_RECIPIENT_PATH=("${LIST[@]}")
@@ -535,7 +535,7 @@ digest_options()
 			exit 2
 		fi
 		local _tmp
-		_tmp=$(realpath -e "$IDENTITY")
+		_tmp=$(realpath -e -- "$IDENTITY")
 		LIST+=(--identity "${_tmp}")
 	done
 	AGE_IDENTITY_PATH=("${LIST[@]}")
@@ -621,7 +621,7 @@ main()
 		exit 1
 	fi
 
-	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
+	OUTPUT_PATH=$(realpath -e -- "$OUTPUT_PATH")
 	local -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
