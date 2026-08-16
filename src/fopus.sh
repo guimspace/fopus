@@ -139,10 +139,10 @@ check_requirements()
 
 show_help()
 {
-	cat << EOT
+	cat << 'EOT'
 Usage:
-    fopus [-1gnqlu] [-b SIZE] [-o OUTPUT] \\
-        [-s SECKEY] [-t COMMENT] \\
+    fopus [-1gnqlu] [-b SIZE] [-o OUTPUT] \
+        [-s SECKEY] [-t COMMENT] \
         [-r RECIPIENT] [-R PATH] [-i PATH] FILE...
 
 Options:
