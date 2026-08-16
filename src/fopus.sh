@@ -224,10 +224,10 @@ fopus_backup()
 	local tmp=""
 
 	REPO_NAME=$(basename -- "${LIST_FILES[0]}")
-	REPO_NAME=$(echo -n "$REPO_NAME" | tr "[:space:]" "_" | tr -s "_")
+	REPO_NAME=$(printf '%s' "$REPO_NAME" | tr "[:space:]" "_" | tr -s "_")
 	REPO_NAME="${REPO_NAME#"${REPO_NAME%%[^.]*}"}"
 
-	tmp=$(printf '%s\n' "${LIST_FILES[0]}" | "$sha1sum_tool")
+	tmp=$(printf '%s' "${LIST_FILES[0]}" | "$sha1sum_tool")
 	tmp="${REPO_NAME}-${tmp:0:11}"
 
 	if [[ "$IS_GROUP_INVERT" == "true" ]]; then
@@ -248,7 +248,7 @@ fopus_backup()
 
 	# show backup details
 	if [[ "$IS_QUIET" == "false" ]]; then
-		echo -e "${JOB} ${LIST_FILES[0]}"
+		printf '%s\n' "${JOB} ${LIST_FILES[0]}"
 		if [[ "$IS_SINGLETON" == "true" ]]; then
 			declare -i i=1
 			N="${#LIST_FILES[@]}"
