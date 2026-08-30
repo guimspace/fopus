@@ -27,7 +27,7 @@
 set -euo pipefail
 
 if [[ "$UID" -lt 1000 ]]; then
-	>&2 echo "fopus: permission denied"
+	printf '%s\n' "fopus: permission denied" >&2
 	exit 1
 fi
 
@@ -52,7 +52,7 @@ cleanup()
 		:
 	else
 		local target
-		target=$(realpath -e "$CLEANUP_DIR")
+		target=$(realpath -e -- "$CLEANUP_DIR")
 		local -r target
 
 		if [[ ! -O "$target" ]]; then
@@ -79,7 +79,7 @@ check_requirements()
 	local app=""
 	for app in "${apps[@]}"; do
 		if ! command -v "${app}" &> /dev/null; then
-			>&2 echo "fopus: ${app} not found"
+			printf '%s\n' "fopus: ${app} not found" >&2
 			exit 1
 		fi
 	done
@@ -87,7 +87,7 @@ check_requirements()
 	if command -v age &> /dev/null; then
 		age_tool="$(command -v age)"
 	else
-		>&2 echo "fopus: age not found"
+		printf '%s\n' "fopus: age not found" >&2
 		exit 1
 	fi
 	declare -gr age_tool
@@ -95,7 +95,7 @@ check_requirements()
 	if command -v minisign &> /dev/null; then
 		minisign_tool="$(command -v minisign)"
 	else
-		>&2 echo "fopus: minisign not found"
+		printf '%s\n' "fopus: minisign not found" >&2
 		exit 1
 	fi
 	declare -gr minisign_tool
@@ -105,7 +105,7 @@ check_requirements()
 	elif command -v shasum &> /dev/null; then
 		sha1sum_tool="$(command -v shasum) "
 	else
-		>&2 echo "fopus: sha1sum not found"
+		printf '%s\n' "fopus: sha1sum not found" >&2
 		exit 1
 	fi
 	declare -gr sha1sum_tool
@@ -115,7 +115,7 @@ check_requirements()
 	elif command -v shasum &> /dev/null; then
 		sha256sum_tool="$(command -v shasum) -a 256"
 	else
-		>&2 echo "fopus: sha256sum not found"
+		printf '%s\n' "fopus: sha256sum not found" >&2
 		exit 1
 	fi
 	declare -gr sha256sum_tool
@@ -129,7 +129,7 @@ check_requirements()
 	elif command -v shasum &> /dev/null; then
 		checksum_tool="$(command -v shasum) -a 256 "
 	else
-		>&2 echo "fopus: hash functions not found"
+		printf '%s\n' "fopus: hash functions not found" >&2
 		exit 1
 	fi
 	declare -gr checksum_tool
@@ -139,10 +139,10 @@ check_requirements()
 
 show_help()
 {
-	cat << EOT
+	cat << 'EOT'
 Usage:
-    fopus [-1gnqlu] [-b SIZE] [-o OUTPUT] \\
-        [-s SECKEY] [-t COMMENT] \\
+    fopus [-1gnqlu] [-b SIZE] [-o OUTPUT] \
+        [-s SECKEY] [-t COMMENT] \
         [-r RECIPIENT] [-R PATH] [-i PATH] FILE...
 
 Options:
@@ -186,14 +186,14 @@ evaluate_files()
 
 	for file in "${FILES[@]}"; do
 		if [[ ! -e "$file" ]]; then
-			>&2 echo "fopus: ${file}: No such file or directory"
+			printf '%s\n' "fopus: ${file}: No such file or directory" >&2
 			exit 1
 		elif [[ ! -r "$file" ]]; then
-			>&2 echo "fopus: ${file}: Permission denied"
+			printf '%s\n' "fopus: ${file}: Permission denied" >&2
 			exit 1
 		fi
 
-		file=$(realpath -e "$file")
+		file=$(realpath -e -- "$file")
 		SELECT+=("${file}")
 	done
 
@@ -224,10 +224,10 @@ fopus_backup()
 	local tmp=""
 
 	REPO_NAME=$(basename -- "${LIST_FILES[0]}")
-	REPO_NAME=$(echo -n "$REPO_NAME" | tr "[:space:]" "_" | tr -s "_")
+	REPO_NAME=$(printf '%s' "$REPO_NAME" | tr "[:space:]" "_" | tr -s "_")
 	REPO_NAME="${REPO_NAME#"${REPO_NAME%%[^.]*}"}"
 
-	tmp=$(echo "${LIST_FILES[0]}" | "$sha1sum_tool")
+	tmp=$(printf '%s' "${LIST_FILES[0]}" | "$sha1sum_tool")
 	tmp="${REPO_NAME}-${tmp:0:11}"
 
 	if [[ "$IS_GROUP_INVERT" == "true" ]]; then
@@ -248,12 +248,12 @@ fopus_backup()
 
 	# show backup details
 	if [[ "$IS_QUIET" == "false" ]]; then
-		echo -e "${JOB} ${LIST_FILES[0]}"
+		printf '%s\n' "${JOB} ${LIST_FILES[0]}"
 		if [[ "$IS_SINGLETON" == "true" ]]; then
 			declare -i i=1
 			N="${#LIST_FILES[@]}"
 			while [[ $i -lt $N ]]; do
-				echo "       ${LIST_FILES[$i]}"
+				printf '\t%s\n' "${LIST_FILES[$i]}"
 				((i += 1))
 			done
 		fi
@@ -268,11 +268,11 @@ fopus_backup()
 	if ! test_is_dryrun; then
 		mkdir -p "${BACKUP_PATH}"
 		if ! mkdir "${BACKUP_PATH}/${BACKUP_DIR}"; then
-			>&2 echo "fopus: cannot create backup: directory already exists"
+			printf '%s\n' "fopus: cannot create backup: directory already exists" >&2
 			return 1
 		fi
 	elif [[ -e "${BACKUP_PATH}/${BACKUP_DIR}" ]]; then
-		>&2 echo "fopus: cannot create backup: directory already exists"
+		printf '%s\n' "fopus: cannot create backup: directory already exists" >&2
 		return 1
 	fi
 
@@ -311,7 +311,7 @@ encrypt_file()
 		params+=("${AGE_IDENTITY_PATH[@]}")
 
 		if [[ "${#params[@]}" -eq 0 ]]; then
-			[[ "$IS_QUIET" == "false" ]] && echo "${REPO_NAME}.tar.xz"
+			[[ "$IS_QUIET" == "false" ]] && printf '%s\n' "${REPO_NAME}.tar.xz"
 			params+=(--passphrase)
 		fi
 
@@ -462,7 +462,7 @@ get_options()
 
 			i) AGE_IDENTITY_PATH+=("$OPTARG") ;;
 
-			v) echo "v${VERSION}"
+			v) printf '%s\n' "v${VERSION}"
 				exit 0 ;;
 
 			h) show_help
@@ -484,28 +484,28 @@ digest_options()
 	local LIST=()
 
 	if ! numfmt --from=iec "$SPLIT_BYTES" &> /dev/null; then
-		>&2 printf "fopus: Invalid split size\n"
+		printf "fopus: Invalid split size\n" >&2
 		exit 2
 	fi
 
 	SPLIT_BYTES=$(numfmt --from=iec "$SPLIT_BYTES")
 
 	if [[ ! -d "$REPOSITORY_PATH" ]]; then
-		>&2 echo "fopus: ${REPOSITORY_PATH}: No such directory"
+		printf '%s\n' "fopus: ${REPOSITORY_PATH}: No such directory" >&2
 		exit 1
 	fi
 
 	if [[ -n "$MINISIGN_KEY_PATH" ]]; then
 		if [[ ! -f "$MINISIGN_KEY_PATH" ]]; then
-			>&2 echo "fopus: ${MINISIGN_KEY_PATH}: No such file"
+			printf '%s\n' "fopus: ${MINISIGN_KEY_PATH}: No such file" >&2
 			exit 1
 		fi
-		MINISIGN_KEY_PATH=$(realpath -e "$MINISIGN_KEY_PATH")
+		MINISIGN_KEY_PATH=$(realpath -e -- "$MINISIGN_KEY_PATH")
 	fi
 
 	if [[ -n "$MINISIGN_TRUSTED_COMMENT" ]] &&\
 		[[ -z "$MINISIGN_KEY_PATH" ]]; then
-			>&2 printf "fopus: A trusted comment requires a minisign key\n"
+			printf "fopus: A trusted comment requires a minisign key\n" >&2
 			exit 1
 	fi
 
@@ -524,7 +524,7 @@ digest_options()
 			exit 2
 		fi
 		local _tmp
-		_tmp=$(realpath -e "$RECIPIENT")
+		_tmp=$(realpath -e -- "$RECIPIENT")
 		LIST+=(--recipients-file "${_tmp}")
 	done
 	AGE_RECIPIENT_PATH=("${LIST[@]}")
@@ -535,7 +535,7 @@ digest_options()
 			exit 2
 		fi
 		local _tmp
-		_tmp=$(realpath -e "$IDENTITY")
+		_tmp=$(realpath -e -- "$IDENTITY")
 		LIST+=(--identity "${_tmp}")
 	done
 	AGE_IDENTITY_PATH=("${LIST[@]}")
@@ -606,32 +606,32 @@ main()
 	local -r FILES
 
 	if [[ -z "${FILES-}" ]]; then
-		>&2 echo "fopus: missing file operand"
-		echo "Try 'fopus -h' for more information."
+		printf '%s\n' "fopus: missing file operand" >&2
+		printf '%s\n' "Try 'fopus -h' for more information."
 		exit 1
 	fi
 
 	OUTPUT_PATH="$REPOSITORY_PATH"
 
 	if [[ ! -d "$OUTPUT_PATH" ]]; then
-		>&2 echo "fopus: ${OUTPUT_PATH}: No such directory"
+		printf '%s\n' "fopus: ${OUTPUT_PATH}: No such directory" >&2
 		exit 1
 	elif [[ ! -w "$OUTPUT_PATH" ]]; then
-		>&2 echo "fopus: ${OUTPUT_PATH}: Permission denied"
+		printf '%s\n' "fopus: ${OUTPUT_PATH}: Permission denied" >&2
 		exit 1
 	fi
 
-	OUTPUT_PATH=$(realpath -e "$OUTPUT_PATH")
+	OUTPUT_PATH=$(realpath -e -- "$OUTPUT_PATH")
 	local -r OUTPUT_PATH="$OUTPUT_PATH"
 
 	if [[ -z "${OUTPUT_PATH%/*}" ]]; then
-		>&2 echo "fopus: ${OUTPUT_PATH}: Permission denied"
+		printf '%s\n' "fopus: ${OUTPUT_PATH}: Permission denied" >&2
 		exit 1
 	fi
 
 	for file in "${FILES[@]}"; do
 		if [[ "$OUTPUT_PATH" == "${file}/"* ]]; then
-			>&2 echo "fopus: invalid output path"
+			printf '%s\n' "fopus: invalid output path" >&2
 			exit 1
 		fi
 	done
